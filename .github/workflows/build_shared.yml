@@ -86,6 +86,9 @@ jobs:
           cp README.md python/README.md
           cp LICENSE python/LICENSE   
                  
+      # Ensure shared libraries are in a central directory
+      - name: Verify shared library files
+        run: ls -l python/package/
 
       - name: Install build tools
         working-directory: ./python
