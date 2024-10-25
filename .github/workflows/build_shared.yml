@@ -1,6 +1,5 @@
 name: Build and Deploy Shared Libraries
 
-
 on:
   push:
     branches:
@@ -161,6 +160,5 @@ jobs:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
         run: |
-          twine upload --repository-url https://upload.pypi.org/legacy/
- dist/*
+          twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 
