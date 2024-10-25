@@ -65,6 +65,7 @@ jobs:
         working-directory: python/
         run: |
           go build -buildmode=c-shared -o package/libprismaid_darwin_amd64.dylib export.go
+          cp package/libprismaid_darwin_amd64.dylib libprismaid_darwin_amd64.dylib
 
   # Package the Python Project Locally
   package-python:
@@ -76,13 +77,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Ensures the entire Git history and tags are fetched
+          fetch-depth: 0 
 
       - name: Copy files for Build
         run: |
           cp README.md python/README.md
           cp LICENSE python/LICENSE   
-          cp python/package/libprismaid_darwin_amd64.dylib python/libprismaid_darwin_amd64.dylib       
+                 
 
       - name: Install build tools
         working-directory: ./python
