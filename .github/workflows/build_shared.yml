@@ -141,13 +141,6 @@ jobs:
     needs: package-python  # Ensure it waits for the packaging job
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/prismaid
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
