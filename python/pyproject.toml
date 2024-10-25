@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis"
 ]
 requires-python = ">=3.6"
-readme = { file = "../README.md", content-type = "text/markdown" }
+readme = "README.md"
 
 [project.urls]
 homepage = "https://github.com/open-and-sustainable/prismaid"

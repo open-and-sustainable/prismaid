@@ -78,6 +78,9 @@ jobs:
         with:
           fetch-depth: 0  # Ensures the entire Git history and tags are fetched
 
+      - name: Copy README for Build
+        run: cp README.md python/README.md  # Copy README.md to python directory
+
       - name: Install build tools
         working-directory: ./python
         run: |
