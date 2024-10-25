@@ -130,6 +130,35 @@ jobs:
         run: |
           python -m build
 
+      - name: Upload Python Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prismaid-python-package
+          path: python/dist/*.whl
+
+  publish-to-testpypi:
+    name: Publish Python 🐍 distribution 📦 to TestPyPI
+    needs: build  # Ensures this job runs after the build job
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Required for Trusted Publisher mode
+      contents: read
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/prismaid
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Python Package Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: prismaid-python-package
+          path: dist/
+
       - name: Publish distribution 📦 to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
