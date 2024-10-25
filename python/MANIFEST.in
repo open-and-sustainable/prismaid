@@ -1,7 +1,7 @@
 # MANIFEST.in
 include README.md
 include LICENSE
-include python/package/libprismaid_linux_amd64.so
-include python/package/libprismaid_windows_amd64.dll
-include python/package/libprismaid_darwin_amd64.dylib
-recursive-include python/package *
+include package/libprismaid_linux_amd64.so
+include package/libprismaid_windows_amd64.dll
+include package/libprismaid_darwin_amd64.dylib
+recursive-include package *
