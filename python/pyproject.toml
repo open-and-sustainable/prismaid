@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prismaid"
-version = "0.0.0"  # Managed dynamically, included here for reference
+dynamic = ["version"]
 description = "PrismAId library package"
 authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
 keywords = ["open science", "systematic reviews", "AI"]
