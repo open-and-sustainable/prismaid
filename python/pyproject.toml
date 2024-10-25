@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prismaid"
-version = "0.0.1"  # Managed dynamically, included here for reference
+version = "0.0.2"  # Managed dynamically, included here for reference
 description = "PrismAId library package"
 authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
 keywords = ["open science", "systematic reviews", "AI"]
@@ -27,13 +27,14 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
 
-[tool.setuptools]
-include-package-data = true
+[tool.setuptools.packages]
+# Map the 'package' directory to the 'prismaid' package name
+prismaid = "package"
 
 [tool.setuptools.package-data]
-"package" = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
+# Include shared libraries within the 'prismaid' package
+prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
 
 [tool.setuptools_scm]
-fallback_version = "0.5.6"  # Used when tags are not available
-
+fallback_version = "0.0.0"  # Used when tags are not available
 
