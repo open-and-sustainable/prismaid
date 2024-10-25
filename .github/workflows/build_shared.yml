@@ -1,8 +1,8 @@
 name: Build and Deploy Shared Libraries
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [42-add-pipeline-to-publish-prismaid-as-python-package]
 
 jobs:
   build-linux:
@@ -157,7 +157,7 @@ jobs:
       - name: Publish distribution 📦 to TestPyPI
         env:
           TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
+          TWINE_PASSWORD: "${{ secrets.TESTPYPY_API_TOKEN }}"
         run: |
-          twine upload --repository-url https://pypi.org/legacy/ dist/*
+          twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
