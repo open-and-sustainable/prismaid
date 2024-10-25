@@ -136,4 +136,4 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
         env:
           TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
+          TWINE_PASSWORD: "${{ secrets.TESTPYPY_API_TOKEN }}"
