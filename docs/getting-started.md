@@ -41,12 +41,16 @@ Most AI tools for systematic literature reviews focus on the literature search p
   - prismAId processes the JSON files returned by the AI model, converting the extracted information into the user-specified format.
   - To facilitate cost management, prismAId tokenizes each single-shot prompt and estimates the execution cost, allowing users to understand the total review cost before proceeding.
 
-## Installation
-To use prismAId, you have two options.
+## Installation and Use
+To utilize prismAId, there are multiple options available:
 
-### Option 1. Binaries 
-Download the appropriate executable for your operating system and platform from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases) page. Using executables does not require any coding skill.
-### Option 2. Go Package
+1. Go Package: Developed in Go, prismAId offers its complete functionalities through a Go package, ideal for integration within Go projects.
+
+2. Python Package: For users preferring Python, prismAId is also available as a Python package, facilitating use within Python scripts and Jupyter notebooks.
+
+3. Binaries: Standalone binaries are available for all operating systems and platforms, providing a versatile option for users across different environments.
+
+### Option 1. Go Package
 You can download the prismAId Go package for developing your own software or review project. To add the package to yoru project:
 ```bash
 go get "github.com/open-and-sustainable/prismaid"
@@ -56,7 +60,41 @@ Once added, it can be imported when needed with:
 import "github.com/open-and-sustainable/prismaid"
 ```
 The package documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid).
-## Running prismAId binaries
+
+### Option 2. Python Package
+You can download and install the prismAId Python package from [PYPI](https://pypi.org/project/prismaid/):
+```bash
+pip install prismaid
+```
+
+The prismAId Python package provides a convenient interface for Python users by wrapping a C shared library. This integration allows users to manipulate project configurations and manage review processes directly within Python scripts and Jupyter notebooks. Users can configure input parameters for reviews and analyze the outputs, making it an effective tool for handling the review results all within the Python ecosystem.
+
+Once installed, prismAId can be imported and used, for instance:
+```python
+import prismaid  # Import the package, which automatically loads the correct shared library for the OS
+from ctypes import c_char_p
+
+# As an example, load the project example of review project configuration
+with open("proj_test.toml", "r") as file:
+    input_str = file.read()
+
+# Call the RunReviewPython function from the prismaid package
+error_ptr = prismaid.RunReviewPython(input_str.encode('utf-8'))
+
+if error_ptr:
+    # An error occurred, retrieve and display the error message
+    error_message = error_ptr.decode('utf-8')
+    print("Error:", error_message)
+    # Free the allocated error message string if necessary
+    prismaid.lib.FreeCString(error_ptr)
+else:
+    # No error occurred
+    print("RunReview completed successfully")
+```
+
+### Option 3. Binaries 
+Download the appropriate executable for your operating system and platform from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases) page. Using executables does not require any coding skill.
+
 The tool uses humaly readable project configuration files (.toml) to configure and run the reviews.
 
 You can find a template and an example on the [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects).

@@ -18,7 +18,7 @@ No coding skills are required to use prismAId.
 
 ## Specifications
 - **Review protocol**: Designed to support any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
-- **Distribution**: As Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) or 'no-coding' binaries compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
+- **Distribution**: Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid), Python [package](https://pypi.org/project/prismaid/), and 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
 - **Supported LLMs**: 
     1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini.
     2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash.

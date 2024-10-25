@@ -1,8 +1,8 @@
 name: Build and Deploy Shared Libraries
 
 on:
-  push:
-    branches: [42-add-pipeline-to-publish-prismaid-as-python-package]
+  release:
+    types: [created]
 
 jobs:
   build-linux:
@@ -136,8 +136,8 @@ jobs:
           name: prismaid-python-package
           path: python/dist/*.whl
 
-  publish-to-testpypi:
-    name: Publish Python 🐍 distribution 📦 to TestPyPI
+  publish-to-pypi:
+    name: Publish Python distribution to PyPI
     needs: package-python  # Ensure it waits for the packaging job
     runs-on: ubuntu-latest
 
@@ -154,10 +154,10 @@ jobs:
       - name: Install Twine
         run: python -m pip install --upgrade twine
 
-      - name: Publish distribution 📦 to TestPyPI
+      - name: Publish distribution to PyPI
         env:
           TWINE_USERNAME: "__token__"
-          TWINE_PASSWORD: "${{ secrets.TESTPYPY_API_TOKEN }}"
+          TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
         run: |
-          twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+          twine upload --repository-url https://pypi.org/legacy/ dist/*
 
