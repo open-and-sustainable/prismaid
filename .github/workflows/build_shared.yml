@@ -65,6 +65,9 @@ jobs:
         run: |
           go build -buildmode=c-shared -o python/package/libprismaid_darwin_amd64.dylib python/export.go
 
+      # Ensure shared libraries are in a central directory
+      - name: Verify shared library files
+        run: ls -l python/package/
 
   # Package the Python Project Locally
   package-python:
