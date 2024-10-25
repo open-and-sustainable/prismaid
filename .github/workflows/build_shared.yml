@@ -80,8 +80,9 @@ jobs:
 
       - name: Copy files for Build
         run: |
-          cp README.md python/README.md  # Copy README.md to python directory
-          cp LICENSE python/LICENSE       # Copy LICENSE to python directory
+          cp README.md python/README.md
+          cp LICENSE python/LICENSE   
+          cp python/package/libprismaid_darwin_amd64.dylib python/libprismaid_darwin_amd64.dylib       
 
       - name: Install build tools
         working-directory: ./python
