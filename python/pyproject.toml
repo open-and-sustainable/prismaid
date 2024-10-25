@@ -16,7 +16,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis"
 ]
 requires-python = ">=3.6"
-readme = "../README.md"  # Corrected the placement of readme outside of 'dynamic'
+readme = { file = "../README.md" }
 
 [project.urls]
 homepage = "https://github.com/open-and-sustainable/prismaid"
