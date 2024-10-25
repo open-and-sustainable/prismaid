@@ -6,12 +6,11 @@ import os
 # Function to determine the version
 def get_version():
     try:
-        # Get the latest tag
-        version = subprocess.check_output(["git", "describe", "--tags", "--abbrev=0"]).decode().strip()
-    except subprocess.CalledProcessError:
-        # If no tags are found, fallback to the short commit hash
-        version = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).decode().strip()
-    return version
+        from subprocess import check_output
+        version = check_output(["git", "describe", "--tags"]).decode().strip()
+        return version
+    except Exception:
+        return "0.1.0"  # Fallback version
 
 # Set the package version
 package_version = get_version()
