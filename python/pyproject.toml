@@ -30,6 +30,9 @@ testing = ["pytest", "pytest-cov"]
 [tool.setuptools]
 include-package-data = true
 
+[tool.setuptools.package-data]
+"package" = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
+
 [tool.setuptools_scm]
 fallback_version = "0.5.6"  # Used when tags are not available
 
