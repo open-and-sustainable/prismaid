@@ -1,7 +1,11 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "prismaid"
+version = "0.5.6"  # Managed dynamically, included here for reference
 description = "PrismAId library package"
-version = "0.5.6"
 authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
 keywords = ["open science", "systematic reviews", "AI"]
 classifiers = [
@@ -12,27 +16,22 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis"
 ]
 requires-python = ">=3.6"
-license = { text = "AGPL-3.0-only" }
+readme = "../README.md"  # Corrected the placement of readme outside of 'dynamic'
 
-[project.optional-dependencies]
-testing = ["pytest", "pytest-cov"]
-
-# Setuptools specific options
-[tool.setuptools]
-include-package-data = true
-
-[tool.setuptools.dynamic]
-long_description = {file = "../README.md"}
-
-[tool.setuptools.urls]
+[project.urls]
 homepage = "https://github.com/open-and-sustainable/prismaid"
 documentation = "https://open-and-sustainable.github.io/prismaid/"
 repository = "https://github.com/open-and-sustainable/prismaid"
 issues = "https://github.com/open-and-sustainable/prismaid/issues"
 
-# Setting up setuptools_scm for versioning from Git tags
+[project.optional-dependencies]
+testing = ["pytest", "pytest-cov"]
+
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools_scm]
-version_scheme = "guess-next-dev"
-local_scheme = "node-and-date"
+write_to = "prismaid/_version.py"  # Path to write version.py, adjust as necessary
 fallback_version = "0.5.6"
+
 
