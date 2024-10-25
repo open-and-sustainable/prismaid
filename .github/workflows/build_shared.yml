@@ -1,9 +1,9 @@
 name: Build and Deploy Shared Libraries
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   build-linux:
