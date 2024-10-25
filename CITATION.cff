@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.5.5 - added unit testing
-  Added unit testing of each package, CI/CD automation, and light code refactoring for API testing
+  v0.6.0 - added Go and Python package release
+  Added Go module and Python wrapper package updated through CI/CD automation
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
