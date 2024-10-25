@@ -106,19 +106,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos-shared-library
-          path: python/package/
+          path: python/prismaid/
 
       - name: Download Linux shared library artifact
         uses: actions/download-artifact@v4
         with:
           name: linux-shared-library
-          path: python/package/
+          path: python/prismaid/
 
       - name: Download Windows shared library artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-shared-library
-          path: python/package/
+          path: python/prismaid/
 
       - name: Install build tools
         working-directory: ./python
