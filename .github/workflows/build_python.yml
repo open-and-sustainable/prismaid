@@ -75,6 +75,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensures the entire Git history and tags are fetched
 
       - name: Install build tools
         working-directory: ./python

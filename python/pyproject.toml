@@ -32,3 +32,4 @@ testing = ["pytest", "pytest-cov"]
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"
 local_scheme = "node-and-date"
+fallback_version = "0.5.6"  # This version will be used if tags are missing
