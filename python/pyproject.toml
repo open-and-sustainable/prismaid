@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=42", "wheel", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prismaid"
+version = "0.0.0"  # Managed dynamically, included here for reference
+description = "PrismAId library package"
+authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
+keywords = ["open science", "systematic reviews", "AI"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Information Analysis"
+]
+requires-python = ">=3.6"
+readme = "README.md"
+
+[project.urls]
+homepage = "https://github.com/open-and-sustainable/prismaid"
+documentation = "https://open-and-sustainable.github.io/prismaid/"
+repository = "https://github.com/open-and-sustainable/prismaid"
+issues = "https://github.com/open-and-sustainable/prismaid/issues"
+
+[project.optional-dependencies]
+testing = ["pytest", "pytest-cov"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0"  # Used when tags are not available
+
+

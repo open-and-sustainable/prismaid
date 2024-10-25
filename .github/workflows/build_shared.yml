@@ -1,0 +1,163 @@
+name: Build and Deploy Shared Libraries
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build-linux:
+    name: Build Linux Shared Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for Linux
+        working-directory: python
+        run: |
+          go build -buildmode=c-shared -o package/libprismaid_linux_amd64.so export.go
+
+      - name: Upload Linux shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-shared-library
+          path: python/package/libprismaid_linux_amd64.so
+
+  build-windows:
+    name: Build Windows Shared Library
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for Windows
+        working-directory: python
+        shell: pwsh
+        run: |
+          go build -buildmode=c-shared -o package/libprismaid_windows_amd64.dll .\export.go
+
+      - name: Upload Windows shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-shared-library
+          path: python/package/libprismaid_windows_amd64.dll
+      
+  build-macos:
+    name: Build macOS Shared Library
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for macOS
+        working-directory: python
+        run: |
+          go build -buildmode=c-shared -o package/libprismaid_darwin_amd64.dylib export.go
+
+      - name: Upload macOS shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-shared-library
+          path: python/package/libprismaid_darwin_amd64.dylib
+
+  # Package the Python Project Locally
+  package-python:
+    name: Package Python Project with All Shared Libraries
+    runs-on: ubuntu-latest
+    needs: [build-linux, build-windows, build-macos]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
+
+      - name: Copy files for Build
+        run: |
+          cp README.md python/README.md
+          cp LICENSE python/LICENSE   
+                 
+      # Download artifacts from build jobs
+      - name: Download macOS shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-shared-library
+          path: python/prismaid/
+
+      - name: Download Linux shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-shared-library
+          path: python/prismaid/
+
+      - name: Download Windows shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-shared-library
+          path: python/prismaid/
+
+      - name: Install build tools
+        working-directory: ./python
+        run: |
+          python -m pip install --upgrade pip setuptools wheel build
+
+      - name: Build Python package
+        working-directory: ./python
+        run: |
+          python -m build
+
+      - name: Upload Python Package Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prismaid-python-package
+          path: python/dist/*.whl
+
+  publish-to-pypi:
+    name: Publish Python distribution to PyPI
+    needs: package-python  # Ensure it waits for the packaging job
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Python Package Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: prismaid-python-package
+          path: dist/
+
+      - name: Install Twine
+        run: python -m pip install --upgrade twine
+
+      - name: Publish distribution to PyPI
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
+        run: |
+          twine upload --repository-url https://pypi.org/legacy/ dist/*
+
