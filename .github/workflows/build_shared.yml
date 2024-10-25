@@ -21,7 +21,7 @@ jobs:
           go-version: '1.21'
 
       - name: Build shared library for Linux
-        working-directory: ./python
+        working-directory: python
         run: |
           go build -buildmode=c-shared -o package/libprismaid_linux_amd64.so export.go
 
@@ -41,7 +41,7 @@ jobs:
           go-version: '1.21'
 
       - name: Build shared library for Windows
-        working-directory: ./python
+        working-directory: python
         shell: pwsh
         run: |
           go build -buildmode=c-shared -o package/libprismaid_windows_amd64.dll .\export.go
@@ -62,7 +62,7 @@ jobs:
           go-version: '1.21'
 
       - name: Build shared library for macOS
-        working-directory: ./python
+        working-directory: python
         run: |
           go build -buildmode=c-shared -o package/libprismaid_darwin_amd64.dylib export.go
 
