@@ -27,12 +27,13 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
 
-[tool.setuptools.packages]
-# Map the 'package' directory to the 'prismaid' package name
-prismaid = "package"
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["package"]
 
 [tool.setuptools.package-data]
-# Include shared libraries within the 'prismaid' package
 prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
 
 [tool.setuptools_scm]
