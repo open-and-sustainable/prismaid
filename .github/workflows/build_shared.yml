@@ -25,6 +25,12 @@ jobs:
         run: |
           go build -buildmode=c-shared -o package/libprismaid_linux_amd64.so export.go
 
+      - name: Upload Linux shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-shared-library
+          path: python/package/libprismaid_linux_amd64.so
+
   build-windows:
     name: Build Windows Shared Library
     runs-on: windows-latest
@@ -45,6 +51,12 @@ jobs:
         shell: pwsh
         run: |
           go build -buildmode=c-shared -o package/libprismaid_windows_amd64.dll .\export.go
+
+      - name: Upload Windows shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-shared-library
+          path: python/package/libprismaid_windows_amd64.dll
       
   build-macos:
     name: Build macOS Shared Library
@@ -62,12 +74,15 @@ jobs:
           go-version: '1.21'
 
       - name: Build shared library for macOS
+        working-directory: python
         run: |
-          go build -buildmode=c-shared -o python/package/libprismaid_darwin_amd64.dylib python/export.go
+          go build -buildmode=c-shared -o package/libprismaid_darwin_amd64.dylib export.go
 
-      # Ensure shared libraries are in a central directory
-      - name: Verify shared library files
-        run: ls -l python/package/
+      - name: Upload macOS shared library artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: macos-shared-library
+            path: python/package/libprismaid_darwin_amd64.dylib
 
   # Package the Python Project Locally
   package-python:
@@ -86,9 +101,24 @@ jobs:
           cp README.md python/README.md
           cp LICENSE python/LICENSE   
                  
-      # Ensure shared libraries are in a central directory
-      - name: Verify shared library files
-        run: ls -l python/package/
+      # Download artifacts from build jobs
+      - name: Download macOS shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-shared-library
+          path: python/package/
+
+      - name: Download Linux shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-shared-library
+          path: python/package/
+
+      - name: Download Windows shared library artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-shared-library
+          path: python/package/
 
       - name: Install build tools
         working-directory: ./python
