@@ -45,7 +45,7 @@ jobs:
         shell: pwsh
         run: |
           go build -buildmode=c-shared -o package/libprismaid_windows_amd64.dll .\export.go
-
+      
   build-macos:
     name: Build macOS Shared Library
     runs-on: macos-latest
@@ -65,6 +65,22 @@ jobs:
         working-directory: python/
         run: |
           go build -buildmode=c-shared -o package/libprismaid_darwin_amd64.dylib export.go
+      
+      # Verify shared library in `python/package/`
+      - name: Check python/package directory
+        run: ls -l python/package/
+
+      # Verify shared library in `python/`
+      - name: Check python directory
+        run: ls -l python/
+
+      # Verify shared library in root package directory
+      - name: Check package directory
+        run: ls -l package/
+
+      # Verify shared library in project root directory
+      - name: Check root directory
+        run: ls -l .
 
   # Package the Python Project Locally
   package-python:
