@@ -46,7 +46,7 @@ jobs:
 
       - name: Install R Dependencies
         run: |
-          install.packages(c("devtools", "desc"))
+          Rscript -e "install.packages(c('devtools', 'desc'), repos='http://cran.rstudio.com/')"
 
       - name: Extract Version from Tag
         id: extract_version
