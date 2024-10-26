@@ -35,8 +35,6 @@ prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libp
 
 [tool.setuptools-git-versioning]
 enabled = true
-template = "{tag}"  # Only use the tag as the version
-dev_template = ""  # No extra suffix for non-tagged commits
-dirty_template = ""  # No "dirty" suffix for modified files
+dev_template = "{tag}"
 
 
