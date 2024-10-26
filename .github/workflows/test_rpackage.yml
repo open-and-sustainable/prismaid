@@ -59,7 +59,7 @@ jobs:
 
       - name: Update DESCRIPTION Version
         run: |
-          Rscript -e "library(desc); desc_file <- desc::desc(file = 'r/prismaid/DESCRIPTION'); desc_file$set('Version', Sys.getenv('VERSION')); desc::desc_write(desc_file, file = 'r/prismaid/DESCRIPTION')"
+          Rscript -e "library(desc); desc_file <- desc::desc(file = 'r/prismaid/DESCRIPTION'); desc_file$set_version(Sys.getenv('VERSION')); desc::desc_write(desc_file, file = 'r/prismaid/DESCRIPTION')"
 
       - name: Build R Package
         run: |
