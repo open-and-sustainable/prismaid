@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prismaid"
-dynamic = ["version"]
 description = "PrismAId library package"
 authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
 keywords = ["open science", "systematic reviews", "AI"]
@@ -35,6 +34,6 @@ prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libp
 
 [tool.setuptools-git-versioning]
 enabled = true
-dev_template = "{tag}.post{ccount}"
+dev_template = "{tag}"
 
 
