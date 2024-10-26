@@ -35,6 +35,6 @@ prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libp
 
 [tool.setuptools-git-versioning]
 enabled = true
-dev_template = "{tag}"
+dev_template = "{tag}.post{ccount}"
 
 
