@@ -1,72 +1,42 @@
 name: Test of Versioning and Build
 
 on:
-  push:
-    branches:
-      - 41-add-pipeline-to-publish-prismaid-as-r-module
+  workflow_dispatch:
 
 jobs:
-  build-linux:
-    name: Build Linux Shared Library
+  update-version:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.21'
-
-      - name: Build shared library for Linux
-        working-directory: python
-        run: |
-          go build -buildmode=c-shared -o package/libprismaid_linux_amd64.so export.go
-
-      - name: Upload Linux shared library artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-shared-library
-          path: python/package/libprismaid_linux_amd64.so
-
-  set-version-and-build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Necessary to fetch all history for tags
 
-      - name: Set up R
-        uses: r-lib/actions/setup-r@v2
+      - name: Install Git
+        run: sudo apt-get install git
 
-      - name: Install R Dependencies
+      - name: Determine Version
+        id: versioning
         run: |
-          Rscript -e "install.packages(c('devtools', 'desc'), repos='http://cran.rstudio.com/')"
+          if [[ $GITHUB_REF =~ refs/tags/v* ]]; then
+            # If build is triggered by a tag
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            # If build is triggered by a branch push without a tag, use the latest tag from main
+            VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+            VERSION=${VERSION#v}  # Strip 'v' prefix if present in tags
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Version determined: ${VERSION}"
 
-      - name: Extract Version from Tag
-        id: extract_version
+      - name: Update DESCRIPTION File
         run: |
-          TAG=${GITHUB_REF#refs/tags/}  # Removes 'refs/tags/' prefix
-          echo "Tag detected: $TAG"
-          VERSION=${TAG#v}  # Removes 'v' prefix
-          echo "Version extracted: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" DESCRIPTION
 
-      - name: Update DESCRIPTION Version
+      - name: Commit and push if changes
         run: |
-          Rscript -e "library(desc); desc_file <- desc::desc(file = 'r/prismaid/DESCRIPTION'); desc_file$set_version(Sys.getenv('VERSION')); desc::desc_write(desc_file, file = 'r/prismaid/DESCRIPTION')"
-
-      - name: Build R Package
-        run: |
-          Rscript -e "devtools::build('r/prismaid')"
-
-      - name: Upload Built Package
-        uses: actions/upload-artifact@v3
-        with:
-          name: prismaid_${{ env.VERSION }}.tar.gz
-          path: r/prismaid_*.tar.gz
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add DESCRIPTION
+          git diff --staged --quiet || (git commit -m "Update version to ${{ env.VERSION }}" && git push)
