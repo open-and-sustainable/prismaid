@@ -9,6 +9,12 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## UNRELEASED
+### Added
+- release of the project as R package published on r-universe
+
+
+
 ## [0.6.0] - 2024-10-25
 ### Added
 - release of the project as Go package at github.com/Open-and-Sustainable/prismAId
