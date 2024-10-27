@@ -37,6 +37,7 @@ jobs:
           cp python/package/libprismaid_linux_amd64.so r/prismaid/inst/libs/libprismaid_linux_amd64.so
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add r/prismaid/inst/libs/libprismaid_linux_amd64.so
           git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
 
@@ -72,6 +73,7 @@ jobs:
           cp python/package/libprismaid_windows_amd64.dll r/prismaid/inst/libs/libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add r/prismaid/inst/libs/libprismaid_windows_amd64.dll
           git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
         
@@ -106,5 +108,6 @@ jobs:
           cp python/package/libprismaid_darwin_amd64.dylib r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
           git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)
