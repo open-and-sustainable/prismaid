@@ -6,3 +6,108 @@ on:
     - 41-add-pipeline-to-publish-prismaid-as-r-module
 
 jobs:
+  build-linux:
+    name: Build Linux Shared Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for Linux
+        working-directory: sharedlib
+        run: |
+          go build -buildmode=c-shared -o libprismaid_linux_amd64.so export.go
+
+      - name: Upload Linux shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-shared-library
+          path: sharedlib/libprismaid_linux_amd64.so
+
+      - name: Commit and push changes
+        run: |
+          cp sharedlib/libprismaid_linux_amd64.so r/prismaid/inst/libs/libprismaid_linux_amd64.so
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_linux_amd64.so
+          git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
+
+  build-windows:
+    name: Build Windows Shared Library
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for Windows
+        working-directory: sharedlib
+        shell: pwsh
+        run: |
+          go build -buildmode=c-shared -o libprismaid_windows_amd64.dll .\export.go
+
+      - name: Upload Windows shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-shared-library
+          path: sharedlib/libprismaid_windows_amd64.dll
+
+      - name: Commit and push changes
+        run: |
+          cp sharedlib/libprismaid_windows_amd64.dll r/prismaid/inst/libs/libprismaid_windows_amd64.dll
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_windows_amd64.dll
+          git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
+
+  build-macos:
+    name: Build macOS Shared Library
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for macOS
+        working-directory: sharedlib
+        run: |
+          go build -buildmode=c-shared -o libprismaid_darwin_amd64.dylib export.go
+
+      - name: Upload macOS shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-shared-library
+          path: sharedlib/libprismaid_darwin_amd64.dylib
+
+      - name: Commit and push changes
+        run: |
+          cp sharedlib/libprismaid_darwin_amd64.dylib r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
+          git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)

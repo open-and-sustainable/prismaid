@@ -8,4 +8,4 @@ Description: prismAId uses generative AI models to extract data from scientific 
 License: AGPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.0.0
+RoxygenNote: 7.3.2
