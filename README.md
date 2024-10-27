@@ -16,7 +16,7 @@ No coding skills are required to use prismAId.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/open-and-sustainable/prismaid.svg)](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
 [![PyPI - Version](https://img.shields.io/pypi/v/prismaid)](https://pypi.org/project/prismaid/)
-[![prismaid status badge](https://ropensci.r-universe.dev/badges/prismaid)](https://ropensci.r-universe.dev/prismaid)
+[![prismaid status badge](https://open-and-sustainable.r-universe.dev/badges/prismaid)](https://open-and-sustainable.r-universe.dev/prismaid)
 
 ---
 
