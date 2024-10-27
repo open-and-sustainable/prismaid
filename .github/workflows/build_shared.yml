@@ -68,6 +68,15 @@ jobs:
           name: linux-shared-library
           path: python/package/libprismaid_linux_amd64.so
 
+      - name: Commit and push changes
+        run: |
+          cp python/package/libprismaid_linux_amd64.so r/prismaid/inst/libs/libprismaid_linux_amd64.so
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_linux_amd64.so
+          git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
+
   build-windows:
     name: Build Windows Shared Library
     runs-on: windows-latest
@@ -94,7 +103,16 @@ jobs:
         with:
           name: windows-shared-library
           path: python/package/libprismaid_windows_amd64.dll
-      
+
+      - name: Commit and push changes
+        run: |
+          cp python/package/libprismaid_windows_amd64.dll r/prismaid/inst/libs/libprismaid_windows_amd64.dll
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_windows_amd64.dll
+          git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
+
   build-macos:
     name: Build macOS Shared Library
     runs-on: macos-latest
@@ -121,6 +139,15 @@ jobs:
           name: macos-shared-library
           path: python/package/libprismaid_darwin_amd64.dylib
 
+      - name: Commit and push changes
+        run: |
+          cp python/package/libprismaid_darwin_amd64.dylib r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add r/prismaid/inst/libs/libprismaid_darwin_amd64.dylib
+          git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)
+          
   package-python:
     name: Package Python Project with All Shared Libraries
     runs-on: ubuntu-latest
