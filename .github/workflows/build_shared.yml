@@ -5,6 +5,43 @@ on:
     types: [created]
 
 jobs:
+  update-version-for-r:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Git
+        run: sudo apt-get install git
+
+      - name: Determine Version
+        id: versioning
+        run: |
+          if [[ $GITHUB_REF =~ refs/tags/v* ]]; then
+            # If build is triggered by a tag
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            # If build is triggered by a branch push without a tag, use the latest tag from main
+            VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+            VERSION=${VERSION#v}  # Strip 'v' prefix if present in tags
+          fi
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Version determined: ${VERSION}"
+
+      - name: Update DESCRIPTION File
+        run: |
+          sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" r/prismaid/DESCRIPTION
+
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add r/prismaid/DESCRIPTION
+          git diff --staged --quiet || (git commit -m "Update version to ${{ env.VERSION }}" && git push)
+
   build-linux:
     name: Build Linux Shared Library
     runs-on: ubuntu-latest
@@ -84,7 +121,6 @@ jobs:
           name: macos-shared-library
           path: python/package/libprismaid_darwin_amd64.dylib
 
-  # Package the Python Project Locally
   package-python:
     name: Package Python Project with All Shared Libraries
     runs-on: ubuntu-latest

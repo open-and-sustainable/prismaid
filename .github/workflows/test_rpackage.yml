@@ -6,39 +6,36 @@ on:
     - 41-add-pipeline-to-publish-prismaid-as-r-module
 
 jobs:
-  update-version:
+  build-linux:
+    name: Build Linux Shared Library
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Necessary to fetch all history for tags
+          fetch-depth: 0
 
-      - name: Install Git
-        run: sudo apt-get install git
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
 
-      - name: Determine Version
-        id: versioning
+      - name: Build shared library for Linux
+        working-directory: python
         run: |
-          if [[ $GITHUB_REF =~ refs/tags/v* ]]; then
-            # If build is triggered by a tag
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            # If build is triggered by a branch push without a tag, use the latest tag from main
-            VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-            VERSION=${VERSION#v}  # Strip 'v' prefix if present in tags
-          fi
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "Version determined: ${VERSION}"
+          go build -buildmode=c-shared -o package/libprismaid_linux_amd64.so export.go
 
-      - name: Update DESCRIPTION File
-        run: |
-          sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" r/prismaid/DESCRIPTION
+      - name: Upload Linux shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-shared-library
+          path: python/package/libprismaid_linux_amd64.so
 
       - name: Commit and push if changes
         run: |
+          cp python/package/libprismaid_linux_amd64.so r/prismaid/inst/libs/libprismaid_linux_amd64.so
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add r/prismaid/DESCRIPTION
-          git diff --staged --quiet || (git commit -m "Update version to ${{ env.VERSION }}" && git push)
+          git add r/prismaid/inst/libs/libprismaid_linux_amd64.so
+          git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
