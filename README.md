@@ -14,6 +14,10 @@ No coding skills are required to use prismAId.
 [![GitHub License](https://img.shields.io/github/license/Open-and-Sustainable/prismAId?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html#license-text)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796)
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/open-and-sustainable/prismaid.svg)](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
+[![PyPI - Version](https://img.shields.io/pypi/v/prismaid)](https://pypi.org/project/prismaid/)
+[![prismaid status badge](https://ropensci.r-universe.dev/badges/prismaid)](https://ropensci.r-universe.dev/prismaid)
+
 ---
 
 ## Specifications

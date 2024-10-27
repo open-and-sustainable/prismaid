@@ -1,8 +1,0 @@
-name: Test of Versioning and Build
-
-on:
-  push:
-    branches:
-    - 41-add-pipeline-to-publish-prismaid-as-r-module
-
-jobs:
