@@ -1,7 +1,25 @@
 # File: R/wrapper.R
 
 # Function to safely load the shared library
-safeLoadLibrary <- function(lib_path) {
+safeLoadLibrary <- function() {
+  # Determine the operating system
+  if (.Platform$OS.type == "unix") {
+    os_type <- tolower(Sys.info()[["sysname"]])
+    if (os_type == "darwin") {
+      libname <- "libprismaid_darwin_amd64.dylib"  # macOS
+    } else {
+      libname <- "libprismaid_linux_amd_64.so"     # Linux and other Unix-like systems
+    }
+  } else if (.Platform$OS.type == "windows") {
+    libname <- "libprismaid_windows_amd64.dll"      # Windows
+  } else {
+    stop("Unsupported OS")
+  }
+
+  # Construct the full path to the library
+  lib_path <- system.file("libs", os_type, libname, package = "prismaid")
+  
+  # Attempt to load the library
   tryCatch({
     dyn.load(lib_path)
   }, error = function(e) {
@@ -9,16 +27,7 @@ safeLoadLibrary <- function(lib_path) {
   })
 }
 
-# Load the correct shared library depending on the operating system
-if (.Platform$OS.type == "unix") {
-    if (Sys.info()["sysname"] == "Linux") {
-        safeLoadLibrary(paste0(system.file("libs", package = "prismaid"), "/libprismaid_linux_amd64.so"))
-    } else if (Sys.info()["sysname"] == "Darwin") {
-        safeLoadLibrary(paste0(system.file("libs", package = "prismaid"), "/libprismaid_macos_amd64.so"))
-    }
-} else if (.Platform$OS.type == "windows") {
-    safeLoadLibrary(paste0(system.file("libs", package = "prismaid"), "/libprismaid_windows_amd64.dll"))
-}
+
 
 #' Run Review
 #'
