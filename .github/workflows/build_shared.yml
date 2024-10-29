@@ -210,13 +210,13 @@ jobs:
           path: sharedlib/libprismaid_darwin_arm64.dylib
 
       - name: Commit and push changes
-          run: |
-            cp sharedlib/libprismaid_darwin_arm64.dylib inst/libs/macos/libprismaid_darwin_arm64.dylib
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-            git add inst/libs/macos/libprismaid_darwin_arm64.dylib
-            git diff --staged --quiet || (git commit -m "Update MacOS arm lib." && git push)
+        run: |
+          cp sharedlib/libprismaid_darwin_arm64.dylib inst/libs/macos/libprismaid_darwin_arm64.dylib
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add inst/libs/macos/libprismaid_darwin_arm64.dylib
+          git diff --staged --quiet || (git commit -m "Update MacOS arm lib." && git push)
 
   package-python:
     name: Package Python Project with All Shared Libraries
