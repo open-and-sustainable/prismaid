@@ -47,3 +47,45 @@ function generateTOMLString(data) {
 
     return toml.join("\n");
 }
+
+function addLLMProvider() {
+    const container = document.getElementById('llmProviders');
+    const index = container.children.length + 1;
+
+    const providerDiv = document.createElement('div');
+    providerDiv.className = 'llm-provider';
+    providerDiv.id = `llmProvider${index}`;
+
+    providerDiv.innerHTML = `
+        <h3>LLM Provider ${index}</h3>
+        <label for="provider${index}">Provider:</label>
+        <select id="provider${index}" name="provider${index}">
+            <option value="OpenAI">OpenAI</option>
+            <option value="GoogleAI">GoogleAI</option>
+            <option value="Cohere">Cohere</option>
+            <option value="Anthropic">Anthropic</option>
+        </select><br>
+        <label for="api_key${index}">API Key:</label>
+        <input type="text" id="api_key${index}" name="api_key${index}"><br>
+        <label for="model${index}">Model:</label>
+        <input type="text" id="model${index}" name="model${index}"><br>
+        <label for="temperature${index}">Temperature:</label>
+        <input type="number" id="temperature${index}" name="temperature${index}"><br>
+    `;
+    
+    const removeButton = document.createElement('button');
+    removeButton.textContent = 'Remove';
+    removeButton.type = 'button';
+    removeButton.onclick = function() { removeLLMProvider(index); };
+    providerDiv.appendChild(removeButton);
+
+    container.appendChild(providerDiv);
+}
+
+function removeLLMProvider(index) {
+    const element = document.getElementById('llmProvider' + index);
+    if (element) {
+        element.parentNode.removeChild(element);
+    }
+}
+
