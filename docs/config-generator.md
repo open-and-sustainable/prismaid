@@ -57,11 +57,10 @@ layout: default
         <option value="yes">Yes</option>
     </select><br>
 
-    <button type="button" onclick="generateConfig()">Generate Configuration</button>
+    <button type="button" id="generateConfigButton">Generate Configuration</button>
 </form>
 
 <textarea id="configOutput" rows="20" cols="70"></textarea>
-
 
 <script src="assets/js/tomlGenerator.js"></script>
 

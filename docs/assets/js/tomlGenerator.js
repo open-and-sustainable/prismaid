@@ -1,3 +1,10 @@
+document.addEventListener('DOMContentLoaded', function() {
+    var button = document.getElementById('generateConfigButton');
+    if (button) {
+        button.addEventListener('click', generateConfig);
+    }
+});
+
 function generateConfig() {
     var data = {
         project: {
@@ -24,12 +31,12 @@ function generateConfig() {
 function generateTOMLString(data) {
     var toml = [];
     toml.push("[project]");
-    for (var key in data.project) {
+    Object.keys(data.project).forEach(function(key) {
         toml.push(key + ' = "' + data.project[key] + '"');
-    }
+    });
     toml.push("\n[project.configuration]");
-    for (var key in data.configuration) {
+    Object.keys(data.configuration).forEach(function(key) {
         toml.push(key + ' = "' + data.configuration[key] + '"');
-    }
+    });
     return toml.join("\n");
 }
