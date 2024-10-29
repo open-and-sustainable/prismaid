@@ -3,15 +3,13 @@ PKG_CFLAGS += -O2
 
 UNAME := $(shell uname)
 PKG_CFLAGS = -I../inst/include
-PKG_LIBS :=
 
-all:
 ifeq ($(UNAME), Linux)
 	$(info Detected Linux: keeping only Linux library)
 	rm -f ../inst/libs/macos/*.dylib
 	rm -f ../inst/libs/windows/*.dll
 	# Linking the Linux library and setting rpath
-	PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
+	PKG_LIBS = -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
 
 ifeq ($(UNAME), Darwin)
@@ -19,7 +17,7 @@ ifeq ($(UNAME), Darwin)
 	rm -f ../inst/libs/linux/*.so
 	rm -f ../inst/libs/windows/*.dll
 	# Linking the macOS library with @loader_path for dynamic library linking
-	PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
+	PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
 
 ifeq ($(UNAME), Windows)
@@ -27,6 +25,6 @@ ifeq ($(UNAME), Windows)
 	rm -f ../inst/libs/linux/*.so
 	rm -f ../inst/libs/macos/*.dylib
 	# Linking the Windows library. No rpath needed, usually DLL loading follows different conventions
-	PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
+	PKG_LIBS = -L../inst/libs/windows -lprismaid_windows_amd64
 endif
 
