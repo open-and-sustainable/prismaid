@@ -1,11 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure the button exists and is correctly targeted
     var button = document.getElementById('generateConfigButton');
     if (button) {
         button.addEventListener('click', generateConfig);
+    } else {
+        console.error('Generate Config Button not found!');
     }
 });
 
 function generateConfig() {
+    // Gather data from form fields
     var data = {
         project: {
             name: document.getElementById('name').value,
@@ -24,19 +28,22 @@ function generateConfig() {
         }
     };
 
+    // Generate TOML string from data
     var toml = generateTOMLString(data);
     document.getElementById('configOutput').value = toml;
 }
 
 function generateTOMLString(data) {
-    var toml = [];
-    toml.push("[project]");
+    // Build TOML string from the structured data
+    var toml = ["[project]"];
     Object.keys(data.project).forEach(function(key) {
-        toml.push(key + ' = "' + data.project[key] + '"');
+        toml.push(`${key} = "${data.project[key]}"`);
     });
+
     toml.push("\n[project.configuration]");
     Object.keys(data.configuration).forEach(function(key) {
-        toml.push(key + ' = "' + data.configuration[key] + '"');
+        toml.push(`${key} = "${data.configuration[key]}"`);
     });
+
     return toml.join("\n");
 }

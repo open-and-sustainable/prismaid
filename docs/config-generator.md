@@ -23,10 +23,10 @@ layout: default
     <label for="input_conversion">Input Conversion:</label>
      <select id="input_conversion" name="input_conversion">
         <option value="" selected>None</option>
-        <option value="pdf" selected>PDF</option>
+        <option value="pdf">PDF</option>
         <option value="docx">DOCX</option>
         <option value="html">HTML</option>
-        <option value="pdf,docx" selected>PDF+DOCX</option>
+        <option value="pdf,docx">PDF+DOCX</option>
         <option value="pdf,html">PDF+HTML</option>
         <option value="docx,html">DOCX+HTML</option>
         <option value="pdf,docx,html">PDF+DOCX+HTML</option>
@@ -65,6 +65,13 @@ layout: default
         <option value="no" selected>No</option>
         <option value="yes">Yes</option>
     </select><br>
+
+    <h2>LLM Providers Configuration</h2>
+    <div id="llmProviders">
+        <!-- LLM providers will be added dynamically here -->
+    </div>
+    <button type="button" onclick="addLLMProvider()">Add LLM Provider</button>
+    <br><br>
 
     <button type="button" id="generateConfigButton">Generate Configuration</button>
 </form>
