@@ -20,8 +20,17 @@ layout: default
     <label for="input_directory">Input Directory:</label>
     <input type="text" id="input_directory" name="input_directory" value="/path/to/txt/files"><br>
 
-    <label for="input_conversion">Input Conversion (pdf,docx,html):</label>
-    <input type="text" id="input_conversion" name="input_conversion" value=""><br>
+    <label for="input_conversion">Input Conversion:</label>
+     <select id="input_conversion" name="input_conversion">
+        <option value="" selected>None</option>
+        <option value="pdf" selected>PDF</option>
+        <option value="docx">DOCX</option>
+        <option value="html">HTML</option>
+        <option value="pdf,docx" selected>PDF+DOCX</option>
+        <option value="pdf,html">PDF+HTML</option>
+        <option value="docx,html">DOCX+HTML</option>
+        <option value="pdf,docx,html">PDF+DOCX+HTML</option>
+    </select><br>
 
     <label for="results_file_name">Results File Name:</label>
     <input type="text" id="results_file_name" name="results_file_name" value="/path/to/save/results_file"><br>
