@@ -46,12 +46,14 @@ To utilize prismAId, there are multiple options available:
 
 1. Go Package: Developed in Go, prismAId offers its complete functionalities through a Go package, ideal for integration within Go projects.
 
-2. Python Package: For users preferring Python, prismAId is also available as a Python package, facilitating use within Python scripts and Jupyter notebooks.
+2. Python Package on PyPI: For users preferring Python, prismAId is also available as a Python package, facilitating use within Python scripts and Jupyter notebooks.
+
+3. R Package on R-universe: For users of R, prismAId is also available as an R package, facilitating use within R and RStudio.
 
 3. Binaries: Standalone binaries are available for all operating systems and platforms, providing a versatile option for users across different environments.
 
 ### Option 1. Go Package
-You can download the prismAId Go package for developing your own software or review project. To add the package to yoru project:
+You can download the prismAId Go package for developing your own software or review project. To add the package to your project:
 ```bash
 go get "github.com/open-and-sustainable/prismaid"
 ```
@@ -92,7 +94,24 @@ else:
     print("RunReview completed successfully")
 ```
 
-### Option 3. Binaries 
+### Oprton 3. R Package
+You can download and install the prismAId from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) with the command:
+```r
+install.packages("prismaid", repos = c("https://open-and-sustainable.r-universe.dev", "https://cloud.r-project.org"))
+```
+
+All inputs and outputs need to happen through files, and reviews can be run as in:
+```r
+library(prismaid)
+# Load the contents of the TOML file
+toml_file_path <- "proj_test.toml"
+# Read the content into a string
+toml_content <- paste(readLines(toml_file_path), collapse = "\n")
+# Run the review
+RunReview(toml_content)
+```
+
+### Option 4. Binaries 
 Download the appropriate executable for your operating system and platform from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases) page. Using executables does not require any coding skill.
 
 The tool uses humaly readable project configuration files (.toml) to configure and run the reviews.
