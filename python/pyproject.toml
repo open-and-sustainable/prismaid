@@ -31,7 +31,7 @@ testing = ["pytest", "pytest-cov"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-prismaid = ["libprismaid_linux_amd64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib"]
+prismaid = ["libprismaid_linux_amd64.so", "libprismaid_linux_arm64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib", "libprismaid_darwin_arm64.dylib"]
 
 [tool.setuptools-git-versioning]
 enabled = true
