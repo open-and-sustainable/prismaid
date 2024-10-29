@@ -16,4 +16,4 @@ layout: default
 </form>
 <textarea id="output" rows="10" cols="50"></textarea>
 
-<script src="/assets/js/tomlGenerator.js"></script>
+<script src="assets/js/tomlGenerator.js"></script>
