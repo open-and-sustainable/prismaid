@@ -1,2 +1,5 @@
 # Export any R functions you want to be available to end-users.
 export(RunReview)
+
+# Register the C function from the shared object
+useDynLib(prismaid, RunReviewR_wrap)

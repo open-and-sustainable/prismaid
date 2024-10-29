@@ -71,11 +71,10 @@ jobs:
       - name: Commit and push changes
         run: |
           cp sharedlib/libprismaid_linux_amd64.so inst/libs/linux/libprismaid_linux_amd64.so
-          cp sharedlib/_cgo_export.h src/_cgo_export.h
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-          git add inst/libs/linux/libprismaid_linux_amd64.so src/_cgo_export.h
+          git add inst/libs/linux/libprismaid_linux_amd64.so
           git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
 
   build-windows:
