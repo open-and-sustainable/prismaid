@@ -30,3 +30,5 @@ go\.sum$
 CITATION.cff
 SECURITY.md
 CHANGELOG
+.github
+.vscode

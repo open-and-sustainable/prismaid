@@ -8,7 +8,7 @@ safeLoadLibrary <- function() {
     if (os_type == "darwin") {
       libname <- "libprismaid_darwin_amd64.dylib"  # macOS
     } else {
-      libname <- "libprismaid_linux_amd_64.so"     # Linux and other Unix-like systems
+      libname <- "libprismaid_linux_amd64.so"     # Linux and other Unix-like systems
     }
   } else if (.Platform$OS.type == "windows") {
     libname <- "libprismaid_windows_amd64.dll"      # Windows
@@ -18,7 +18,12 @@ safeLoadLibrary <- function() {
 
   # Construct the full path to the library
   lib_path <- system.file("libs", os_type, libname, package = "prismaid")
-  
+
+  # Check if the path actually exists
+  if (!file.exists(lib_path)) {
+    stop("Library path does not exist: ", lib_path)
+  }
+
   # Attempt to load the library
   tryCatch({
     dyn.load(lib_path)
@@ -38,11 +43,11 @@ safeLoadLibrary <- function() {
 #' @examples
 #' RunReview("example input")
 RunReview <- function(input_string) {
-    # Convert input to a form suitable for C
-    input_char <- charToRaw(input_string)
-    result <- .C("RunReviewR", as.character(input_char), PACKAGE = "prismaid")
-    # Convert result back to R character string
-    output <- rawToChar(result$value)
+    # Directly pass the string as R character to .Call)
+    result <- .Call("RunReviewR_wrap", input_string, PACKAGE = "prismaid")
     return(output)
 }
 
+.onLoad <- function(libname, pkgname) {
+  safeLoadLibrary()
+}

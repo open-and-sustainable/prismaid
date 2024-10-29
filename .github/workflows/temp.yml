@@ -1,0 +1,43 @@
+name: For dev of R package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-linux:
+    name: Build Linux Shared Library
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build shared library for Linux
+        working-directory: sharedlib
+        run: |
+          go build -buildmode=c-shared -o libprismaid_linux_amd64.so export.go
+
+      - name: Upload Linux shared library artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-shared-library
+          path: sharedlib/libprismaid_linux_amd64.so
+
+      - name: Commit and push changes
+        run: |
+          cp sharedlib/libprismaid_linux_amd64.so inst/libs/linux/libprismaid_linux_amd64.so
+          cp sharedlib/_cgo_export.h src/_cgo_export.h
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
+          git add inst/libs/linux/libprismaid_linux_amd64.so src/_cgo_export.h
+          git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
