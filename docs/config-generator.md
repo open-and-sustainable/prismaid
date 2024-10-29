@@ -8,28 +8,28 @@ layout: default
 <form id="configForm">
     <h2>Project Information</h2>
     <label for="name">Project Name:</label>
-    <input type="text" id="name" name="name" value="Use of LLM for systematic review"><br>
+    <input type="text" id="name" name="name" value="Review Project Title"><br>
 
     <label for="author">Project Author:</label>
-    <input type="text" id="author" name="author" value="John Doe"><br>
+    <input type="text" id="author" name="author" value="First Lastname"><br>
 
     <label for="version">Version:</label>
-    <input type="text" id="version" name="version" value="1.0"><br>
+    <input type="text" id="version" name="version" value="0.1"><br>
 
     <h2>Project Configuration</h2>
     <label for="input_directory">Input Directory:</label>
     <input type="text" id="input_directory" name="input_directory" value="/path/to/txt/files"><br>
 
-    <label for="input_conversion">Input Conversion:</label>
+    <label for="input_conversion">Input Conversion (pdf,docx,html):</label>
     <input type="text" id="input_conversion" name="input_conversion" value=""><br>
 
     <label for="results_file_name">Results File Name:</label>
-    <input type="text" id="results_file_name" name="results_file_name" value="/path/to/save/results"><br>
+    <input type="text" id="results_file_name" name="results_file_name" value="/path/to/save/results_file"><br>
 
     <label for="output_format">Output Format:</label>
     <select id="output_format" name="output_format">
-        <option value="csv">CSV</option>
-        <option value="json" selected>JSON</option>
+        <option value="csv" selected>CSV</option>
+        <option value="json">JSON</option>
     </select><br>
 
     <label for="log_level">Log Level:</label>
