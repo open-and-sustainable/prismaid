@@ -45,6 +45,8 @@ function generateTOMLString(data) {
         toml.push(`${key} = "${data.configuration[key]}"`);
     });
 
+    toml.push("\n[project.llm]");
+
     return toml.join("\n");
 }
 
@@ -70,7 +72,11 @@ function addLLMProvider() {
         <label for="model${index}">Model:</label>
         <input type="text" id="model${index}" name="model${index}"><br>
         <label for="temperature${index}">Temperature:</label>
-        <input type="number" id="temperature${index}" name="temperature${index}"><br>
+        <input type="number" id="temperature${index}" name="temperature${index}">0.01<br>
+        <label for="tpm_limit${index}">Tokens Per Minute:</label>
+        <input type="number" id="tpm_limit${index}" name="tpm_limit${index}">0<br>
+        <label for="rpm_limit${index}">Requests Per Minute:</label>
+        <input type="number" id="rpm_limit${index}" name="rpm_limit${index}">0<br>
     `;
     
     const removeButton = document.createElement('button');
