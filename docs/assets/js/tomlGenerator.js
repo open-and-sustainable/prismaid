@@ -57,7 +57,7 @@ function addLLMProvider() {
     providerDiv.id = `llmProvider${index}`;
 
     providerDiv.innerHTML = `
-        <h3>LLM Provider ${index}</h3>
+        <h3>Large Language Model ${index}</h3>
         <label for="provider${index}">Provider:</label>
         <select id="provider${index}" name="provider${index}">
             <option value="OpenAI">OpenAI</option>

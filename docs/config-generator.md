@@ -66,11 +66,11 @@ layout: default
         <option value="yes">Yes</option>
     </select><br>
 
-    <h2>LLM Providers Configuration</h2>
+    <h2>LLM Configuration</h2>
     <div id="llmProviders">
         <!-- LLM providers will be added dynamically here -->
     </div>
-    <button type="button" onclick="addLLMProvider()">Add LLM Provider</button>
+    <button type="button" onclick="addLLMProvider()">Add LLModel</button>
     <br><br>
 
     <button type="button" id="generateConfigButton">Generate Configuration</button>
