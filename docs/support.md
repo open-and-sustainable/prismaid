@@ -5,11 +5,11 @@ layout: default
 
 # Support
 
-## Common Issues and Solutions
+## Common Issues
 - **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
 - **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
 - **API Keys**: These may be loaded either through system variables or the project configuration. If multiple keys are provided, the latter will have priority.
-- **Partial Results**: Results presenting only the first few entries of a review containing many more contributions suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
+- **Partial Results**: Results presenting only the first few entries of a review containing many more manuscripts suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
 - **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
 - **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
@@ -30,7 +30,9 @@ layout: default
 8. Properly cite prismAId [doi.org/10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796).
 
 ## Technical FAQs
-### Q: Will I always get the same answer if I set the model temperature to zero?
+
+1. **Q: Will I always get the same answer if I set the model temperature to zero?**
+
 **A:** No, setting the model temperature to zero does not guarantee identical answers every time. Generative AI models, including GPT-4, can exhibit some variability even with a temperature setting of zero. While the temperature parameter influences the randomness of the output, setting it to zero aims to make the model more deterministic. However, GPT-4 and similar models are sparse mixture-of-experts models, meaning they may still show some probabilistic behavior at higher levels.
 
 This probabilistic behavior becomes more pronounced when the prompts are near the maximum token limit. In such cases, the content within the model's attention window may change due to space constraints, leading to different outputs. Additionally, there are other mechanisms within the model that can affect its determinism.
@@ -39,7 +41,7 @@ Nevertheless, using a lower temperature is a good strategy to minimize probabili
 
 **Further reading:** [https://doi.org/10.48550/arXiv.2308.00951](https://doi.org/10.48550/arXiv.2308.00951)
 
-### Q: Does noise (or how much information is hidden in the literature to be reviewed) have an impact?
+2. **Q: Does noise (or how much information is hidden in the literature to be reviewed) have an impact?**
 
 **A:** Yes, the presence of noise and the degree to which information is hidden significantly impact the quality of information extraction. The more obscured the information and the higher the noise level in the prompt, the more challenging it becomes to extract accurate and high-quality information. 
 
@@ -47,7 +49,7 @@ During the project configuration development phase, thorough testing can help id
 
 **Further reading:** [https://doi.org/10.48550/arXiv.2404.08865](https://doi.org/10.48550/arXiv.2404.08865)
 
-### Q: What happens if the literature to be reviewed says something different from the data used to train the model?
+3. **Q: What happens if the literature to be reviewed says something different from the data used to train the model?**
 
 **A:** This is a challenge that cannot be completely avoided. We do not have full transparency on the exact data used for training the model. If the literature and the training data conflict, information extraction from the literature could be biased, transformed, or augmented by the training data. 
 
@@ -57,7 +59,7 @@ However, the prismAId ability to replicate reviews and experiment with different
 
 **Further reading:** [https://doi.org/10.48550/arXiv.2404.08865](https://doi.org/10.48550/arXiv.2404.08865)
 
-### Q: Are there reasoning biases I should expect when analyzing literature with generative AI models?
+4. **Q: Are there reasoning biases I should expect when analyzing literature with generative AI models?**
 
 **A:** Yes, similar to human reasoning biases, AI models trained on human texts can replicate these biases and may lead to false information extraction if the prompts steer them in that direction. This is because the models learn from and mimic the patterns found in the training data, which includes human reasoning biases. 
 
@@ -65,13 +67,14 @@ A good strategy to address this in prismAId is to ensure prompts are carefully c
 
 **Further reading:** [https://doi.org/10.1038/s43588-023-00527-x](https://doi.org/10.1038/s43588-023-00527-x)
 
-### Q: Is it always better to analyze literature by extracting one piece of information at a time (one piece of information per prismAId project)?
+5. **Q: Is it always better to analyze literature by extracting one piece of information at a time (one piece of information per prismAId project)?**
 
 **A:** Yes, creating a separate prismAId project for each piece of information to be analyzed is a viable and highly effective approach. The main advantage is that it allows you to tailor the prompt structure and content, effectively guiding the AI model to provide accurate answers. Adding multiple information retrieval tasks within a single prismAId project requires writing much longer prompts, which can lead to more complex, potentially noisier, and confused requests for the AI model. 
 
 The only drawback is the higher cost incurred from using the model API. Separating two questions into distinct projects approximately doubles the cost of the analysis, as most of the tokens in each project are comprised of the literature text. Therefore, the only constraint to quality is the budget.
 
 **Further reading:** [OpenAI API Prices](https://openai.com/api/pricing/) - [https://doi.org/10.48550/arXiv.2404.08865](https://doi.org/10.48550/arXiv.2404.08865)
+
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

@@ -11,7 +11,7 @@ Prepare a project configuration file in [TOML](https://toml.io/en/), following t
 
 ## Section 1: 'Project' Details
 
-### Project Information:
+### Project Information
 ```toml
 [project]
 name = "Use of LLM for Systematic Review"
@@ -23,7 +23,7 @@ version = "1.0"
   - **`author`**: Project author.
   - **`version`**: Configuration version.
 
-### Configuration Details:
+### Configuration Details
 ```toml
 [project.configuration]
 input_directory = "/path/to/txt/files"
@@ -54,7 +54,7 @@ summary = "no"
     - `no`: Deafult.
     - `yes`: A summary is generated for each manuscript and saved in the same directory.
 
-### LLM Configuration:
+### LLM Configuration
 ```toml
 [project.llm]
 [project.llm.1]
@@ -211,7 +211,7 @@ Each model has specific limits for input size and costs, as summarized below:
 
 The **`[prompt]`** section breaks down the prompt structure into essential components to ensure accurate data extraction and minimize potential misinterpretations.
 
-### Logic of the Prompt Section
+### Rationale
 - This section provides explicit instructions and context for the AI model.
 - The prompt consists of structured elements: 
 <div style="text-align: center;"> 
@@ -232,7 +232,7 @@ example = ""
 ```
 This structured approach increases consistency, reduces model hallucinations, and facilitates precise information extraction in line with research objectives.
 
-### Examples and Explanation of Entries
+### Entry Details
 
 - **`persona`**:  
   - Example: "You are an experienced scientist working on a systematic review of the literature."
@@ -262,7 +262,7 @@ This structured approach increases consistency, reduces model hallucinations, an
 
 The **`[review]`** section specifies the information to be extracted from the text, defining the JSON output structure with keys and their possible values.
 
-### Logic of the Review Section
+### Rationale
 - This section serves as a knowledge map to guide the extraction process.
 - Each item includes:
   - `key`: A concept or topic of interest.
@@ -282,7 +282,7 @@ key = "geographical scale"
 values = ["world", "continent", "river basin"]
 ```
 
-### Examples and Explanation of Entries
+### Entry Details
 
 - **`[review]`**:  
   - Header indicating the start of review items, defining the structure of the knowledge map.

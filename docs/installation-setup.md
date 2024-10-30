@@ -68,7 +68,7 @@ else:
     print("RunReview completed successfully")
 ```
 
-### Oprton 3. R Package
+### Option 3. R Package
 
 Install the prismAId R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
 ```r
@@ -94,7 +94,7 @@ prismAId uses a human-readable `.toml` project configuration file for setup. You
 
 ## Addiitonal Setup Information
 
-### Initialize the Project Configuration File
+### Initialize the Configuration File
 prismAId binaries and Go module offer an interactive terminal application to help create draft configuration files. Use the -init flag to start the setup: 
 ```bash
 # For Linux on Intel
@@ -110,7 +110,7 @@ Follow documented protocols for literature search and identification, such as [P
 
 Removing unnecessary content helps reduce costs and resource usage and may improve model performance, as excessive information can [negatively affect](https://arxiv.org/abs/2404.08865) analysis outcomes.
 
-### Cost Estimations at Startup
+### Cost Estimation at Startup
 After loading the project configuration, prismAId provides an estimated cost (in USD) to run the review using the specified OpenAI model. This estimate primarily reflects the input processing cost, which is typically the largest component in review projects.
 
 To proceed, the user must confirm by entering 'y'; otherwise, the process exits without making API calls, ensuring no cost is incurred:
