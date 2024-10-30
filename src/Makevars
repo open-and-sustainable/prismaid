@@ -1,39 +1,41 @@
+# Compiler Flags
 CFLAGS += -O2
 PKG_CFLAGS += -O2
 PKG_CFLAGS += -I../inst/include
 
+# Platform Identification
 UNAME := $(shell uname)
 
+# Platform-Specific Configuration
 ifeq ($(UNAME), Linux)
-	$(info Detected Linux: keeping only Linux library)
-	# Linking the Linux library and setting rpath
-	PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
+    echo "Detected Linux: Keeping only Linux library"
+    PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
 
 ifeq ($(UNAME), Darwin)
-	$(info Detected macOS: keeping only macOS library)
-	# Linking the macOS library with @loader_path for dynamic library linking
-	PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
+    echo "Detected macOS: Keeping only macOS library"
+    PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
 
 ifeq ($(UNAME), Windows)
-	$(info Detected Windows: keeping only Windows library)
-	# Linking the Windows library. No rpath needed, usually DLL loading follows different conventions
-	PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
+    echo "Detected Windows: Keeping only Windows library"
+    PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
 endif
+
+# Add target to perform library cleanup
+.PHONY: clean
 
 clean:
-ifeq ($(UNAME), Linux)
-	rm -f ../inst/libs/macos/*.dylib
-	rm -f ../inst/libs/windows/*.dll
-endif
-
-ifeq ($(UNAME), Darwin)
-	rm -f ../inst/libs/linux/*.so
-	rm -f ../inst/libs/windows/*.dll
-endif
-
-ifeq ($(UNAME), Windows)
-	rm -f ../inst/libs/linux/*.so
-	rm -f ../inst/libs/macos/*.dylib
-endif
+    echo "Running clean task for platform $(UNAME)..."
+    ifeq ($(UNAME), Linux)
+        rm -f ../inst/libs/macos/*.dylib
+        rm -f ../inst/libs/windows/*.dll
+    endif
+    ifeq ($(UNAME), Darwin)
+        rm -f ../inst/libs/linux/*.so
+        rm -f ../inst/libs/windows/*.dll
+    endif
+    ifeq ($(UNAME), Windows)
+        rm -f ../inst/libs/linux/*.so
+        rm -f ../inst/libs/macos/*.dylib
+    endif
