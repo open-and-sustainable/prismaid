@@ -6,17 +6,19 @@ PKG_CFLAGS += -I../inst/include
 # Platform Identification
 UNAME := $(shell uname)
 
-# Platform-Specific Configuration
+# Default target to avoid missing separator errors
+all: platform-specific-libs
+
+# Platform-Specific Configuration for Library Linking
+platform-specific-libs:
 ifeq ($(UNAME), Linux)
 	echo "Detected Linux: Keeping only Linux library"
     PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
-
 ifeq ($(UNAME), Darwin)
     echo "Detected macOS: Keeping only macOS library"
     PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
-
 ifeq ($(UNAME), Windows)
     echo "Detected Windows: Keeping only Windows library"
     PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
