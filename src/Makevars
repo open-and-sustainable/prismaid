@@ -6,25 +6,34 @@ UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
 	$(info Detected Linux: keeping only Linux library)
-	rm -f ../inst/libs/macos/*.dylib
-	rm -f ../inst/libs/windows/*.dll
 	# Linking the Linux library and setting rpath
 	PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
 
 ifeq ($(UNAME), Darwin)
 	$(info Detected macOS: keeping only macOS library)
-	rm -f ../inst/libs/linux/*.so
-	rm -f ../inst/libs/windows/*.dll
 	# Linking the macOS library with @loader_path for dynamic library linking
 	PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
 
 ifeq ($(UNAME), Windows)
 	$(info Detected Windows: keeping only Windows library)
-	rm -f ../inst/libs/linux/*.so
-	rm -f ../inst/libs/macos/*.dylib
 	# Linking the Windows library. No rpath needed, usually DLL loading follows different conventions
 	PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
 endif
 
+clean:
+ifeq ($(UNAME), Linux)
+	rm -f ../inst/libs/macos/*.dylib
+	rm -f ../inst/libs/windows/*.dll
+endif
+
+ifeq ($(UNAME), Darwin)
+	rm -f ../inst/libs/linux/*.so
+	rm -f ../inst/libs/windows/*.dll
+endif
+
+ifeq ($(UNAME), Windows)
+	rm -f ../inst/libs/linux/*.so
+	rm -f ../inst/libs/macos/*.dylib
+endif
