@@ -19,8 +19,8 @@ nav_links:
     url: "/review-configurator.html"
   - name: "Research &<br>Development"
     url: "/research-development.html"
-  - name: "Support"
-    url: "/support.html"
+  - name: "Help &<br>Resources"
+    url: "/help-resources.html"
 # configuration of custom colors
 nav_background_color: "#0056b3" # Override nav bar color (darker blue)
 nav_hover_color: "#007BFF"      # Override hover color (blue)

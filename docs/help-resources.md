@@ -1,9 +1,9 @@
 ---
-title: Support
+title: Help & Resources
 layout: default
 ---
 
-# Support
+# Help & Resources
 
 ## Common Issues
 - **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.

@@ -26,7 +26,7 @@ Explore this [documentation website](https://open-and-sustainable.github.io/pris
 2. [Using prismAId](using-prismaid): Discover how to effectively utilize prismAId, including its advanced features.
 3. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
 4. [Research & Development](research-development): Understand the technology behind prismAId and how you can contribute to its advancement.
-5. [Support](support): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results.
+5. [Help & Resources](help-resources): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results.
 
 ## Credits
 ### Authors
