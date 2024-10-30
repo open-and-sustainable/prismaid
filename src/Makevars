@@ -8,7 +8,7 @@ UNAME := $(shell uname)
 
 # Platform-Specific Configuration
 ifeq ($(UNAME), Linux)
-    echo "Detected Linux: Keeping only Linux library"
+	echo "Detected Linux: Keeping only Linux library"
     PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
 
@@ -26,16 +26,16 @@ endif
 .PHONY: clean
 
 clean:
-    echo "Running clean task for platform $(UNAME)..."
-    ifeq ($(UNAME), Linux)
-        rm -f ../inst/libs/macos/*.dylib
-        rm -f ../inst/libs/windows/*.dll
-    endif
-    ifeq ($(UNAME), Darwin)
-        rm -f ../inst/libs/linux/*.so
-        rm -f ../inst/libs/windows/*.dll
-    endif
-    ifeq ($(UNAME), Windows)
-        rm -f ../inst/libs/linux/*.so
-        rm -f ../inst/libs/macos/*.dylib
-    endif
+echo "Running clean task for platform $(UNAME)..."
+ifeq ($(UNAME), Linux)
+	rm -f ../inst/libs/macos/*.dylib
+	rm -f ../inst/libs/windows/*.dll
+endif
+ifeq ($(UNAME), Darwin)
+	rm -f ../inst/libs/linux/*.so
+	rm -f ../inst/libs/windows/*.dll
+endif
+ifeq ($(UNAME), Windows)
+	rm -f ../inst/libs/linux/*.so
+	rm -f ../inst/libs/macos/*.dylib
+endif
