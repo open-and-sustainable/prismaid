@@ -3,32 +3,30 @@ title: Home
 layout: default
 ---
 
-# Open Science AI Tools for Systematic, Protocol-Based Literature Reviews.
+# Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
-## Purpose
-prismAId uses generative AI models to extract data from scientific literature. It offers simple-to-use, efficient, and replicable methods for analyzing literature when conducting systematic reviews. No coding skills are required to use prismAId.
 
-## Specifications
-- **Review protocol**: Designed to support any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
-- **Distribution**: Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid), Python [package](https://pypi.org/project/prismaid/), R [package](https://open-and-sustainable.r-universe.dev/prismaid), and 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
-- **Supported LLMs**: 
-    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini.
-    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash.
-    3. **Cohere**: Command, Command Light, Command R, and Command R+.
-    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Sonnet
-- **Output format**: Outputs data in CSV or JSON formats.
-- **Performance**: Designed to process extensive datasets efficiently with minimal user setup and **no coding** required.
-- **Programming Language**: Developed in Go.
+## Purpose and Benefits
+prismAId revolutionizes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
+
+### Key Advantages:
+
+- **Accessibility**: Easy-to-use interfaces ensure that anyone can leverage advanced AI tools for literature reviews.
+- **Flexibility**: Supports a wide range of literature review protocols, including the Prisma 2020.
+- **Efficiency**: Optimized for handling large datasets with minimal setup, reducing the time from research to results.
+- **Innovation**: Continuously updated to incorporate the latest AI advancements, keeping your research at the cutting edge.
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 80%;">
+</div>
 
 ## Table of Contents
-Visit this [documentation website](https://open-and-sustainable.github.io/prismaid/) to find: 
-1. Instructions to install prismAId and start using it: [Getting Started](getting-started).
-2. A walkthrough of the process of setting up your systematic literature review project: [Project Setup](project-setup).
-3. A detailed guide on designing robust prompts to exploit generative AI models for information extraction from the literature: [Prompt Design](prompt-design).
-4. A presentation of the most advanced features provided by the tool: [Advanced Features](advanced-features).
-5. Troubleshooting directions and frequently asked questions on prismAId and generative AI features and results: [FAQs and Troubleshooting](faqs).
-6. A description of the software implementation of prismAId along with guidelines on how to contribute to its future development: [For Developers](for-developers).
-
+Explore this [documentation website](https://open-and-sustainable.github.io/prismaid/) for comprehensive guidance on using prismAId: 
+1. [Installation & Workflow](installation-setup): Learn how to install prismAId and configure it for different environments.
+2. [Using prismAId](using-prismaid): Discover how to effectively utilize prismAId, including its advanced features.
+3. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
+4. [Research & Development](research-development): Understand the technology behind prismAId and how you can contribute to its advancement.
+5. [Support](support): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results.
 
 ## Credits
 ### Authors

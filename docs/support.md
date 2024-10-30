@@ -1,31 +1,32 @@
 ---
-title: FAQs
+title: Support
 layout: default
 ---
 
-# FAQs and Troubleshooting
+# Support
 
 ## Common Issues and Solutions
+- **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
 - **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
 - **API Keys**: These may be loaded either through system variables or the project configuration. If multiple keys are provided, the latter will have priority.
 - **Partial Results**: Results presenting only the first few entries of a review containing many more contributions suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
 - **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
 - **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
-## Tips and Tricks
-### Mastering the Art of prismAId
-- Carefully read the [technical FAQs](faqs) to avoid misusing the tool and to access emerging scientific references on issues related to the use of generative AI similar to those you may encounter in prismAId.
+## Best Practices
+### Learn prismAId
+- Carefully read the technical FAQs below to avoid misusing the tool and to access emerging scientific references on issues related to the use of generative AI similar to those you may encounter in prismAId.
 - We provide an additional example in the [projects](https://github.com/open-and-sustainable/prismaid/blob/main/projects/test.toml) directory. This includes not only the project configuration but also [input files](https://github.com/open-and-sustainable/prismaid/tree/main/projects/input/test) and [output files](https://github.com/open-and-sustainable/prismaid/tree/main/projects/output/test). The input text is extracted from a study we conducted [doi.org/10.3390/cli10020027](https://doi.org/10.3390/cli10020027).
 - Multiple protocols for reporting systematic literature reviews are supported by prismAId [https://doi.org/10.1186/s13643-023-02255-9](https://doi.org/10.1186/s13643-023-02255-9). Users are encouraged to experiment and define their own prismAId methodologies.
 
-### The Golden Rules of prismAId
+### Methodology of prismAId
 1. Remove unnecessary sections from the literature to be reviewed.
 2. It's better to risk repeating an explanation of the information you are seeking through examples than not defining it clearly enough.
 3. If the budget allows, conduct a separate review process for each piece of information you want to extract. This allows for more detailed definitions for each information piece.
 4. Try to avoid using open-ended answers and define and explain all possible answers the AI model can provide.
 5. First, run a test on a single paper. Once the results are satisfactory, repeat the process with a different batch of papers. If the results are still satisfactory, proceed with the rest of the literature.
 6. Focus on primary sources and avoid reviewing reviews unless it is intentional and carefully planned. Do not mix primary and secondary sources in the same review process.
-7. Include the project configuration (the .toml file) in the appendix of your paper.
+7. Include the project configuration (the .toml file) in the appendix of your paper, it's all about open science.
 8. Properly cite prismAId [doi.org/10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796).
 
 ## Technical FAQs

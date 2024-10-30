@@ -2,7 +2,7 @@
 remote_theme: open-and-sustainable/greendoc_theme
 # title and description, URLs
 title: "prismAId"
-description: "Documentation of prismAId tools"
+description: "Documentation of prismAId"
 baseurl: "/prismaid"
 url: "https://open-and-sustainable.github.io"
 github_repo: "https://github.com/open-and-sustainable/prismaid"
@@ -11,20 +11,16 @@ logo: "assets/images/prismaid-logo.png"
 favicon: "assets/images/prismaid-favicon.ico"
 # configuration of navigation entries
 nav_links:
-  - name: "Getting Started"
-    url: "/getting-started.html"
-  - name: "Project Setup"
-    url: "/project-setup.html"
-  - name: "Prompt Design"
-    url: "/prompt-design.html"
-  - name: "Advanced Features"
-    url: "/advanced-features.html"
-  - name: "Open Science"
-    url: "/open-science.html"
-  - name: "FAQs"
-    url: "/faqs.html"
-  - name: "For Developers"
-    url: "/for-developers.html"
+  - name: "Installation & Setup"
+    url: "/installation-setup.html"
+  - name: "Using prismAId"
+    url: "/using-prismaid.html"
+  - name: "Review Configurator"
+    url: "/review-configurator.html"
+  - name: "Research & Development"
+    url: "/research-development.html"
+  - name: "Support"
+    url: "/support.html"
 # configuration of custom colors
 nav_background_color: "#0056b3" # Override nav bar color (darker blue)
 nav_hover_color: "#007BFF"      # Override hover color (blue)
