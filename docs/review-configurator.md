@@ -3,7 +3,7 @@ title: Config Generator
 layout: default
 ---
 
-<link rel="stylesheet" href="/assets/css/styles.css">
+<link rel="stylesheet" href="assets/css/styles.css">
 
 # Generate Your Review Configuration File
 
