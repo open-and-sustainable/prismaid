@@ -104,7 +104,9 @@ layout: default
     <button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate Configuration</button>
 </form>
 
-<textarea id="configOutput" rows="20" cols="70"></textarea>
+<textarea id="configOutput" rows="50" cols="140"></textarea>
+
+<button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download Configuration</button>
 
 <script src="assets/js/tomlGenerator.js"></script>
 

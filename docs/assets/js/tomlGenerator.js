@@ -1,10 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Ensure the button exists and is correctly targeted
-    var button = document.getElementById('generateConfigButton');
-    if (button) {
-        button.addEventListener('click', generateConfig);
-    } else {
-        console.error('Generate Config Button not found!');
+    // Setup event listener for the Generate Configuration button if needed
+    var generateButton = document.getElementById('generateConfigButton');
+    if (generateButton) {
+        generateButton.addEventListener('click', generateConfig);
+    }
+
+    // Setup event listener for the Download Configuration button
+    var downloadButton = document.getElementById('downloadButton');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', downloadConfiguration);
     }
 });
 
@@ -97,9 +101,10 @@ function generateTOMLString(data) {
     // Append review items to the TOML string
     data.review_items.forEach((review, index) => {
         toml.push(`\n[review.${index + 1}]`);
-        Object.keys(review).forEach(key => {
-            toml.push(`${key} = "${review[key]}"`);
-        });
+        toml.push(`key = "${review.key}"`);
+        // Format the values as an array of strings
+        const valuesArray = review.values.split(',').map(value => `"${value.trim()}"`);
+        toml.push(`values = [${valuesArray.join(", ")}]`);
     });
 
     return toml.join("\n");
@@ -137,6 +142,8 @@ function addLLMProvider() {
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
+    removeButton.style.backgroundColor = '#ffffff';
+    removeButton.style.color = '#FF0000';
     removeButton.onclick = function() { removeLLMProvider(index); };
     providerDiv.appendChild(removeButton);
 
@@ -169,6 +176,8 @@ function addReviewBlock() {
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
+    removeButton.style.backgroundColor = '#ffffff';
+    removeButton.style.color = '#FF0000';
     removeButton.onclick = function() { removeReviewBlock(index); };
     reviewDiv.appendChild(removeButton);
 
@@ -182,3 +191,18 @@ function removeReviewBlock(index) {
     }
 }
 
+function downloadConfiguration() {
+    var text = document.getElementById('configOutput').value; // Get the content from textarea
+    var filename = "configuration.toml"; // Define a filename
+
+    var blob = new Blob([text], { type: 'text/plain' });
+
+    var downloadLink = document.createElement('a');
+    downloadLink.href = window.URL.createObjectURL(blob);
+    downloadLink.download = filename;
+
+    // Append the link to the document, click it, and then remove it
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
