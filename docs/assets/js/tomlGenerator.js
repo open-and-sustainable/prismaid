@@ -123,6 +123,16 @@ function addLLMProvider() {
 
     const providerDiv = document.createElement('div');
     providerDiv.className = 'llm-provider';
+
+    // Define the model options for each provider
+    const modelOptions = {
+        OpenAI: ['gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', ''],
+        GoogleAI: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', ''],
+        Cohere: ['command-r-plus', 'command-r', 'command-light', 'command', ''],
+        Anthropic: ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', '']
+    };
+
+    // HTML content for the provider
     providerDiv.innerHTML = `
         <h3>Large Language Model ${index}</h3>
         <label>Provider:</label>
@@ -135,7 +145,7 @@ function addLLMProvider() {
         <label>API Key:</label>
         <input type="text" class="api-key-input"><br>
         <label>Model:</label>
-        <input type="text" class="model-input"><br>
+        <select class="model-input"></select><br>
         <label>Temperature:</label>
         <input type="number" class="temperature-input" value="0.01" step="0.01"><br>
         <label>Tokens Per Minute:</label>
@@ -143,18 +153,47 @@ function addLLMProvider() {
         <label>Requests Per Minute:</label>
         <input type="number" class="rpm-limit-input" value="0"><br>
     `;
-
+    // Append the remove button
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
     removeButton.style.backgroundColor = '#ffffff';
     removeButton.style.color = '#FF0000';
     removeButton.onclick = function() {
-        removeLLMProvider(providerDiv); // Pass the div itself to the removal function
+        providerDiv.remove(); // Directly remove the provider block
     };
     providerDiv.appendChild(removeButton);
 
+    // Append the providerDiv to the container
     container.appendChild(providerDiv);
+
+    // Get the select elements
+    const providerSelect = providerDiv.querySelector('.provider-select');
+    const modelSelect = providerDiv.querySelector('.model-input');
+
+    // Function to update model options based on the selected provider
+    function updateModelOptions() {
+        // Clear the current options
+        modelSelect.innerHTML = '';
+
+        // Get the selected provider and the corresponding models
+        const selectedProvider = providerSelect.value;
+        const models = modelOptions[selectedProvider] || [];
+
+        // Populate the model select with the new options
+        models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model;
+            option.textContent = model || 'Default'; // Show 'Default' for empty string
+            modelSelect.appendChild(option);
+        });
+    }
+
+    // Initialize the model options on creation
+    updateModelOptions();
+
+    // Add event listener to update models when the provider changes
+    providerSelect.addEventListener('change', updateModelOptions);
 }
 
 function removeLLMProvider(element) {
