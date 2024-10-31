@@ -134,25 +134,31 @@ function addLLMProvider() {
 
     // HTML content for the provider
     providerDiv.innerHTML = `
-        <h3>Large Language Model ${index}</h3>
-        <label>Provider:</label>
-        <select class="provider-select">
+        <h3 class="form-heading">Large Language Model ${index}</h3>
+        <label class="form-label">Provider:</label>
+        <select class="form-input provider-select">
             <option value="OpenAI">OpenAI</option>
             <option value="GoogleAI">GoogleAI</option>
             <option value="Cohere">Cohere</option>
             <option value="Anthropic">Anthropic</option>
         </select><br>
-        <label>API Key:</label>
-        <input type="text" class="api-key-input"><br>
-        <label>Model:</label>
-        <select class="model-input"></select><br>
-        <label>Temperature:</label>
-        <input type="number" class="temperature-input" value="0.01" step="0.01"><br>
-        <label>Tokens Per Minute:</label>
-        <input type="number" class="tpm-limit-input" value="0"><br>
-        <label>Requests Per Minute:</label>
-        <input type="number" class="rpm-limit-input" value="0"><br>
+
+        <label class="form-label">API Key:</label>
+        <input type="text" class="form-input api-key-input"><br>
+
+        <label class="form-label">Model:</label>
+        <select class="form-input model-input"></select><br>
+
+        <label class="form-label">Temperature:</label>
+        <input type="number" class="form-input temperature-input" value="0.01" step="0.01"><br>
+
+        <label class="form-label">Tokens Per Minute:</label>
+        <input type="number" class="form-input tpm-limit-input" value="0"><br>
+
+        <label class="form-label">Requests Per Minute:</label>
+        <input type="number" class="form-input rpm-limit-input" value="0"><br>
     `;
+
     // Append the remove button
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
@@ -216,11 +222,12 @@ function addReviewBlock() {
 
     // Set up the innerHTML for reviewDiv using classes instead of IDs
     reviewDiv.innerHTML = `
-        <h3>Review Block</h3>
-        <label>Key:</label>
-        <input type="text" class="review-key"><br>
-        <label>Values:</label>
-        <input type="text" class="review-values" placeholder="Enter comma-separated values"><br>
+        <h3 class="form-heading">Review Block</h3>
+        <label class="form-label">Key:</label>
+        <input type="text" class="form-input review-key"><br>
+
+        <label class="form-label">Values:</label>
+        <input type="text" class="form-input review-values" placeholder="Enter comma-separated values"><br>
     `;
 
     // Create and configure the remove button

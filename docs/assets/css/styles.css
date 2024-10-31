@@ -11,13 +11,18 @@
 
 .form-label {
     display: inline-block;
-    width: 150px; /* Fixed width for labels to align inputs */
+    width: 200px; /* Fixed width for labels to align inputs */
     font-weight: bold; /* Makes the labels stand out */
 }
 
 .form-input {
-    width: 300px; /* Adjust the width of the input fields as needed */
+    width: 400px; /* Adjust the width of the input fields as needed */
     padding: 5px;
     border: 1px solid #ccc; /* Light border for inputs */
     border-radius: 4px; /* Rounded corners for inputs */
+}
+
+.form-heading {
+    font-size: 1.1em; /* Adjust heading size as needed */
+    margin-bottom: 10px;
 }
