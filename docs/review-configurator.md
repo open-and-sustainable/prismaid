@@ -70,7 +70,7 @@ layout: default
     <div id="llmProviders">
         <!-- LLM providers will be added dynamically here -->
     </div>
-    <button type="button" onclick="addLLMProvider()">Add LLModel</button>
+    <button type="button" onclick="addLLMProvider()" style="background-color: #ffffff;">Add LLModel</button>
     <br><br>
 
     <h2>Prompt Components</h2>
@@ -94,10 +94,10 @@ layout: default
 
 
     <h2>Review Items</h2>
-    <div id="review">
+    <div id="reviews">
         <!-- Review items will be added dynamically here -->
     </div>
-    <button type="button" onclick="addReviewBlock()">Add Review Item</button>
+    <button type="button" onclick="addReviewBlock()" style="background-color: #ffffff;">Add Review Item</button>
     <br><br>
 
 

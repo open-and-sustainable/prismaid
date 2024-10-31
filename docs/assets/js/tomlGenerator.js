@@ -53,11 +53,11 @@ function generateConfig() {
     });
 
     // Collect data from dynamically added review items
-    const reviews = document.querySelectorAll('.review');
+    const reviews = document.querySelectorAll('.review-item');
     reviews.forEach((review, index) => {
         const reviewData = {
             key: review.querySelector(`#key${index + 1}`).value,
-            values: review.querySelector(`#values${index + 1}`).value
+            values: review.querySelector(`#values${index + 1}`).value.split(',').map(v => v.trim())
         };
         data.review_items.push(reviewData);
     });
@@ -155,7 +155,7 @@ function addReviewBlock() {
     const index = container.children.length + 1;
 
     const reviewDiv = document.createElement('div');
-    reviewDiv.className = 'review';
+    reviewDiv.className = 'review-item';
     reviewDiv.id = `review${index}`;
 
     reviewDiv.innerHTML = `
