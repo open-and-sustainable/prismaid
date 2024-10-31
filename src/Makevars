@@ -31,7 +31,7 @@ clean:
 	@echo "Running clean task for platform $(UNAME)..."
 ifeq ($(UNAME), Linux)
 	rm -f ../inst/libs/macos/*.dylib
-	rm -f ../inst/libs/windows/*.dll
+#rm -f ../inst/libs/windows/*.dll
 endif
 ifeq ($(UNAME), Darwin)
 	rm -f ../inst/libs/linux/*.so
