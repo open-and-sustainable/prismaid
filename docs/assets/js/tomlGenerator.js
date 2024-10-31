@@ -26,7 +26,15 @@ function generateConfig() {
             cot_justification: document.getElementById('cot_justification').value,
             summary: document.getElementById('summary').value,
         },
-        llm_providers: []
+        llm_providers: [],
+        prompt: {
+            persona: document.getElementById('persona').value,
+            task: document.getElementById('task').value,
+            expected_result: document.getElementById('expected_result').value,
+            definitions: document.getElementById('definitions').value,
+            example: document.getElementById('example').value,
+            failsafe: document.getElementById('failsafe').value,
+        }
     };
 
     // Collect data from dynamically added LLM providers
@@ -69,6 +77,11 @@ function generateTOMLString(data) {
         });
     });
 
+    var toml = ["[prompt]"];
+        Object.keys(data.prompt).forEach(function(key) {
+            toml.push(`${key} = "${data.prompt[key]}"`);
+        });
+
     return toml.join("\n");
 }
 
@@ -94,7 +107,7 @@ function addLLMProvider() {
         <label for="model${index}">Model:</label>
         <input type="text" id="model${index}" name="model${index}"><br>
         <label for="temperature${index}">Temperature:</label>
-        <input type="number" id="temperature${index}" value="0.01" name="temperature${index}"><br>
+        <input type="number" id="temperature${index}" value="0.01" name="temperature${index}" step="0.01"><br>
         <label for="tpm_limit${index}">Tokens Per Minute:</label>
         <input type="number" id="tpm_limit${index}" value="0" name="tpm_limit${index}"><br>
         <label for="rpm_limit${index}">Requests Per Minute:</label>

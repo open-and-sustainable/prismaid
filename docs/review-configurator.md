@@ -73,6 +73,28 @@ layout: default
     <button type="button" onclick="addLLMProvider()">Add LLModel</button>
     <br><br>
 
+    <h2>Prompt Components</h2>
+    <label for="persona">Persona:</label>
+        <input type="text" id="persona" name="persona" value="You are an experienced scientist working on a systematic review of the literature."><br>
+
+    <label for="task">Task:</label>
+        <input type="text" id="task" name="task" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
+
+    <label for="expected_result">Expected Result:</label>
+        <input type="text" id="expected_result" name="expected_result" value="You should output a JSON object with the following keys and possible values: "><br>
+
+    <label for="definitions">Definitions:</label>
+            <input type="text" id="definitions" name="definitions" value=""><br>
+
+    <label for="example">Examples:</label>
+        <input type="text" id="example" name="example" value=""><br>
+
+    <label for="failsafe">Failsafe:</label>
+        <input type="text" id="failsafe" name="failsafe" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
+
+
+    <h2>Review Items</h2>
+
     <button type="button" id="generateConfigButton">Generate Configuration</button>
 </form>
 
