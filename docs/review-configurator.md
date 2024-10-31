@@ -158,7 +158,7 @@ layout: default
 ## Generate Configuration
 <button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate TOML</button>
 
-<textarea id="configOutput" rows="50" cols="140"></textarea>
+<textarea id="configOutput" class="wide-textarea"></textarea>
 ## Download Configuration
 <button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download File</button>
 

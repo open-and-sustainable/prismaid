@@ -6,30 +6,38 @@
 .description {
     margin: 0;
     font-style: italic;
-    color: #666; /* Lighter color for descriptions */
+    color: #666; 
 }
 
 .form-label {
     display: inline-block;
-    width: 200px; /* Fixed width for labels to align inputs */
-    font-weight: bold; /* Makes the labels stand out */
+    width: 200px; 
+    font-weight: bold; 
 }
 
 .form-input {
-    width: 400px; /* Adjust the width of the input fields as needed */
+    width: 400px; 
     padding: 5px;
-    border: 1px solid #ccc; /* Light border for inputs */
-    border-radius: 4px; /* Rounded corners for inputs */
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
 }
 
 .form-long-input {
-    width: 800px; /* Adjust the width of the input fields as needed */
+    width: 800px; 
     padding: 5px;
-    border: 1px solid #ccc; /* Light border for inputs */
-    border-radius: 4px; /* Rounded corners for inputs */
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
 
 .form-heading {
-    font-size: 1.1em; /* Adjust heading size as needed */
+    font-size: 1.1em; 
     margin-bottom: 10px;
+}
+
+.wide-textarea {
+    width: 800px;
+    height: 300px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
 }
