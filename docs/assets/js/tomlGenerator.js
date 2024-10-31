@@ -139,14 +139,17 @@ function addLLMProvider() {
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
-    removeButton.onclick = () => providerDiv.remove(); // Directly remove the div
+    removeButton.style.backgroundColor = '#ffffff';
+    removeButton.style.color = '#FF0000';
+    removeButton.onclick = function() {
+        removeLLMProvider(providerDiv); // Pass the div itself to the removal function
+    };
     providerDiv.appendChild(removeButton);
 
     container.appendChild(providerDiv);
 }
 
-function removeLLMProvider(index) {
-    const element = document.getElementById('llmProvider' + index);
+function removeLLMProvider(element) {
     if (element) {
         element.parentNode.removeChild(element);
     }
