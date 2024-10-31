@@ -39,7 +39,7 @@ function generateConfig() {
             example: document.getElementById('example').value,
             failsafe: document.getElementById('failsafe').value,
         },
-        review_items: collectReviewData
+        review_items: collectReviewData()
     };
 
     // Generate TOML string from data
