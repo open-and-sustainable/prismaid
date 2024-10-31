@@ -39,18 +39,8 @@ function generateConfig() {
             example: document.getElementById('example').value,
             failsafe: document.getElementById('failsafe').value,
         },
-        review_items: []
+        review_items: collectReviewData
     };
-
-    // Collect data from dynamically added review items
-    const reviews = document.querySelectorAll('.review-item');
-    reviews.forEach((review, index) => {
-        const reviewData = {
-            key: review.querySelector(`#key${index + 1}`).value,
-            values: review.querySelector(`#values${index + 1}`).value.split(',').map(v => v.trim())
-        };
-        data.review_items.push(reviewData);
-    });
 
     // Generate TOML string from data
     var toml = generateTOMLString(data);
@@ -69,6 +59,16 @@ function collectProviderData() {
     }));
     return data;
 }
+
+function collectReviewData() {
+    const reviews = document.querySelectorAll('.review-item');
+    const data = Array.from(reviews).map(review => ({
+        key: review.querySelector('.review-key').value,  // Use class to select the key input
+        values: review.querySelector('.review-values').value.split(',').map(v => v.trim())  // Use class to select the values input and process it
+    }));
+    return data;
+}
+
 
 function generateTOMLString(data) {
     // Build TOML string from the structured data
@@ -157,37 +157,42 @@ function removeLLMProvider(element) {
 
 function addReviewBlock() {
     const container = document.getElementById('reviews');
-    const index = container.children.length + 1;
 
+    // Create the review block div
     const reviewDiv = document.createElement('div');
     reviewDiv.className = 'review-item';
-    reviewDiv.id = `review${index}`;
 
+    // Set up the innerHTML for reviewDiv using classes instead of IDs
     reviewDiv.innerHTML = `
-        <h3>Review Block ${index}</h3>
-        <label for="key${index}">Key:</label>
-        <input type="text" id="key${index}" name="key${index}"><br>
-        <label for="values${index}">Values:</label>
-        <input type="text" id="values${index}" name="values${index}" placeholder="Enter comma-separated values"><br>
+        <h3>Review Block</h3>
+        <label>Key:</label>
+        <input type="text" class="review-key"><br>
+        <label>Values:</label>
+        <input type="text" class="review-values" placeholder="Enter comma-separated values"><br>
     `;
 
+    // Create and configure the remove button
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
     removeButton.style.backgroundColor = '#ffffff';
     removeButton.style.color = '#FF0000';
-    removeButton.onclick = function() { removeReviewBlock(index); };
+    removeButton.onclick = function() {
+        removeReviewBlock(reviewDiv);
+    };
     reviewDiv.appendChild(removeButton);
 
+    // Append the review block to the container
     container.appendChild(reviewDiv);
 }
 
-function removeReviewBlock(index) {
-    const element = document.getElementById('review' + index);
+
+function removeReviewBlock(element) {
     if (element) {
         element.parentNode.removeChild(element);
     }
 }
+
 
 function downloadConfiguration() {
     var text = document.getElementById('configOutput').value; // Get the content from textarea
