@@ -1,41 +1,5 @@
 # File: R/wrapper.R
 
-# Function to safely load the shared library
-safeLoadLibrary <- function() {
-  # Determine the operating system
-  if (.Platform$OS.type == "unix") {
-    os_type <- tolower(Sys.info()[["sysname"]])
-    if (os_type == "darwin") {
-      libname <- "libprismaid_darwin_amd64.dylib"  # macOS
-    } else {
-      libname <- "libprismaid_linux_amd64.so"     # Linux and other Unix-like systems
-    }
-  } else if (.Platform$OS.type == "windows") {
-    libname <- "libprismaid_windows_amd64.dll"      # Windows
-  } else {
-    stop("Unsupported OS")
-  }
-
-  # Construct the full path to the library
-  lib_path <- system.file("libs", os_type, libname, package = "prismaid")
-
-  # Log the full path for debugging
-  message("Attempting to load library at: ", lib_path)
-
-  # Check if the path actually exists
-  if (!file.exists(lib_path)) {
-    stop("Library path does not exist: ", lib_path)
-  }
-
-  # Attempt to load the library
-  tryCatch({
-    dyn.load(lib_path)
-    message("Successfully loaded library: ", libname)
-  }, error = function(e) {
-    stop("Failed to load the required shared library: ", e$message)
-  })
-}
-
 .onLoad <- function(libname, pkgname) {
   message("Loading package: ", pkgname)
   message("Library name passed: ", libname)
