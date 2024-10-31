@@ -30,7 +30,7 @@ function generateConfig() {
             cot_justification: document.getElementById('cot_justification').value,
             summary: document.getElementById('summary').value,
         },
-        llm_providers: [],
+        llm_providers: collectProviderData(),
         prompt: {
             persona: document.getElementById('persona').value,
             task: document.getElementById('task').value,
@@ -41,20 +41,6 @@ function generateConfig() {
         },
         review_items: []
     };
-
-    // Collect data from dynamically added LLM providers
-    const providers = document.querySelectorAll('.llm-provider');
-    providers.forEach((provider, index) => {
-        const providerData = {
-            provider: provider.querySelector(`#provider${index + 1}`).value,
-            api_key: provider.querySelector(`#api_key${index + 1}`).value,
-            model: provider.querySelector(`#model${index + 1}`).value,
-            temperature: provider.querySelector(`#temperature${index + 1}`).value,
-            tpm_limit: provider.querySelector(`#tpm_limit${index + 1}`).value,
-            rpm_limit: provider.querySelector(`#rpm_limit${index + 1}`).value
-        };
-        data.llm_providers.push(providerData);
-    });
 
     // Collect data from dynamically added review items
     const reviews = document.querySelectorAll('.review-item');
@@ -69,6 +55,19 @@ function generateConfig() {
     // Generate TOML string from data
     var toml = generateTOMLString(data);
     document.getElementById('configOutput').value = toml;
+}
+
+function collectProviderData() {
+    const providers = document.querySelectorAll('.llm-provider');
+    const data = Array.from(providers).map(provider => ({
+        provider: provider.querySelector('.provider-select').value,
+        api_key: provider.querySelector('.api-key-input').value,
+        model: provider.querySelector('.model-input').value,
+        temperature: provider.querySelector('.temperature-input').value,
+        tpm_limit: provider.querySelector('.tpm-limit-input').value,
+        rpm_limit: provider.querySelector('.rpm-limit-input').value,
+    }));
+    return data;
 }
 
 function generateTOMLString(data) {
@@ -112,39 +111,35 @@ function generateTOMLString(data) {
 
 function addLLMProvider() {
     const container = document.getElementById('llmProviders');
-    const index = container.children.length + 1;
+    const index = container.children.length + 1; // This index is now used only to label the sections visually
 
     const providerDiv = document.createElement('div');
     providerDiv.className = 'llm-provider';
-    providerDiv.id = `llmProvider${index}`;
-
     providerDiv.innerHTML = `
         <h3>Large Language Model ${index}</h3>
-        <label for="provider${index}">Provider:</label>
-        <select id="provider${index}" name="provider${index}">
+        <label>Provider:</label>
+        <select class="provider-select">
             <option value="OpenAI">OpenAI</option>
             <option value="GoogleAI">GoogleAI</option>
             <option value="Cohere">Cohere</option>
             <option value="Anthropic">Anthropic</option>
         </select><br>
-        <label for="api_key${index}">API Key:</label>
-        <input type="text" id="api_key${index}" name="api_key${index}"><br>
-        <label for="model${index}">Model:</label>
-        <input type="text" id="model${index}" name="model${index}"><br>
-        <label for="temperature${index}">Temperature:</label>
-        <input type="number" id="temperature${index}" value="0.01" name="temperature${index}" step="0.01"><br>
-        <label for="tpm_limit${index}">Tokens Per Minute:</label>
-        <input type="number" id="tpm_limit${index}" value="0" name="tpm_limit${index}"><br>
-        <label for="rpm_limit${index}">Requests Per Minute:</label>
-        <input type="number" id="rpm_limit${index}" value="0" name="rpm_limit${index}"><br>
+        <label>API Key:</label>
+        <input type="text" class="api-key-input"><br>
+        <label>Model:</label>
+        <input type="text" class="model-input"><br>
+        <label>Temperature:</label>
+        <input type="number" class="temperature-input" value="0.01" step="0.01"><br>
+        <label>Tokens Per Minute:</label>
+        <input type="number" class="tpm-limit-input" value="0"><br>
+        <label>Requests Per Minute:</label>
+        <input type="number" class="rpm-limit-input" value="0"><br>
     `;
-    
+
     const removeButton = document.createElement('button');
     removeButton.textContent = 'Remove';
     removeButton.type = 'button';
-    removeButton.style.backgroundColor = '#ffffff';
-    removeButton.style.color = '#FF0000';
-    removeButton.onclick = function() { removeLLMProvider(index); };
+    removeButton.onclick = () => providerDiv.remove(); // Directly remove the div
     providerDiv.appendChild(removeButton);
 
     container.appendChild(providerDiv);

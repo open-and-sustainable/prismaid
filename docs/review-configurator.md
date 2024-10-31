@@ -100,9 +100,9 @@ layout: default
     <button type="button" onclick="addReviewBlock()" style="background-color: #ffffff;">Add Review Item</button>
     <br><br>
 
-
-    <button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate Configuration</button>
 </form>
+
+<button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate Configuration</button>
 
 <textarea id="configOutput" rows="50" cols="140"></textarea>
 
