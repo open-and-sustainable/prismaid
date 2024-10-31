@@ -6,11 +6,7 @@ PKG_CFLAGS += -I../inst/include
 # Platform Identification
 UNAME := $(shell uname)
 
-# Default target to avoid missing separator errors
-all: platform-specific-libs
-
 # Platform-Specific Configuration for Library Linking
-platform-specific-libs:
 ifeq ($(UNAME), Linux)
 	@echo "Detected Linux: Keeping only Linux library"
 	PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
