@@ -77,10 +77,10 @@ function generateTOMLString(data) {
         });
     });
 
-    var toml = ["[prompt]"];
-        Object.keys(data.prompt).forEach(function(key) {
-            toml.push(`${key} = "${data.prompt[key]}"`);
-        });
+    toml.push("\n[prompt]");
+    Object.keys(data.prompt).forEach(function(key) {
+        toml.push(`${key} = "${data.prompt[key]}"`);
+    });
 
     return toml.join("\n");
 }

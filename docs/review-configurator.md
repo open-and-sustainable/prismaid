@@ -75,7 +75,7 @@ layout: default
 
     <h2>Prompt Components</h2>
     <label for="persona">Persona:</label>
-        <input type="text" id="persona" name="persona" value="You are an experienced scientist working on a systematic review of the literature."><br>
+        <input type="text" id="persona" name="persona" style="width: 70%;" value="You are an experienced scientist working on a systematic review of the literature."><br>
 
     <label for="task">Task:</label>
         <input type="text" id="task" name="task" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
