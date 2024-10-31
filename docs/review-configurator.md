@@ -155,13 +155,18 @@ layout: default
     <br><br>
 
 </form>
+
 ## Generate Configuration
 <button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate TOML</button>
 
 <textarea id="configOutput" class="wide-textarea"></textarea>
+
 ## Download Configuration
 <button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download File</button>
 
 <script src="assets/js/tomlGenerator.js"></script>
 
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
 
