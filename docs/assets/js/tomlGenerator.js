@@ -151,7 +151,7 @@ function removeLLMProvider(index) {
 }
 
 function addReviewBlock() {
-    const container = document.getElementById('reviews');
+    const container = document.getElementById('review_items');
     const index = container.children.length + 1;
 
     const reviewDiv = document.createElement('div');
