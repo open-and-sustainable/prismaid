@@ -62,13 +62,17 @@ function collectProviderData() {
 
 function collectReviewData() {
     const reviews = document.querySelectorAll('.review-item');
-    const data = Array.from(reviews).map(review => ({
-        key: review.querySelector('.review-key').value,  // Use class to select the key input
-        values: review.querySelector('.review-values').value.split(',').map(v => v.trim())  // Use class to select the values input and process it
-    }));
+    const data = Array.from(reviews).map(review => {
+        const key = review.querySelector('.review-key').value;
+        const valuesInput = review.querySelector('.review-values').value;
+
+        // Check if the values input is empty
+        const values = valuesInput ? valuesInput.split(',').map(v => v.trim()) : [];
+
+        return { key, values };
+    });
     return data;
 }
-
 
 function generateTOMLString(data) {
     // Build TOML string from the structured data

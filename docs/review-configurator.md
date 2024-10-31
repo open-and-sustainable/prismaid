@@ -6,7 +6,7 @@ layout: default
 # Generate Your Review Configuration File
 
 <form id="configForm">
-    <h2>Project Information</h2>
+    ## Project Information
     <label for="name">Project Name:</label>
     <input type="text" id="name" name="name" value="Review Project Title"><br>
 
@@ -101,12 +101,12 @@ layout: default
     <br><br>
 
 </form>
-
-<button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate Configuration</button>
+## Generate Configuration
+<button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate</button>
 
 <textarea id="configOutput" rows="50" cols="140"></textarea>
-
-<button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download Configuration</button>
+## Download Configuration
+<button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download</button>
 
 <script src="assets/js/tomlGenerator.js"></script>
 
