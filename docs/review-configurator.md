@@ -101,7 +101,7 @@ layout: default
     <br><br>
 
 
-    <button type="button" id="generateConfigButton">Generate Configuration</button>
+    <button type="button" id="generateConfigButton" style="background-color: #0056b3; color: #ffffff;">Generate Configuration</button>
 </form>
 
 <textarea id="configOutput" rows="20" cols="70"></textarea>
