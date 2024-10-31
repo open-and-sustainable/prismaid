@@ -3,20 +3,26 @@ title: Config Generator
 layout: default
 ---
 
+<link rel="stylesheet" href="/assets/css/styles.css">
+
 # Generate Your Review Configuration File
 
 <form id="configForm">
     <h2 id="project-information">Project Information</h2>
-    <label for="name">Project Name:</label>
-    <input type="text" id="name" name="name" value="Review Project Title"><br>
 
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Enter the name of your project.</p>
+        <label for="name" class="form-label">Project Name:</label>
+        <input type="text" id="name" name="name" value="Review Project Title" class="form-input"><br>
+    </div>
+ 
     <label for="author">Project Author:</label>
     <input type="text" id="author" name="author" value="First Lastname"><br>
 
     <label for="version">Version:</label>
     <input type="text" id="version" name="version" value="0.1"><br>
 
-    <h2>Project Configuration</h2>
+    <h2 id="project-configuration">Project Configuration</h2>
     <label for="input_directory">Input Directory:</label>
     <input type="text" id="input_directory" name="input_directory" value="/path/to/txt/files"><br>
 
@@ -66,14 +72,14 @@ layout: default
         <option value="yes">Yes</option>
     </select><br>
 
-    <h2>LLM Configuration</h2>
+    <h2 id="llm-configuration">LLM Configuration</h2>
     <div id="llmProviders">
         <!-- LLM providers will be added dynamically here -->
     </div>
     <button type="button" onclick="addLLMProvider()" style="background-color: #ffffff;">Add LLModel</button>
     <br><br>
 
-    <h2>Prompt Components</h2>
+    <h2 id="prompt-components">Prompt Components</h2>
     <label for="persona">Persona:</label>
         <input type="text" id="persona" name="persona" style="width: 70%;" value="You are an experienced scientist working on a systematic review of the literature."><br>
 
@@ -93,7 +99,7 @@ layout: default
         <input type="text" id="failsafe" name="failsafe" style="width: 70%;" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
 
 
-    <h2>Review Items</h2>
+    <h2 id="review-items">Review Items</h2>
     <div id="reviews">
         <!-- Review items will be added dynamically here -->
     </div>

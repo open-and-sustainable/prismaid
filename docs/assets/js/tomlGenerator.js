@@ -186,6 +186,11 @@ function addLLMProvider() {
             option.value = model;
             option.textContent = model || 'Default'; // Show 'Default' for empty string
             modelSelect.appendChild(option);
+
+            // Set "Default" as the selected value
+            if (model === '') {
+                option.selected = true; // Mark the "Default" option as selected
+            }
         });
     }
 
