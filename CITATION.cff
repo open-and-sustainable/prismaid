@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.6.0 - added Go and Python package release
-  Added Go module and Python wrapper package updated through CI/CD automation
+  v0.6.1 - added R package release and configuration web initializer. 
+  Release of the project as R package published on r-universe, web initializer of project configuration file.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

@@ -9,12 +9,14 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## UNRELEASED
+## [0.6.1] - 2024-10-31
 ### Added
 - release of the project as R package published on r-universe
+- web initializer of project configuration file
 ### Fixed
 - updated documentation to include R package
-
+### Changed
+- deep refactoring of documentation to improve readability and information access
 
 ## [0.6.0] - 2024-10-25
 ### Added
