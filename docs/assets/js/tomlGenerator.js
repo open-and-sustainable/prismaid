@@ -34,7 +34,8 @@ function generateConfig() {
             definitions: document.getElementById('definitions').value,
             example: document.getElementById('example').value,
             failsafe: document.getElementById('failsafe').value,
-        }
+        },
+        review_items: []
     };
 
     // Collect data from dynamically added LLM providers
@@ -49,6 +50,16 @@ function generateConfig() {
             rpm_limit: provider.querySelector(`#rpm_limit${index + 1}`).value
         };
         data.llm_providers.push(providerData);
+    });
+
+    // Collect data from dynamically added review items
+    const reviews = document.querySelectorAll('.review');
+    reviews.forEach((review, index) => {
+        const reviewData = {
+            key: review.querySelector(`#key${index + 1}`).value,
+            values: review.querySelector(`#values${index + 1}`).value
+        };
+        data.review_items.push(reviewData);
     });
 
     // Generate TOML string from data
@@ -80,6 +91,15 @@ function generateTOMLString(data) {
     toml.push("\n[prompt]");
     Object.keys(data.prompt).forEach(function(key) {
         toml.push(`${key} = "${data.prompt[key]}"`);
+    });
+
+    toml.push("\n[review]");
+    // Append review items to the TOML string
+    data.review_items.forEach((review, index) => {
+        toml.push(`\n[review.${index + 1}]`);
+        Object.keys(review).forEach(key => {
+            toml.push(`${key} = "${review[key]}"`);
+        });
     });
 
     return toml.join("\n");
@@ -125,6 +145,38 @@ function addLLMProvider() {
 
 function removeLLMProvider(index) {
     const element = document.getElementById('llmProvider' + index);
+    if (element) {
+        element.parentNode.removeChild(element);
+    }
+}
+
+function addReviewBlock() {
+    const container = document.getElementById('reviews');
+    const index = container.children.length + 1;
+
+    const reviewDiv = document.createElement('div');
+    reviewDiv.className = 'review';
+    reviewDiv.id = `review${index}`;
+
+    reviewDiv.innerHTML = `
+        <h3>Review Block ${index}</h3>
+        <label for="key${index}">Key:</label>
+        <input type="text" id="key${index}" name="key${index}"><br>
+        <label for="values${index}">Values:</label>
+        <input type="text" id="values${index}" name="values${index}" placeholder="Enter comma-separated values"><br>
+    `;
+
+    const removeButton = document.createElement('button');
+    removeButton.textContent = 'Remove';
+    removeButton.type = 'button';
+    removeButton.onclick = function() { removeReviewBlock(index); };
+    reviewDiv.appendChild(removeButton);
+
+    container.appendChild(reviewDiv);
+}
+
+function removeReviewBlock(index) {
+    const element = document.getElementById('review' + index);
     if (element) {
         element.parentNode.removeChild(element);
     }

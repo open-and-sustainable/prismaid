@@ -78,22 +78,28 @@ layout: default
         <input type="text" id="persona" name="persona" style="width: 70%;" value="You are an experienced scientist working on a systematic review of the literature."><br>
 
     <label for="task">Task:</label>
-        <input type="text" id="task" name="task" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
+        <input type="text" id="task" name="task" style="width: 70%;" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
 
     <label for="expected_result">Expected Result:</label>
-        <input type="text" id="expected_result" name="expected_result" value="You should output a JSON object with the following keys and possible values: "><br>
+        <input type="text" id="expected_result" name="expected_result" style="width: 70%;" value="You should output a JSON object with the following keys and possible values: "><br>
 
     <label for="definitions">Definitions:</label>
-            <input type="text" id="definitions" name="definitions" value=""><br>
+            <input type="text" id="definitions" name="definitions" style="width: 70%;" value=""><br>
 
     <label for="example">Examples:</label>
-        <input type="text" id="example" name="example" value=""><br>
+        <input type="text" id="example" name="example" style="width: 70%;" value=""><br>
 
     <label for="failsafe">Failsafe:</label>
-        <input type="text" id="failsafe" name="failsafe" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
+        <input type="text" id="failsafe" name="failsafe" style="width: 70%;" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
 
 
     <h2>Review Items</h2>
+    <div id="review">
+        <!-- Review items will be added dynamically here -->
+    </div>
+    <button type="button" onclick="addReviewBlock()">Add Review Item</button>
+    <br><br>
+
 
     <button type="button" id="generateConfigButton">Generate Configuration</button>
 </form>
