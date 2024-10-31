@@ -22,6 +22,13 @@
     border-radius: 4px; /* Rounded corners for inputs */
 }
 
+.form-long-input {
+    width: 800px; /* Adjust the width of the input fields as needed */
+    padding: 5px;
+    border: 1px solid #ccc; /* Light border for inputs */
+    border-radius: 4px; /* Rounded corners for inputs */
+}
+
 .form-heading {
     font-size: 1.1em; /* Adjust heading size as needed */
     margin-bottom: 10px;

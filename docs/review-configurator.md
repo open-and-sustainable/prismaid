@@ -113,37 +113,37 @@ layout: default
     <div class="form-group">
         <p class="description" style="font-style: italic;">Describe the persona or role the model should adopt when performing the task.</p>
         <label for="persona" class="form-label">Persona:</label>
-        <input type="text" id="persona" name="persona" class="form-input long-input" value="You are an experienced scientist working on a systematic review of the literature."><br>
+        <input type="text" id="persona" name="persona" class="form-long-input" value="You are an experienced scientist working on a systematic review of the literature."><br>
     </div>
 
     <div class="form-group">
         <p class="description" style="font-style: italic;">Specify the task the model should perform.</p>
         <label for="task" class="form-label">Task:</label>
-        <input type="text" id="task" name="task" class="form-input long-input" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
+        <input type="text" id="task" name="task" class="form-long-input" value="You are asked to map the concepts discussed in a scientific paper attached here."><br>
     </div>
 
     <div class="form-group">
         <p class="description" style="font-style: italic;">Outline the expected result in detail, in particular stating you are looking for a JSON response object.</p>
         <label for="expected_result" class="form-label">Expected Result:</label>
-        <input type="text" id="expected_result" name="expected_result" class="form-input long-input" value="You should output a JSON object with the following keys and possible values: "><br>
+        <input type="text" id="expected_result" name="expected_result" class="form-long-input" value="You should output a JSON object with the following keys and possible values: "><br>
     </div>
 
     <div class="form-group">
         <p class="description" style="font-style: italic;">Provide any specific definitions to avoid misunderstandings.</p>
         <label for="definitions" class="form-label">Definitions:</label>
-        <input type="text" id="definitions" name="definitions" class="form-input long-input" value=""><br>
+        <input type="text" id="definitions" name="definitions" class="form-long-input" value=""><br>
     </div>
 
     <div class="form-group">
         <p class="description" style="font-style: italic;">Include examples to clarify the request.</p>
         <label for="example" class="form-label">Examples:</label>
-        <input type="text" id="example" name="example" class="form-input long-input" value=""><br>
+        <input type="text" id="example" name="example" class="form-long-input" value=""><br>
     </div>
 
     <div class="form-group">
         <p class="description" style="font-style: italic;">Specify a failsafe response if the concepts are unclear or missing.</p>
         <label for="failsafe" class="form-label">Failsafe:</label>
-        <input type="text" id="failsafe" name="failsafe" class="form-input long-input" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
+        <input type="text" id="failsafe" name="failsafe" class="form-long-input" value="If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."><br>
     </div>
 
 
