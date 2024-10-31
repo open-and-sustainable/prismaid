@@ -101,13 +101,17 @@ function generateTOMLString(data) {
     });
 
     toml.push("\n[review]");
-    // Append review items to the TOML string
     data.review_items.forEach((review, index) => {
         toml.push(`\n[review.${index + 1}]`);
         toml.push(`key = "${review.key}"`);
-        // Format the values as an array of strings
-        const valuesArray = review.values.split(',').map(value => `"${value.trim()}"`);
-        toml.push(`values = [${valuesArray.join(", ")}]`);
+
+        // Properly format `values` as an array of strings
+        if (Array.isArray(review.values)) {
+            const formattedValues = review.values.map(value => `"${value}"`).join(", ");
+            toml.push(`values = [${formattedValues}]`);
+        } else {
+            toml.push(`values = []`); // Fallback if `values` is not an array
+        }
     });
 
     return toml.join("\n");
