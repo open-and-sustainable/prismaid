@@ -98,7 +98,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu
-          GOARCH=arm64 go build -buildmode=c-shared -o libprismaid_linux_arm64.so export.go
+          CC=aarch64-linux-gnu-gcc GOARCH=arm64 go build -buildmode=c-shared -o libprismaid_linux_arm64.so export.go
 
       - name: Upload Linux shared library artifact
         uses: actions/upload-artifact@v4
