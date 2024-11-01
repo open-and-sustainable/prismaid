@@ -19,9 +19,9 @@ ifeq ($(UNAME), Darwin)
     @echo "Detected macOS: Keeping only macOS library"
     PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
-ifeq ($(UNAME), Windows)
+ifeq ($(UNAME), Windows_NT)
     @echo "Detected Windows: Keeping only Windows library"
-    PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64
+    PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
 endif
 
 # Add target to perform library cleanup
