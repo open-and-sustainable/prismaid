@@ -1,8 +1,9 @@
-name: Build and Deploy Shared Libraries
+name: Test CI
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
 
 jobs:
   update-version-for-r:
