@@ -9,10 +9,11 @@ layout: default
 ## Purpose and Benefits
 prismAId revolutionizes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
 
-### Key Advantages:
+### Key Advantages
 
 - **Accessibility**: Easy-to-use interfaces ensure that anyone can leverage advanced AI tools for literature reviews.
 - **Flexibility**: Supports a wide range of literature review protocols, including the Prisma 2020.
+- **Replicability**: Enables seamless saving and sharing of review inputs, ensuring that any researcher can reproduce or continue the analysis effortlessly.
 - **Efficiency**: Optimized for handling large datasets with minimal setup, reducing the time from research to results.
 - **Innovation**: Continuously updated to incorporate the latest AI advancements, keeping your research at the cutting edge.
 
