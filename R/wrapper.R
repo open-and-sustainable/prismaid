@@ -1,7 +1,5 @@
 # File: R/wrapper.R
 
-.# File: R/wrapper.R
-
 .onLoad <- function(libname, pkgname) {
   # Log package loading
   message("Loading package: ", pkgname)
