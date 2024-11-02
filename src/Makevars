@@ -22,6 +22,8 @@ endif
 ifeq ($(UNAME), Windows_NT)
     @echo "Detected Windows: Keeping only Windows library"
     PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
+    # Ensure the Go shared library is linked
+    PKG_LIBS += libprismaid_windows_amd64.dll
 endif
 
 # Add target to perform library cleanup
