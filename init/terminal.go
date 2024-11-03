@@ -64,27 +64,63 @@ func RunInteractiveConfigCreation() {
 	)
 	checkErr(err)
 
-	// Configuration details with help for each choice
-	inputDir, err := prompt.New().Ask("Enter input directory (must exist):").Input(
-		"./", 
-		input.WithHelp(true), input.WithValidateFunc(validateDirectory))
-	checkErr(err)
-
-	// inputConversion
-	val2, err := prompt.New().Ask("Do you need input file conversion from these formats to .txt? (leave empty if not needed)").
-		MultiChoose(
-			[]string{"pdf", "docx", "html"},
-			multichoose.WithDefaultIndexes(1, []int{}),
-			multichoose.WithHelp(true),
-		)
-	checkErr(err)
+	inputDir := ""
 	inputConversion := ""
-	if len(val2) == 1 {
-		inputConversion = val2[0]
-	} else if len(val2) > 1 {
-		inputConversion = strings.Join(val2, ",")
-	}
+	zoteroUser := ""
+	zoteroAPI := ""
+	zoteroGroup := ""
 
+	// Zotero review
+	zotBool, err := prompt.New().Ask("Do you want to run a review of PDFs in a Zotero collection or group?").
+	AdvancedChoose(
+		[]choose.Choice{
+			{Text: "no", Note: "I want to run a review of set of local files."},
+			{Text: "yes", Note: "Enable the review of a Zotero collection or group."},
+		},
+		choose.WithHelp(true),)
+	checkErr(err)
+	if zotBool == "yes" {
+		// Zotero user
+		zoteroUser, err = prompt.New().Ask("Enter Zotero user number:").Input(
+			"",
+			input.WithHelp(true),
+		)
+		checkErr(err)
+		// Zotero API
+		zoteroAPI, err = prompt.New().Ask("Enter Zotero API private key:").Input(
+			"",
+			input.WithHelp(true),
+		)
+		checkErr(err)
+		// Zotero group
+		zoteroGroup, err = prompt.New().Ask("Enter Zotero collection or group with nested path (e.g., 'parent/collection'):").Input(
+			"",
+			input.WithHelp(true),
+		)
+		checkErr(err)
+	} else {
+		// Configuration details with help for each choice
+		inputDir, err = prompt.New().Ask("Enter input directory (must exist):").Input(
+			"./", 
+			input.WithHelp(true), input.WithValidateFunc(validateDirectory))
+		checkErr(err)
+
+		// inputConversion
+		val2, err := prompt.New().Ask("Do you need input file conversion from these formats to .txt? (leave empty if not needed)").
+			MultiChoose(
+				[]string{"pdf", "docx", "html"},
+				multichoose.WithDefaultIndexes(1, []int{}),
+				multichoose.WithHelp(true),
+			)
+		checkErr(err)
+		
+		if len(val2) == 1 {
+			inputConversion = val2[0]
+		} else if len(val2) > 1 {
+			inputConversion = strings.Join(val2, ",")
+		}
+	}
+	
 	resultsFileName, err := prompt.New().Ask("Enter results directory (must exist):").Input(
 		"./", 
 		input.WithHelp(true), input.WithValidateFunc(validateDirectory))
@@ -262,7 +298,8 @@ func RunInteractiveConfigCreation() {
 	config := generateTomlConfig(
 		projectName, author, version,
 		inputDir, inputConversion, resultsFileName, outputFormat, logLevel,
-		duplication, cotJustification, summary, models, 
+		duplication, cotJustification, summary, 
+		zoteroUser, zoteroAPI, zoteroGroup, models, 
 		persona, task, expected_result,
 		failsafe, definitions, example, review,
 	)
@@ -520,7 +557,7 @@ func collectExamples(reviewItems []ReviewItem) string {
 
 // Helper function to generate the TOML configuration string
 func generateTomlConfig(projectName, author, version, inputDir, inputConversion, resultsFileName, outputFormat, 
-	logLevel, duplication, cotJustification, summary, models, 
+	logLevel, duplication, cotJustification, summary, zoteroUser, zoteroAPI, zoteroGroup, models, 
 	persona, task, expected_result, failsafe, definitions, example, review string) string {
 	config := fmt.Sprintf(`
 [project]
@@ -538,6 +575,11 @@ duplication = "%s"
 cot_justification = "%s"
 summary = "%s"
 
+[project.zotero]
+user = "%s"
+api_key = "%s"
+group = "%s" 
+
 [project.llm]
 %s
 [prompt]
@@ -551,7 +593,7 @@ example = "%s"
 [review]
 %s
 `, projectName, author, version, inputDir, inputConversion, resultsFileName, outputFormat, 
-logLevel, duplication, cotJustification, summary, models,
+logLevel, duplication, cotJustification, summary, zoteroUser, zoteroAPI, zoteroGroup, models,
 persona, task, expected_result, failsafe, definitions, example, review)
 	return strings.TrimSpace(config)
 }

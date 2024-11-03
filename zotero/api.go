@@ -100,3 +100,50 @@ func DownloadPDFs(username, apiKey, collectionKey string) error {
 
     return nil
 }
+
+type Collection struct {
+    Key  string `json:"key"`
+    Name string `json:"data.name"`
+}
+
+// getCollectionKey fetches the key of a collection by its name
+func getCollectionKey(username, apiKey, collectionName string) (string, error) {
+    const baseURL = "https://api.zotero.org"
+    collectionsURL := fmt.Sprintf("%s/users/%s/collections?format=json", baseURL, username)
+
+    // Create a new HTTP request
+    req, err := http.NewRequest("GET", collectionsURL, nil)
+    if err != nil {
+        return "", fmt.Errorf("error creating request: %v", err)
+    }
+
+    // Add the API key to the request header
+    req.Header.Add("Zotero-API-Key", apiKey)
+
+    // Send the request
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return "", fmt.Errorf("error making request: %v", err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        return "", fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+    }
+
+    // Parse the JSON response
+    var collections []Collection
+    if err := json.NewDecoder(resp.Body).Decode(&collections); err != nil {
+        return "", fmt.Errorf("error decoding JSON: %v", err)
+    }
+
+    // Search for the collection by name
+    for _, collection := range collections {
+        if collection.Name == collectionName {
+            return collection.Key, nil
+        }
+    }
+
+    return "", fmt.Errorf("collection with name '%s' not found", collectionName)
+}

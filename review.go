@@ -128,6 +128,8 @@ func RunReview(tomlConfiguration string) error {
 		debug.SetupLogging(debug.Silent, config.Project.Configuration.ResultsFileName) // default value
 	}
 
+	// Zotero review logic
+
 	// run input conversion if needed
 	if config.Project.Configuration.InputConversion != "no" {
 		err := convert.Convert(config)

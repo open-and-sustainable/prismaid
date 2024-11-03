@@ -21,6 +21,7 @@ func TestMyInteractiveFunction(t *testing.T) {
         "Test Project",
         "Test Author",
         "1.0",
+        "no",
         "./input",
         "",
         "./results",

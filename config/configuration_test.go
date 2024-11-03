@@ -34,6 +34,12 @@ duplication = "no"                          # Can be "yes" or "no" [default]. It
 cot_justification = "no"                    # Can be "yes" or "no" [default]. It requests and saves the model justification in terms of chain of thought for the answers provided.
 summary = "no"                              # Can be "yes" or "no" [default]. If positive, manuscript summaries will be generated an saved.
 
+### The optional [project.zotero] section contains the parameters needed to review a collection or group in Zotero
+[project.zotero]
+user = "123456789"
+api_key = "env6666"
+group = "parent/group"
+
 ### The [project.llm] section, if more than 1 will be an ensemble project
 [project.llm]
 [project.llm.1]
@@ -123,6 +129,11 @@ values = ["world", "continent", "river basin"]
                 Duplication:      "no",
                 CotJustification: "no",
                 Summary:          "no",
+            },
+            Zotero: ProjectZotero{
+                User:   "123456789",
+                API:    "env6666",
+                Group:  "parent/group",
             },
             LLM: map[string]LLMItem{
                 "1": {
