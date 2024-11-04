@@ -138,7 +138,11 @@ func RunReview(tomlConfiguration string) error {
 			return err
 		}
 		// convert pdfs
-
+		err = convert.Convert(getDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
+		if err != nil {
+			log.Printf("Error:\n%v", err)
+			exit(ExitCodeErrorInReviewLogic)
+		}
 	} else {
 		// run input conversion if needed and not a Zotero project
 		if config.Project.Configuration.InputConversion != "no" {
@@ -148,7 +152,6 @@ func RunReview(tomlConfiguration string) error {
 				exit(ExitCodeErrorInReviewLogic)
 			}
 		}
-
 	}
 
 	// setup other debugging features
