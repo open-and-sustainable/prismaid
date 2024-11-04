@@ -14,7 +14,88 @@ A string indicating the result of the review process.
 }
 \description{
 This function interfaces with a shared library to perform a review process on the input data.
+The input data must be structured in a TOML format, consisting of the following sections and parameters:
 }
+\section{\verb{[project]}}{
+
+\itemize{
+\item \code{name}: A string representing the project title. Example: "Use of LLM for systematic review".
+\item \code{author}: The name of the project author. Example: "John Doe".
+\item \code{version}: The version number for the project configuration. Example: "1.0".
+}
+}
+
+\section{\verb{[project.configuration]}}{
+
+\itemize{
+\item \code{input_directory}: The file path to the directory containing manuscripts to be reviewed. Example: "/path/to/txt/files".
+\item \code{input_conversion}: Specifies manuscript conversion formats:
+\itemize{
+\item \code{""}: Default, non-active conversion.
+\item \code{"pdf"}, \code{"docx"}, \code{"html"}, or combinations like \code{"pdf,docx"}.
+}
+\item \code{results_file_name}: The path and base name for saving results (file extension will be added automatically). Example: "/path/to/save/results".
+\item \code{output_format}: The format for output results. Options: "csv" (default) or "json".
+\item \code{log_level}: Determines logging verbosity:
+\itemize{
+\item \code{"low"}: Minimal logging (default).
+\item \code{"medium"}: Logs to standard output.
+\item \code{"high"}: Logs to a file (see user manual for details).
+}
+\item \code{duplication}: Runs model queries twice for debugging purposes. Options: "yes" or "no" (default).
+\item \code{cot_justification}: Requests chain-of-thought justification from the model. Options: "yes" or "no" (default).
+\item \code{summary}: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
+}
+}
+
+\section{\verb{[project.llm]}}{
+
+\itemize{
+\item Configuration for LLMs, supporting multiple providers for ensemble reviews.
+\item Parameters include:
+\itemize{
+\item \code{provider}: The LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
+\item \code{api_key}: API key for the provider. If empty, environment variables will be checked.
+\item \code{model}: Model name. Options vary by provider:
+\itemize{
+\item OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", or "" (default).
+\item GoogleAI: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", or "" (default).
+\item Cohere: "command-r-plus", "command-r", "command-light", "command", or "" (default).
+\item Anthropic: "claude-3-5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default).
+}
+}
+\item \code{temperature}: Controls model randomness. Range: 0 to 1 (or 0 to 2 for GoogleAI). Lower values reduce randomness.
+\item \code{tpm_limit}: Tokens per minute limit before delaying prompts. Default: 0 (no delay).
+\item \code{rpm_limit}: Requests per minute limit before delaying prompts. Default: 0 (no delay).
+}
+}
+
+\section{\verb{[prompt]}}{
+
+\itemize{
+\item Defines the main components of the prompt for reviews.
+\item \code{persona}: Optional text specifying the model's role. Example: "You are an experienced scientist...".
+\item \code{task}: Required text framing the task for the model. Example: "Map the concepts discussed in a scientific paper...".
+\item \code{expected_result}: Required text describing the expected output structure in JSON.
+\item \code{definitions}: Optional text defining concepts to clarify instructions. Example: "'Interest rate' is defined as...".
+\item \code{example}: Optional example to illustrate concepts.
+\item \code{failsafe}: Specifies a fallback if the concepts cannot be identified. Example: "Respond with an empty '' value if concepts are unclear".
+}
+}
+
+\section{\verb{[review]}}{
+
+\itemize{
+\item Defines the keys and possible values in the JSON object for the review.
+\item Example entries:
+\itemize{
+\item \verb{[review.1]}: \code{key = "interest rate"}, \verb{values = [""]}
+\item \verb{[review.2]}: \code{key = "regression models"}, \verb{values = ["yes", "no"]}
+\item \verb{[review.3]}: \code{key = "geographical scale"}, \verb{values = ["world", "continent", "river basin"]}
+}
+}
+}
+
 \examples{
 RunReview("example input")
 }
