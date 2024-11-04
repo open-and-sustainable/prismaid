@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/open-and-sustainable/prismaid/config"
 )
 
 // Convert processes files from the input directory specified in the configuration and converts them into plain text files.
@@ -26,16 +25,15 @@ import (
 //   > if err != nil {
 //   >     log.Fatalf("Conversion failed: %v", err)
 //   > }
-func Convert(config *config.Config) error {
+func Convert(inputDir, selectedFormats string) error {
 	// Load files from the input directory
-	inputDir := config.Project.Configuration.InputDirectory
 	files, err := os.ReadDir(inputDir)
 	if err != nil {
 		log.Println("Error: ", err)
 		return fmt.Errorf("error reading input directory: %v", err)
 	}
 	// formats
-	formats := strings.Split(config.Project.Configuration.InputConversion, ",")
+	formats := strings.Split(selectedFormats, ",")
 	// parse files
 	for format := range formats {
 		for _, file := range files {

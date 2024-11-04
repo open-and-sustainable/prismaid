@@ -16,6 +16,7 @@ import (
 	"github.com/open-and-sustainable/prismaid/results"
 	"github.com/open-and-sustainable/prismaid/review"
 	"github.com/open-and-sustainable/prismaid/tokens"
+	"github.com/open-and-sustainable/prismaid/zotero"
 	"sync"
 	"time"
 )
@@ -129,14 +130,25 @@ func RunReview(tomlConfiguration string) error {
 	}
 
 	// Zotero review logic
-
-	// run input conversion if needed
-	if config.Project.Configuration.InputConversion != "no" {
-		err := convert.Convert(config)
+	if config.Project.Zotero.User != "" {
+		// downlaod pdfs
+		err := zotero.DownloadPDFs(config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, getDirectoryPath(config.Project.Configuration.ResultsFileName))
 		if err != nil {
 			log.Printf("Error:\n%v", err)
-			exit(ExitCodeErrorInReviewLogic)
+			return err
 		}
+		// convert pdfs
+
+	} else {
+		// run input conversion if needed and not a Zotero project
+		if config.Project.Configuration.InputConversion != "no" {
+			err := convert.Convert(config.Project.Configuration.InputDirectory, config.Project.Configuration.InputConversion)
+			if err != nil {
+				log.Printf("Error:\n%v", err)
+				exit(ExitCodeErrorInReviewLogic)
+			}
+		}
+
 	}
 
 	// setup other debugging features

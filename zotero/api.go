@@ -3,6 +3,7 @@ package zotero
 import (
     "encoding/json"
     "fmt"
+    "log"
     "io"
     "net/http"
     "os"
@@ -17,9 +18,14 @@ type Item struct {
 }
 
 // DownloadPDFs downloads all PDFs from the specified Zotero group or collection
-func DownloadPDFs(username, apiKey, collectionKey string) error {
+func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
     const baseURL = "https://api.zotero.org"
     userID := username
+
+    collectionKey, err := getCollectionKey(username, apiKey, collectionName)
+    if err != nil {
+        return err
+    }
 
     // Construct the URL for the collection
     collectionURL := fmt.Sprintf("%s/users/%s/collections/%s/items?format=json&itemType=attachment", baseURL, userID, collectionKey)
@@ -52,7 +58,7 @@ func DownloadPDFs(username, apiKey, collectionKey string) error {
     }
 
     // Create a directory to save the PDFs
-    outputDir := "zotero_pdfs"
+    outputDir := parentDir + "/zotero"
     if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
         return fmt.Errorf("error creating directory: %v", err)
     }
@@ -62,20 +68,20 @@ func DownloadPDFs(username, apiKey, collectionKey string) error {
         downloadURL := fmt.Sprintf("%s/users/%s/items/%s/file", baseURL, userID, item.Key)
         req, err := http.NewRequest("GET", downloadURL, nil)
         if err != nil {
-            fmt.Printf("Error creating request for file: %v\n", err)
+            log.Printf("Error creating request for file: %v\n", err)
             continue
         }
         req.Header.Add("Zotero-API-Key", apiKey)
 
         resp, err := client.Do(req)
         if err != nil {
-            fmt.Printf("Error downloading file: %v\n", err)
+            log.Printf("Error downloading file: %v\n", err)
             continue
         }
         defer resp.Body.Close()
 
         if resp.StatusCode != http.StatusOK {
-            fmt.Printf("Error: received non-200 response status for file: %s\n", resp.Status)
+            log.Printf("Error: received non-200 response status for file: %s\n", resp.Status)
             continue
         }
 
@@ -83,7 +89,7 @@ func DownloadPDFs(username, apiKey, collectionKey string) error {
         outputPath := filepath.Join(outputDir, item.Data.Filename)
         outFile, err := os.Create(outputPath)
         if err != nil {
-            fmt.Printf("Error creating file: %v\n", err)
+            log.Printf("Error creating file: %v\n", err)
             continue
         }
         defer outFile.Close()
@@ -91,11 +97,11 @@ func DownloadPDFs(username, apiKey, collectionKey string) error {
         // Write the response body to the file
         _, err = io.Copy(outFile, resp.Body)
         if err != nil {
-            fmt.Printf("Error saving file: %v\n", err)
+            log.Printf("Error saving file: %v\n", err)
             continue
         }
 
-        fmt.Println("Downloaded:", item.Data.Filename)
+        log.Println("Downloaded:", item.Data.Filename)
     }
 
     return nil
