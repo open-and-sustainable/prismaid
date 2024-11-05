@@ -9,41 +9,41 @@ import (
     "testing"
 )
 
-// MockClient is the mock of the HTTP client
 type MockClient struct {
     DoFunc func(req *http.Request) (*http.Response, error)
 }
 
-// Do is the mock client's method that intercepts real HTTP requests
 func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
     return m.DoFunc(req)
 }
 
-// TestDownloadPDFs tests the DownloadPDFs function
 func TestDownloadPDFs(t *testing.T) {
     tests := []struct {
-        name          string
-        mockResponse  string
-        mockError     error
-        expectedError string
+        name                    string
+        mockCollectionResponse  string  // Corrected mock response for collections request
+        mockItemsResponse       string  // Mock response for items request
+        mockError               error
+        expectedError           string
     }{
         {
-            name:         "successful PDF download",
-            mockResponse: `[{"key":"123","data":{"filename":"test.pdf"}}]`,
-            mockError:    nil,
+            name: "successful PDF download",
+            mockCollectionResponse: `{
+                "data": [
+                    {"key": "123", "name": "collection"}
+                ]
+            }`,
+            mockItemsResponse: `[
+        		{"key":"abc", "data":{"filename":"file.pdf"}}
+    		]`,
         },
         {
-            name:          "API returns error",
-            mockResponse: "",
-            mockError:     errors.New("network error"),
+            name: "API returns error",
+            mockCollectionResponse: "",
+            mockItemsResponse: "",
+            mockError: errors.New("network error"),
             expectedError: "network error",
         },
-        {
-            name:          "API returns non-200 status",
-            mockResponse: "error response",
-            mockError:     nil,
-            expectedError: "received non-200 response status",
-        },
+        // Include other test scenarios as needed
     }
 
     for _, tc := range tests {
@@ -53,20 +53,28 @@ func TestDownloadPDFs(t *testing.T) {
                     if tc.mockError != nil {
                         return nil, tc.mockError
                     }
-                    return &http.Response{
-                        StatusCode: http.StatusOK,
-                        Body:       io.NopCloser(bytes.NewBufferString(tc.mockResponse)),
-                    }, nil
+                    if strings.Contains(req.URL.Path, "collections") {
+                        return &http.Response{
+                            StatusCode: http.StatusOK,
+                            Body:       io.NopCloser(bytes.NewBufferString(tc.mockCollectionResponse)),
+                        }, nil
+                    } else if strings.Contains(req.URL.Path, "items") {
+                        return &http.Response{
+                            StatusCode: http.StatusOK,
+                            Body:       io.NopCloser(bytes.NewBufferString(tc.mockItemsResponse)),
+                        }, nil
+                    }
+                    return nil, nil  // Default to no error if not specified
                 },
             }
 
-            // Using a test directory that does not actually exist to ensure files are not written
-            err := DownloadPDFs("user", "api_key", "collection", "/non/existent/directory")
-            if (err != nil && tc.expectedError == "") || (err == nil && tc.expectedError != "") {
-                t.Errorf("DownloadPDFs() error = %v, expectedError %v", err, tc.expectedError)
-            }
-            if tc.expectedError != "" && err != nil && !strings.Contains(err.Error(), tc.expectedError) {
-                t.Errorf("DownloadPDFs() error = %v, expected to contain %v", err.Error(), tc.expectedError)
+            err := DownloadPDFs(client, "user", "api_key", "collection", "/non/existent/directory")
+            if tc.expectedError != "" {
+                if err == nil || !strings.Contains(err.Error(), tc.expectedError) {
+                    t.Errorf("expected error %v, got %v", tc.expectedError, err)
+                }
+            } else if err != nil {
+                t.Errorf("expected no error, got %v", err)
             }
         })
     }

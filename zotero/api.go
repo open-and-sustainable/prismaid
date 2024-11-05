@@ -10,6 +10,11 @@ import (
     "path/filepath"
 )
 
+
+type HttpClient interface {
+    Do(req *http.Request) (*http.Response, error)
+}
+
 type Item struct {
     Key  string `json:"key"`
     Data struct {
@@ -18,29 +23,23 @@ type Item struct {
 }
 
 // DownloadPDFs downloads all PDFs from the specified Zotero group or collection
-func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
+func DownloadPDFs(client HttpClient, username, apiKey, collectionName, parentDir string) error {
     const baseURL = "https://api.zotero.org"
     userID := username
 
-    collectionKey, err := getCollectionKey(username, apiKey, collectionName)
+    collectionKey, err := getCollectionKey(client, username, apiKey, collectionName)
     if err != nil {
         return err
     }
 
     // Construct the URL for the collection
     collectionURL := fmt.Sprintf("%s/users/%s/collections/%s/items?format=json&itemType=attachment", baseURL, userID, collectionKey)
-
-    // Create a new HTTP request
     req, err := http.NewRequest("GET", collectionURL, nil)
     if err != nil {
         return fmt.Errorf("error creating request: %v", err)
     }
 
-    // Add the API key to the request header
     req.Header.Add("Zotero-API-Key", apiKey)
-
-    // Send the request
-    client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
         return fmt.Errorf("error making request: %v", err)
@@ -51,19 +50,16 @@ func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
         return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
     }
 
-    // Parse the JSON response
     var items []Item
     if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
         return fmt.Errorf("error decoding JSON: %v", err)
     }
 
-    // Create a directory to save the PDFs
     outputDir := parentDir + "/zotero"
     if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
         return fmt.Errorf("error creating directory: %v", err)
     }
 
-    // Download each PDF
     for _, item := range items {
         downloadURL := fmt.Sprintf("%s/users/%s/items/%s/file", baseURL, userID, item.Key)
         req, err := http.NewRequest("GET", downloadURL, nil)
@@ -85,7 +81,6 @@ func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
             continue
         }
 
-        // Create the file
         outputPath := filepath.Join(outputDir, item.Data.Filename)
         outFile, err := os.Create(outputPath)
         if err != nil {
@@ -94,7 +89,6 @@ func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
         }
         defer outFile.Close()
 
-        // Write the response body to the file
         _, err = io.Copy(outFile, resp.Body)
         if err != nil {
             log.Printf("Error saving file: %v\n", err)
@@ -108,26 +102,26 @@ func DownloadPDFs(username, apiKey, collectionName, parentDir string) error {
 }
 
 type Collection struct {
-    Key  string `json:"key"`
-    Name string `json:"data.name"`
+    Key    string `json:"key"`
+    Name   string `json:"name"`
 }
 
+type CollectionsResponse struct {
+    Data []Collection `json:"data"`
+}
+
+
 // getCollectionKey fetches the key of a collection by its name
-func getCollectionKey(username, apiKey, collectionName string) (string, error) {
+func getCollectionKey(client HttpClient, username, apiKey, collectionName string) (string, error) {
     const baseURL = "https://api.zotero.org"
     collectionsURL := fmt.Sprintf("%s/users/%s/collections?format=json", baseURL, username)
 
-    // Create a new HTTP request
     req, err := http.NewRequest("GET", collectionsURL, nil)
     if err != nil {
         return "", fmt.Errorf("error creating request: %v", err)
     }
 
-    // Add the API key to the request header
     req.Header.Add("Zotero-API-Key", apiKey)
-
-    // Send the request
-    client := &http.Client{}
     resp, err := client.Do(req)
     if err != nil {
         return "", fmt.Errorf("error making request: %v", err)
@@ -138,14 +132,12 @@ func getCollectionKey(username, apiKey, collectionName string) (string, error) {
         return "", fmt.Errorf("error: received non-200 response status: %s", resp.Status)
     }
 
-    // Parse the JSON response
-    var collections []Collection
-    if err := json.NewDecoder(resp.Body).Decode(&collections); err != nil {
+    var response CollectionsResponse
+    if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
         return "", fmt.Errorf("error decoding JSON: %v", err)
     }
 
-    // Search for the collection by name
-    for _, collection := range collections {
+    for _, collection := range response.Data {
         if collection.Name == collectionName {
             return collection.Key, nil
         }

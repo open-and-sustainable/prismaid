@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"github.com/open-and-sustainable/prismaid/check"
@@ -131,8 +132,9 @@ func RunReview(tomlConfiguration string) error {
 
 	// Zotero review logic
 	if config.Project.Zotero.User != "" {
+		client := &http.Client{}
 		// downlaod pdfs
-		err := zotero.DownloadPDFs(config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, getDirectoryPath(config.Project.Configuration.ResultsFileName))
+		err := zotero.DownloadPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, getDirectoryPath(config.Project.Configuration.ResultsFileName))
 		if err != nil {
 			log.Printf("Error:\n%v", err)
 			return err
