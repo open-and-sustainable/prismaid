@@ -30,13 +30,13 @@ layout: default
 
     <h2 id="project-configuration">Project Configuration</h2>
     <div class="form-group">
-        <p class="description" style="font-style: italic;">Specify the directory where the input text files are located.</p>
+        <p class="description" style="font-style: italic;">Specify the directory where the input text files are located (if not a Zotero based review project).</p>
         <label for="input_directory" class="form-label">Input Directory:</label>
         <input type="text" id="input_directory" name="input_directory" value="/path/to/txt/files" class="form-input"><br>
     </div>
 
     <div class="form-group">
-        <p class="description" style="font-style: italic;">Choose the input conversion format(s), if necessary. You can select multiple formats for conversion.</p>
+        <p class="description" style="font-style: italic;">Choose the input conversion format(s), if necessary (and not a Zotero based review project). You can select multiple formats for conversion.</p>
         <label for="input_conversion" class="form-label">Input Conversion:</label>
         <select id="input_conversion" name="input_conversion" class="form-input">
             <option value="" selected>None</option>
@@ -96,10 +96,29 @@ layout: default
     <div class="form-group">
         <p class="description" style="font-style: italic;">Choose whether to generate and save summaries of the manuscript.</p>
         <label for="summary" class="form-label">Summary:</label>
-        <select id="summary" name="summary" class="form-input">
+        <select id="summary" name="summarthe name of the collection or group containing the document to reviewy" class="form-input">
             <option value="no" selected>No</option>
             <option value="yes">Yes</option>
         </select><br>
+    </div>
+
+    <h2 id="project-zotero-integration">Project Zotero Integration</h2>
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Specify the user ID accessible at https://www.zotero.org/settings/security.</p>
+        <label for="user" class="form-label">User ID:</label>
+        <input type="text" id="user" name="user" value="" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Specify the private key created at https://www.zotero.org/settings/security.</p>
+        <label for="api_key" class="form-label">API key:</label>
+        <input type="text" id="api_key" name="api_key" value="" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Specify the name of the collection or group containing the document to review.</p>
+        <label for="group" class="form-label">Group:</label>
+        <input type="text" id="group" name="group" value="" class="form-input"><br>
     </div>
 
     <h2 id="llm-configuration">LLM Configuration</h2>

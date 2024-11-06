@@ -30,6 +30,11 @@ function generateConfig() {
             cot_justification: document.getElementById('cot_justification').value,
             summary: document.getElementById('summary').value,
         },
+        zotero: {
+            user: document.getElementById('user').value,
+            api_key: document.getElementById('api_key').value,
+            group: document.getElementById('group').value,  
+        },
         llm_providers: collectProviderData(),
         prompt: {
             persona: document.getElementById('persona').value,
@@ -84,6 +89,11 @@ function generateTOMLString(data) {
     toml.push("\n[project.configuration]");
     Object.keys(data.configuration).forEach(function(key) {
         toml.push(`${key} = "${data.configuration[key]}"`);
+    });
+
+    toml.push("\n[project.zotero]");
+    Object.keys(data.zotero).forEach(function(key) {
+        toml.push(`${key} = "${data.zotero[key]}"`);
     });
 
     toml.push("\n[project.llm]");

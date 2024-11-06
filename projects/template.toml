@@ -18,7 +18,7 @@ summary = "no"                              # Can be "yes" or "no" [default].  I
                                             ### The optional [project.zotero] section contains the parameters needed to review a collection or group in Zotero
 [project.zotero]
 user = ""                                   # The user nummber accessible at https://www.zotero.org/settings/security "User ID: Your user ID for use in API calls is XXXXXXX"
-api_key = ""                                    # A private key that can be created at https://www.zotero.org/settings/security (select allow library access and read only for all groups in Default Group Permissions)
+api_key = ""                                # A private key that can be created at https://www.zotero.org/settings/security (select allow library access and read only for all groups in Default Group Permissions)
 group = ""                                  # This is the name of the collection or group containing the document to review, with nesting represented as a path, e.g. "parent/collection"
 
                                             ### The [project.llm] section, if more than 1 will be an ensemble project
