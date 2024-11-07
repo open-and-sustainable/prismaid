@@ -6,6 +6,7 @@ on:
     branches:
       - 71-r-package-does-not-compile-for-macos-and-windows
 
+jobs:
   build-macos-arm64:
     name: Build macOS Arm64 Shared Library
     runs-on: macos-latest
