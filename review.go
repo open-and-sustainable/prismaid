@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"github.com/open-and-sustainable/prismaid/check"
@@ -16,6 +17,7 @@ import (
 	"github.com/open-and-sustainable/prismaid/results"
 	"github.com/open-and-sustainable/prismaid/review"
 	"github.com/open-and-sustainable/prismaid/tokens"
+	"github.com/open-and-sustainable/prismaid/zotero"
 	"sync"
 	"time"
 )
@@ -128,12 +130,29 @@ func RunReview(tomlConfiguration string) error {
 		debug.SetupLogging(debug.Silent, config.Project.Configuration.ResultsFileName) // default value
 	}
 
-	// run input conversion if needed
-	if config.Project.Configuration.InputConversion != "no" {
-		err := convert.Convert(config)
+	// Zotero review logic
+	if config.Project.Zotero.User != "" {
+		client := &http.Client{}
+		// downlaod pdfs
+		err := zotero.DownloadPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, getDirectoryPath(config.Project.Configuration.ResultsFileName))
+		if err != nil {
+			log.Printf("Error:\n%v", err)
+			return err
+		}
+		// convert pdfs
+		err = convert.Convert(getDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
 		if err != nil {
 			log.Printf("Error:\n%v", err)
 			exit(ExitCodeErrorInReviewLogic)
+		}
+	} else {
+		// run input conversion if needed and not a Zotero project
+		if config.Project.Configuration.InputConversion != "no" {
+			err := convert.Convert(config.Project.Configuration.InputDirectory, config.Project.Configuration.InputConversion)
+			if err != nil {
+				log.Printf("Error:\n%v", err)
+				exit(ExitCodeErrorInReviewLogic)
+			}
 		}
 	}
 

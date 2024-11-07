@@ -30,6 +30,7 @@ type ProjectConfig struct {
 	Author        string               `toml:"author"`
 	Version       string               `toml:"version"`
 	Configuration ProjectConfiguration `toml:"configuration"`
+	Zotero		  ProjectZotero		   `toml:"zotero"`
 	LLM           map[string]LLMItem   `toml:"llm"`
 }
 
@@ -43,6 +44,13 @@ type ProjectConfiguration struct {
 	CotJustification string  `toml:"cot_justification"`
 	Duplication      string  `toml:"duplication"`
 	Summary    string     `toml:"summary"`
+}
+
+// ProjectZotero defines various settings related to the collection or group to be reviewed.
+type ProjectZotero struct {
+	User  string `toml:"user"`
+	API string `toml:"api_key"`
+	Group string `toml:"group"`
 }
 
 // LLMConfig holds the configuration settings specific to the AI model being used.

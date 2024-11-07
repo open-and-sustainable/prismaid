@@ -6,7 +6,6 @@ import (
     "strings"
     "testing"
 
-    "github.com/open-and-sustainable/prismaid/config"
 )
 
 func TestConvertHTML(t *testing.T) {
@@ -34,18 +33,8 @@ func TestConvertHTML(t *testing.T) {
         t.Fatalf("Failed to write test HTML file: %v", err)
     }
 
-    // Step 3: Set up the configuration
-    cfg := &config.Config{
-        Project: config.ProjectConfig{
-            Configuration: config.ProjectConfiguration{
-                InputDirectory:  tempDir,
-                InputConversion: "html", // Specify that we want to convert HTML files
-            },
-        },
-    }
-
     // Step 4: Run the Convert function
-    err = Convert(cfg)
+    err = Convert(tempDir, "html")
     if err != nil {
         t.Errorf("Convert returned an error: %v", err)
     }

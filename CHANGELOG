@@ -9,6 +9,12 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.6.2] - 2024-11-07
+### Added
+- Integration with Zotero collections and shared groups, with direct (API) download and conversion of literature pdfs
+### Fixed
+- updated documentation, terminal and web initializers to include Zotero integration
+
 ## [0.6.1] - 2024-10-31
 ### Added
 - release of the project as R package published on r-universe
