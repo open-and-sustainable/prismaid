@@ -11,7 +11,7 @@ endif
 
 ifeq ($(UNAME), Windows_NT)
     # Windows-specific linking with .def file
-    PKG_LIBS = -L../inst/libs/windows -l:prismaid_windows_amd64.dll -Wl,--output-def,libprismaid_windows_amd64.def
+    PKG_LIBS = -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
 endif
 
 # Default target
