@@ -54,6 +54,21 @@ summary = "no"
     - `no`: Deafult.
     - `yes`: A summary is generated for each manuscript and saved in the same directory.
 
+### Zotero Section
+```toml
+[project.zotero]
+user = "12345678"
+api_key = "fdjkdfnjhfd4556"
+group = "My Group/My Collection"
+```
+- **`[project.zotero]`** contains the parameters needed to integrate Zotero collections or groups into your review process. Omitting this section or leaving its fileds empty (i.e., `""`) will disable Zotero integration. See details also [below](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#zotero-integration).
+
+Parameters:
+- **`user`**: Your Zotero user ID, which can be found by visiting [Zotero Settings](https://www.zotero.org/settings). Look for "User ID for use in API calls" under your API keys.
+- **`api_key`**: A private API key for accessing the Zotero API. Create one by going to [Zotero Settings](https://www.zotero.org/settings) and selecting "Create new private key". When creating the key, ensure that you enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions".
+- **`group`**: The name of the collection or group containing the documents you wish to review. If the collection or group is nested, represent the hierarchy using a forward slash (/), e.g., "Parent Collection/Sub Collection".
+
+
 ### LLM Configuration
 ```toml
 [project.llm]
@@ -77,8 +92,8 @@ The **`[project.llm.#]`** fields manage LLM usage:
     - **Cohere**: Options are `command-r-plus`, `command-r`, `command-light`, `command`.
     - **Anthropic**: Includes `claude-3-5-sonnet`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
-- **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay). Use a non-zero value based on your provider TPM limits (see Rate Limits in Advanced Features below).
-- **`rpm_limits`**: Sets maximum requests per minute. Default is `0` (no limit). See provider’s RPM restrictions in Advanced Features below.
+- **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay). Use a non-zero value based on your provider TPM limits (see Rate Limits in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below).
+- **`rpm_limits`**: Sets maximum requests per minute. Default is `0` (no limit). See provider’s RPM restrictions in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below.
 
 ### Supported Models
 Each model has specific limits for input size and costs, as summarized below:
@@ -541,6 +556,27 @@ temperature = 0.01
 tpm_limit = 0 
 rpm_limit = 0
 ```
+
+### Zotero Integration
+
+The tool can automatically download and process literature from your specified Zotero collections or groups. To enable this, you must configure access credentials and group structure in the `[project.zotero]` section.
+
+To get your credentials, go to the [Zotero Settings](https://www.zotero.org/settings) page, navigate to the Privacy tab, and then to the Applications section. You will find your user ID and the button to generate an API key, as shown below:
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 60%;">
+</div>
+
+When creating a new API key, you must enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions". You must also provide a name for the key, such as "test" or "prismaid".
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 80%;">
+</div>
+
+Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library. For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
+
+All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismaid** will convert them into text files and run the review process. The files are stored locally and are available for inspection and further cleaning and analysis without the need to connect to the Zotero API again.
+
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
