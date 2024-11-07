@@ -14,6 +14,11 @@ ifeq ($(UNAME), Windows_NT)
     PKG_LIBS = -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
 endif
 
+ifeq ($(UNAME), Darwin)
+    # macOS-specific linking
+    PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,@loader_path/../libs/macos
+endif
+
 # Default target
 all: R_wrapper.o
 
