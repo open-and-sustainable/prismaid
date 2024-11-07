@@ -49,12 +49,12 @@
 #' The input data must be structured in a TOML format, consisting of several sections and parameters.
 #'
 #' @details
-#' **[project]**
+#' **\[project\]**
 #' - `name`: A string representing the project title. Example: "Use of LLM for systematic review".
 #' - `author`: The name of the project author. Example: "John Doe".
 #' - `version`: The version number for the project configuration. Example: "1.0".
 #'
-#' **[project.configuration]**
+#' **\[project.configuration\]**
 #' - `input_directory`: The file path to the directory containing manuscripts to be reviewed. Example: "/path/to/txt/files".
 #' - `input_conversion`: Specifies manuscript conversion formats:
 #'   - `""`: Default, non-active conversion.
@@ -69,7 +69,7 @@
 #' - `cot_justification`: Requests chain-of-thought justification from the model. Options: "yes" or "no" (default).
 #' - `summary`: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 #'
-#' **[project.llm]**
+#' **\[project.llm\]**
 #' - Configuration for LLMs, supporting multiple providers for ensemble reviews.
 #' - Parameters include:
 #'   - `provider`: The LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
@@ -83,7 +83,7 @@
 #'   - `tpm_limit`: Tokens per minute limit before delaying prompts. Default: 0 (no delay).
 #'   - `rpm_limit`: Requests per minute limit before delaying prompts. Default: 0 (no delay).
 #'
-#' **[prompt]**
+#' **\[prompt\]**
 #' - Defines the main components of the prompt for reviews.
 #' - `persona`: Optional text specifying the model's role. Example: "You are an experienced scientist...".
 #' - `task`: Required text framing the task for the model. Example: "Map the concepts discussed in a scientific paper...".
@@ -92,12 +92,12 @@
 #' - `example`: Optional example to illustrate concepts.
 #' - `failsafe`: Specifies a fallback if the concepts cannot be identified. Example: "Respond with an empty '' value if concepts are unclear".
 #'
-#' **[review]**
+#' **\[review\]**
 #' - Defines the keys and possible values in the JSON object for the review.
 #' - Example entries:
-#'   - `[review.1]`: `key = "interest rate"`, `values = [""]`
-#'   - `[review.2]`: `key = "regression models"`, `values = ["yes", "no"]`
-#'   - `[review.3]`: `key = "geographical scale"`, `values = ["world", "continent", "river basin"]`
+#'   - \[review.1\]: `key = "interest rate"`, `values = [""]`
+#'   - \[review.2\]: `key = "regression models"`, `values = ["yes", "no"]`
+#'   - \[review.3\]: `key = "geographical scale"`, `values = ["world", "continent", "river basin"]`
 #'
 #' @param input_string A string representing the input data.
 #' @return A string indicating the result of the review process.

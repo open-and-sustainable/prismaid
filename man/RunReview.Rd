@@ -18,14 +18,14 @@ The input data must be structured in a TOML format, consisting of several sectio
 \details{
 This function interfaces with a shared library to perform a review process on the input data.
 
-\strong{\link[=project]{project}}
+\strong{[project]}
 \itemize{
 \item \code{name}: A string representing the project title. Example: "Use of LLM for systematic review".
 \item \code{author}: The name of the project author. Example: "John Doe".
 \item \code{version}: The version number for the project configuration. Example: "1.0".
 }
 
-\strong{\link[=project.configuration]{project.configuration}}
+\strong{[project.configuration]}
 \itemize{
 \item \code{input_directory}: The file path to the directory containing manuscripts to be reviewed. Example: "/path/to/txt/files".
 \item \code{input_conversion}: Specifies manuscript conversion formats:
@@ -46,7 +46,7 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{summary}: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 }
 
-\strong{\link[=project.llm]{project.llm}}
+\strong{[project.llm]}
 \itemize{
 \item Configuration for LLMs, supporting multiple providers for ensemble reviews.
 \item Parameters include:
@@ -66,7 +66,7 @@ This function interfaces with a shared library to perform a review process on th
 }
 }
 
-\strong{\link[=prompt]{prompt}}
+\strong{[prompt]}
 \itemize{
 \item Defines the main components of the prompt for reviews.
 \item \code{persona}: Optional text specifying the model's role. Example: "You are an experienced scientist...".
@@ -77,14 +77,14 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{failsafe}: Specifies a fallback if the concepts cannot be identified. Example: "Respond with an empty '' value if concepts are unclear".
 }
 
-\strong{\link[=review]{review}}
+\strong{[review]}
 \itemize{
 \item Defines the keys and possible values in the JSON object for the review.
 \item Example entries:
 \itemize{
-\item \verb{[review.1]}: \code{key = "interest rate"}, \verb{values = [""]}
-\item \verb{[review.2]}: \code{key = "regression models"}, \verb{values = ["yes", "no"]}
-\item \verb{[review.3]}: \code{key = "geographical scale"}, \verb{values = ["world", "continent", "river basin"]}
+\item [review.1]: \code{key = "interest rate"}, \verb{values = [""]}
+\item [review.2]: \code{key = "regression models"}, \verb{values = ["yes", "no"]}
+\item [review.3]: \code{key = "geographical scale"}, \verb{values = ["world", "continent", "river basin"]}
 }
 }
 }
