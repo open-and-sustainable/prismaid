@@ -17,8 +17,6 @@
   } else if (sys_name == "Darwin") {
     library_file <- "libprismaid_darwin_arm64.dylib"
     library_path <- system.file("libs/macos", library_file, package = pkgname)
-    # Use absolute path to load library explicitly
-    message("Loading with absolute path: ", library_path)
   } else if (sys_name == "Linux") {
     library_file <- "libprismaid_linux_amd64.so"
     library_path <- system.file("libs/linux", library_file, package = pkgname)
