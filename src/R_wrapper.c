@@ -2,6 +2,8 @@
 #include <Rinternals.h>
 #include "_cgo_export.h"  // Header to access Go functions
 
+extern char* RunReviewR(char* input);  // Explicit declaration
+
 SEXP RunReviewR_wrap(SEXP input) {
     const char *c_input = CHAR(STRING_ELT(input, 0));
     const char *c_result = RunReviewR((char *)c_input);  // Call the Go function
