@@ -16,7 +16,7 @@ endif
 
 ifeq ($(UNAME), Darwin)
     # macOS-specific linking
-    PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,@loader_path/../libs/macos
+    PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_arm64 -Wl,-rpath,@loader_path/../libs/macos
 endif
 
 # Default target

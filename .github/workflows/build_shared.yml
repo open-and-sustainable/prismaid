@@ -115,8 +115,8 @@ jobs:
           git add inst/libs/windows/libprismaid_windows_amd64.dll
           git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
 
-  build-macos-amd64:
-    name: Build macOS AMD64 Shared Library
+  build-macos-arm64:
+    name: Build macOS Arm64 Shared Library
     runs-on: macos-latest
 
     steps:
@@ -133,28 +133,28 @@ jobs:
       - name: Build shared library for macOS
         working-directory: sharedlib
         run: |
-          go build -buildmode=c-shared -o libprismaid_darwin_amd64.dylib export.go
+          go build -buildmode=c-shared -o libprismaid_darwin_arm64.dylib export.go
 
       - name: Upload macOS shared library artifact
         uses: actions/upload-artifact@v4
         with:
-          name: macos-amd64-shared-library
-          path: sharedlib/libprismaid_darwin_amd64.dylib
+          name: macos-arm64-shared-library
+          path: sharedlib/libprismaid_darwin_arm64.dylib
 
       - name: Commit and push changes
         run: |
-          cp sharedlib/libprismaid_darwin_amd64.dylib inst/libs/macos/libprismaid_darwin_amd64.dylib
+          cp sharedlib/libprismaid_darwin_arm64.dylib inst/libs/macos/libprismaid_darwin_arm64.dylib
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-          git add inst/libs/macos/libprismaid_darwin_amd64.dylib
+          git add inst/libs/macos/libprismaid_darwin_arm64.dylib
           git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)
           
   package-python:
     name: Package Python Project with All Shared Libraries
     runs-on: ubuntu-latest
-    needs: [build-linux-amd64, build-windows-amd64, build-macos-amd64]
+    needs: [build-linux-amd64, build-windows-amd64, build-macos-arm64]
 
     steps:
       - name: Checkout code
@@ -171,7 +171,7 @@ jobs:
       - name: Download macOS shared library artifact
         uses: actions/download-artifact@v4
         with:
-          name: macos-amd64-shared-library
+          name: macos-arm64-shared-library
           path: python/prismaid/
 
       - name: Download Linux shared library artifact
