@@ -15,7 +15,7 @@
     library_file <- "libprismaid_windows_amd64.dll"
     library_path <- system.file("libs/windows", library_file, package = pkgname)
   } else if (sys_name == "Darwin") {
-    library_file <- "libprismaid_darwin_amd64.dylib"
+    library_file <- "libprismaid_darwin_arm64.dylib"
     library_path <- system.file("libs/macos", library_file, package = pkgname)
   } else if (sys_name == "Linux") {
     library_file <- "libprismaid_linux_amd64.so"
