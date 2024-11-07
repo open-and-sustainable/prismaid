@@ -32,3 +32,6 @@ SECURITY.md
 CHANGELOG
 .github
 .vscode
+^inst/libs
+^src/libprismaid_windows_amd64.def
+

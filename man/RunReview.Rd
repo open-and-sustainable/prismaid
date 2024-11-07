@@ -18,14 +18,14 @@ The input data must be structured in a TOML format, consisting of several sectio
 \details{
 This function interfaces with a shared library to perform a review process on the input data.
 
-\strong{\link{project}}
+\strong{\link[=project]{project}}
 \itemize{
 \item \code{name}: A string representing the project title. Example: "Use of LLM for systematic review".
 \item \code{author}: The name of the project author. Example: "John Doe".
 \item \code{version}: The version number for the project configuration. Example: "1.0".
 }
 
-\strong{\link{project.configuration}}
+\strong{\link[=project.configuration]{project.configuration}}
 \itemize{
 \item \code{input_directory}: The file path to the directory containing manuscripts to be reviewed. Example: "/path/to/txt/files".
 \item \code{input_conversion}: Specifies manuscript conversion formats:
@@ -46,7 +46,7 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{summary}: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 }
 
-\strong{\link{project.llm}}
+\strong{\link[=project.llm]{project.llm}}
 \itemize{
 \item Configuration for LLMs, supporting multiple providers for ensemble reviews.
 \item Parameters include:
@@ -66,7 +66,7 @@ This function interfaces with a shared library to perform a review process on th
 }
 }
 
-\strong{\link{prompt}}
+\strong{\link[=prompt]{prompt}}
 \itemize{
 \item Defines the main components of the prompt for reviews.
 \item \code{persona}: Optional text specifying the model's role. Example: "You are an experienced scientist...".
@@ -77,7 +77,7 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{failsafe}: Specifies a fallback if the concepts cannot be identified. Example: "Respond with an empty '' value if concepts are unclear".
 }
 
-\strong{\link{review}}
+\strong{\link[=review]{review}}
 \itemize{
 \item Defines the keys and possible values in the JSON object for the review.
 \item Example entries:
