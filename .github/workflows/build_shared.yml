@@ -73,6 +73,7 @@ jobs:
           cp sharedlib/libprismaid_linux_amd64.so inst/libs/linux/libprismaid_linux_amd64.so
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add inst/libs/linux/libprismaid_linux_amd64.so
           git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
@@ -109,6 +110,7 @@ jobs:
           cp sharedlib/libprismaid_windows_amd64.dll inst/libs/windows/libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add inst/libs/windows/libprismaid_windows_amd64.dll
           git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
@@ -144,6 +146,7 @@ jobs:
           cp sharedlib/libprismaid_darwin_amd64.dylib inst/libs/macos/libprismaid_darwin_amd64.dylib
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
+          git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
           git add inst/libs/macos/libprismaid_darwin_amd64.dylib
           git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)
