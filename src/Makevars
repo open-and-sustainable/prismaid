@@ -6,7 +6,7 @@ UNAME := $(shell uname)
 
 # Platform-Specific Configuration for Library Linking
 ifeq ($(UNAME), Linux)
-    PKG_LIBS = -L../inst/libs/linux -lprismaid_linux_amd64.so -Wl,-rpath,'$$ORIGIN/../libs/linux'
+    PKG_LIBS = -L../inst/libs/linux -l:libprismaid_linux_amd64.so -Wl,-rpath,'$$ORIGIN/../libs/linux'
 endif
 
 ifeq ($(UNAME), Windows_NT)
