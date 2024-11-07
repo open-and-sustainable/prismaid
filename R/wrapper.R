@@ -24,6 +24,9 @@
     stop("Unsupported OS: ", sys_name)
   }
 
+  # Load the dynamic library with an explicit path
+  dyn.load(library_path)
+
   # Log the library path
   message("Attempting to load library from: ", library_path)
 
