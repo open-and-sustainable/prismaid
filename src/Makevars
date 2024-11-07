@@ -9,19 +9,24 @@ UNAME := $(shell uname)
 # Default target to avoid missing separator errors
 all: platform-specific-libs
 
+
+# Compile R_wrapper.c to R_wrapper.o
+R_wrapper.o: R_wrapper.c
+    $(CC) $(CFLAGS) -c R_wrapper.c -o R_wrapper.o
+
 # Platform-Specific Configuration for Library Linking
 platform-specific-libs:
 ifeq ($(UNAME), Linux)
 	@echo "Detected Linux: Keeping only Linux library"
-    PKG_LIBS += -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
+    PKG_LIBS += R_wrapper.o -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux' -Wl,-v
 endif
 ifeq ($(UNAME), Darwin)
     @echo "Detected macOS: Keeping only macOS library"
-    PKG_LIBS += -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
+    PKG_LIBS += R_wrapper.o -L../inst/libs/macos -lprismaid_darwin_amd64 -Wl,-rpath,'@loader_path/../libs/macos'
 endif
 ifeq ($(UNAME), Windows_NT)
     @echo "Detected Windows: Keeping only Windows library"
-    PKG_LIBS += -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
+    PKG_LIBS +=  R_wrapper.o -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
     # Ensure the Go shared library is linked
     PKG_LIBS += libprismaid_windows_amd64.dll
 endif
