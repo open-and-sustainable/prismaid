@@ -564,13 +564,13 @@ The tool can automatically download and process literature from your specified Z
 To get your credentials, go to the [Zotero Settings](https://www.zotero.org/settings) page, navigate to the Privacy tab, and then to the Applications section. You will find your user ID and the button to generate an API key, as shown below:
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 50%;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 600px;">
 </div>
 
 When creating a new API key, you must enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions". You must also provide a name for the key, such as "test" or "prismaid".
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 60%;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 600px;">
 </div>
 
 Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library. For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
