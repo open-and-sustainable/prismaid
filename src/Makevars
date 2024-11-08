@@ -6,19 +6,19 @@ UNAME := $(shell uname)
 
 # Platform-Specific Configuration for Library Linking
 ifeq ($(UNAME), Linux)
-    PKG_LIBS = -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux'
+	PKG_LIBS = -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux'
 endif
 
 ifeq ($(UNAME), Windows_NT)
     # Windows-specific linking with .def file
-    PKG_LIBS = -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
+	PKG_LIBS = -L../inst/libs/windows -lprismaid_windows_amd64 -Wl,--output-def,libprismaid_windows_amd64.def
 endif
 
 ifeq ($(UNAME), Darwin)
-    PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_arm64 -Wl,-rpath,@loader_path/../libs/macos -Wl,-install_name,@loader_path/../libs/macos/libprismaid_darwin_arm64.dylib
+	PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_arm64 -Wl,-rpath,@loader_path/../libs/macos -Wl,-install_name,@loader_path/../libs/macos/libprismaid_darwin_arm64.dylib
     # Additional command to adjust library path in prismaid.so after building
     all: prismaid.so
-        install_name_tool -change libprismaid_darwin_arm64.dylib @loader_path/../libs/macos/libprismaid_darwin_arm64.dylib prismaid.so
+		install_name_tool -change libprismaid_darwin_arm64.dylib @loader_path/../libs/macos/libprismaid_darwin_arm64.dylib prismaid.so
 endif
 
 # Default target
