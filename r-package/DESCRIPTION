@@ -1,0 +1,11 @@
+Package: prismaid
+Title: Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
+Version: 0.6.2
+Authors@R: 
+    person("Riccardo", "Boero", , "ribo@nilu.no", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-7468-9096"))
+Description: prismAId uses generative AI models to extract data from scientific literature. It offers simple-to-use, efficient, and replicable methods for analyzing literature when conducting systematic reviews.
+License: AGPL (>= 3)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
