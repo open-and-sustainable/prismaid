@@ -18,7 +18,7 @@ prismAId revolutionizes the way researchers conduct systematic reviews using gen
 - **Innovation**: Continuously updated to incorporate the latest AI advancements, keeping your research at the cutting edge.
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 80%;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
 </div>
 
 ## Table of Contents
