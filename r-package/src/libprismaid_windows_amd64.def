@@ -1,3 +1,0 @@
-LIBRARY libprismaid_windows_amd64
-EXPORTS
-    RunReviewR
