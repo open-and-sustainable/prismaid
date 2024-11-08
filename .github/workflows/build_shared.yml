@@ -33,13 +33,13 @@ jobs:
 
       - name: Update DESCRIPTION File
         run: |
-          sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" DESCRIPTION
+          sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" r-package/DESCRIPTION
 
       - name: Commit and push if changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add DESCRIPTION
+          git add r-package/DESCRIPTION
           git diff --staged --quiet || (git commit -m "Update version to ${{ env.VERSION }}" && git push)
 
   build-linux-amd64:
@@ -70,12 +70,12 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          cp sharedlib/libprismaid_linux_amd64.so inst/libs/linux/libprismaid_linux_amd64.so
+          cp sharedlib/libprismaid_linux_amd64.so r-package/inst/libs/linux/libprismaid_linux_amd64.so
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-          git add inst/libs/linux/libprismaid_linux_amd64.so
+          git add r-package/inst/libs/linux/libprismaid_linux_amd64.so
           git diff --staged --quiet || (git commit -m "Update linux lib." && git push)
 
   build-windows-amd64:
@@ -107,12 +107,12 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          cp sharedlib/libprismaid_windows_amd64.dll inst/libs/windows/libprismaid_windows_amd64.dll
+          cp sharedlib/libprismaid_windows_amd64.dll r-package/inst/libs/windows/libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-          git add inst/libs/windows/libprismaid_windows_amd64.dll
+          git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll
           git diff --staged --quiet || (git commit -m "Update Windows lib." && git push)
 
   build-macos-arm64:
@@ -143,12 +143,12 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          cp sharedlib/libprismaid_darwin_arm64.dylib inst/libs/macos/libprismaid_darwin_arm64.dylib
+          cp sharedlib/libprismaid_darwin_arm64.dylib r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git checkout ${GITHUB_REF#refs/heads/}
           git pull --no-rebase origin ${GITHUB_REF#refs/heads/}
-          git add inst/libs/macos/libprismaid_darwin_arm64.dylib
+          git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib
           git diff --staged --quiet || (git commit -m "Update MacOS lib." && git push)
           
   package-python:
