@@ -18,6 +18,5 @@
 //    > if err != nil {
 //    >     log.Fatalf("Conversion failed: %v", err)
 //    > }
-
 package convert
 
