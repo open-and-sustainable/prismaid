@@ -30,7 +30,7 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 ## Step-by-Step Installation
 
-### Option 1. Go Package
+### Option 1. Go Package (Supported: Linux, macOS, Windows; AMD64, Arm64)
 
 To add the prismAId Go package to your project:
 1. Install with:
@@ -46,7 +46,7 @@ import "github.com/open-and-sustainable/prismaid"
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
 
 
-### Option 2. Python Package
+### Option 2. Python Package (Supported: Linux AMD64, macOS Arm64)
 
 Install the prismAId package from [PYPI](https://pypi.org/project/prismaid/) with:
 ```bash
@@ -68,7 +68,7 @@ else:
     print("RunReview completed successfully")
 ```
 
-### Option 3. R Package
+### Option 3. R Package (Supported: Linux AMD64, macOS Arm64)
 
 Install the prismAId R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
 ```r
@@ -82,7 +82,7 @@ toml_content <- paste(readLines("proj_test.toml"), collapse = "\n")
 RunReview(toml_content)
 ```
 
-### Option 4. Binaries
+### Option 4. Binaries (Supported: Linux, macOS, Windows; AMD64, Arm64)
 
 Download the appropriate executable for your OS from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases). No coding is required.
 
