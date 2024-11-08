@@ -5,6 +5,11 @@ layout: default
 
 # Help & Resources
 
+If you need assistance, you can:
+- **Open an Issue** on our [GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
+- **Discuss in the Matrix Support Room**: [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) ![Matrix](https://img.shields.io/matrix/prismAId-support%3Amatrix.org?server_fqdn=matrix.org&logo=appveyor).
+- **Stay Updated with New Releases**: Follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
+
 ## Common Issues
 - **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
 - **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
