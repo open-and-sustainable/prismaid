@@ -1,9 +1,9 @@
 name: Post GitHub Release to Matrix
 
 on:
-  push:
-    branches:
-      - 31-publishing-of-new-releases-on-matrix-channel
+  release:
+    types: [published]
+
 jobs:
   post-to-matrix:
     runs-on: ubuntu-latest
