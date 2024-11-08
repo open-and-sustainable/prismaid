@@ -10,6 +10,8 @@ Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
 ## [0.6.3] - unrelased
+### Added
+- secondary (fallback) pdf to txt conversion mechanism
 ### Fixed
 - release for arm64 platform packages in PyPI and R
 
