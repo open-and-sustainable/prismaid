@@ -15,7 +15,7 @@ ifeq ($(UNAME), Windows_NT)
     # If using a .def file to control exports, ensure it's being used correctly:
     # PKG_LIBS += -Wl,--input-def=../inst/libs/windows/libprismaid_windows_amd64.def
     # Optionally add flags to ensure all symbols are exported:
-    PKG_LIBS += -Wl,--export-all-symbols
+    PKG_LIBS += -Wl,--verbose
 endif
 
 
