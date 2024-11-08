@@ -12,6 +12,8 @@ Security: For vulnerabilities.
 ## [0.6.3] - unrelased
 ### Added
 - secondary (fallback) pdf to txt conversion mechanism
+- release publishing in Matrix room for announcements
+- setup of Matrix support room and reference in documentation
 ### Fixed
 - release for arm64 platform packages in PyPI and R
 
