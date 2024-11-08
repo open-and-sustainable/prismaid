@@ -1,5 +1,7 @@
+#ifdef HAVE_R_H
 #include <R.h>
 #include <Rinternals.h>
+#endif
 #include "_cgo_export.h"  // Header to access Go functions
 
 SEXP RunReviewR_wrap(SEXP input) {
