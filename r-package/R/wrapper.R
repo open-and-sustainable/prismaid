@@ -72,6 +72,13 @@
 #' - `cot_justification`: Requests chain-of-thought justification from the model. Options: "yes" or "no" (default).
 #' - `summary`: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 #'
+#' **\[project.zotero\]**
+#' - Configuration for Zotero integration (remove or leave empty if not needed).
+#' - Parameters include:
+#'   - `user`: Your Zotero user ID, which can be found by visiting [Zotero Settings](https://www.zotero.org/settings).
+#'   - `api_key`: API key for Zotero.
+#'   - `group`: This is the name of the collection or group containing the document to review, with nesting represented as a path, e.g. "parent/collection".
+#'
 #' **\[project.llm\]**
 #' - Configuration for LLMs, supporting multiple providers for ensemble reviews.
 #' - Parameters include:

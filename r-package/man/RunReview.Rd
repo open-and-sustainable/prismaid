@@ -46,6 +46,13 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{summary}: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 }
 
+\strong{[project.zotero]}
+\itemize{
+\item \code{user}: Your Zotero user ID, which can be found by visiting [Zotero Settings](https://www.zotero.org/settings).
+\item \code{api_key}: API key for Zotero.
+\item \code{group}: This is the name of the collection or group containing the document to review, with nesting represented as a path, e.g. "parent/collection".
+}
+
 \strong{[project.llm]}
 \itemize{
 \item Configuration for LLMs, supporting multiple providers for ensemble reviews.
