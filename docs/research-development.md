@@ -34,18 +34,17 @@ layout: default
 We welcome contributions to improve prismAId, whether you're fixing bugs, adding features, or enhancing documentation:
 - **Branching Strategy**: Create a new branch for each set of related changes and submit a pull request via GitHub.
 - **Code Reviews**: All submissions undergo thorough review to maintain code quality.
-- **Community Engagement**: Connect with us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions) for feature requests, suggestions, or questions.
+- **Community Engagement**: Connect with us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions) for feature requests, suggestions, or questions. - Discuss in the Matrix [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) or follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
 
 ### Guidelines
 For detailed contribution guidelines, see our [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Software Stack
 
-prismAId is developed in Go, a language favored for its simplicity and efficiency with concurrent operations. We prioritize the latest stable Go releases to incorporate improvements.
+prismAId is developed in Go, selected for its simplicity and efficiency with concurrent operations. We prioritize the latest stable Go releases to incorporate improvements.
 
 ### Technical Foundation
-To support consistent development, we provide templates for VSCodium or Visual Studio Code:
-- **Accessing Templates**: Located in the [root directory](https://github.com/open-and-sustainable/prismaid/tree/main) of our repository.
+To support consistent development, we provide templates for VSCodium or Visual Studio Code that are located in the [root directory](https://github.com/open-and-sustainable/prismaid/tree/main) of our repository.
 
 **Using the Templates**:
 1. **Clone Repository**: Clone the prismAId repository.
