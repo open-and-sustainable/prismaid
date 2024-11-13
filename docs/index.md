@@ -22,12 +22,15 @@ prismAId revolutionizes the way researchers conduct systematic reviews using gen
 </div>
 
 ## Table of Contents
-Explore this [documentation website](https://open-and-sustainable.github.io/prismaid/) for comprehensive guidance on using prismAId: 
+Explore this website for comprehensive guidance on using prismAId: 
 1. [Installation & Workflow](installation-setup): Learn how to install prismAId and configure it for different environments.
 2. [Using prismAId](using-prismaid): Discover how to effectively utilize prismAId, including its advanced features.
 3. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
 4. [Research & Development](research-development): Understand the technology behind prismAId and how you can contribute to its advancement.
 5. [Help & Resources](help-resources): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results.
+
+## New Releases and Updates
+Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
 
 ## Credits
 ### Authors

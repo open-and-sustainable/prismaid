@@ -102,7 +102,7 @@ layout: default
         </select><br>
     </div>
 
-    <h2 id="project-zotero-integration">Project Zotero Integration</h2>
+    <h2 id="zotero-integration">Zotero Integration</h2>
     <div class="form-group">
         <p class="description" style="font-style: italic;">Specify the user ID accessible at https://www.zotero.org/settings/security.</p>
         <label for="user" class="form-label">User ID:</label>
