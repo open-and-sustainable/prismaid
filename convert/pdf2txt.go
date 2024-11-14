@@ -61,7 +61,7 @@ func readPdf(path string) (string, error) {
     // Fallback if no text was extracted
     if text == "" {
         log.Println("No text extracted from any pages of the PDF, attempting alternative method.")
-        return extractWithPdfcpuAndRscio(path)
+        return extractWithRscioOnly(path)
     }
     return text, nil
 }
@@ -86,6 +86,7 @@ func extractWithPdfcpuAndRscio(path string) (string, error) {
     defer file.Close()
 
     conf := model.NewDefaultConfiguration()
+
     ctx, err := api.ReadValidateAndOptimize(file, conf)
     if err != nil {
         log.Printf("pdfcpu optimization failed: %v", err)
@@ -119,6 +120,47 @@ func extractWithPdfcpuAndRscio(path string) (string, error) {
     result := extractedText.String()
     if result == "" {
         log.Println("Text extraction from optimized PDF returned empty result.")
+        return "", nil
+    }
+
+    return result, nil
+}
+
+func extractWithRscioOnly(path string) (string, error) {
+    file, err := os.Open(path)
+    if err != nil {
+        log.Printf("Failed to open PDF: %v", err)
+        return "", err
+    }
+    defer file.Close()
+
+    // Get file size for rsc.io/pdf reader
+    stat, err := file.Stat()
+    if err != nil {
+        log.Printf("Failed to get file stats: %v", err)
+        return "", err
+    }
+
+    // Use rsc.io/pdf to extract text from the original PDF
+    pdfReader, err := rsc.NewReader(file, stat.Size())
+    if err != nil {
+        log.Printf("Failed to read PDF with rsc.io/pdf: %v", err)
+        return "", err
+    }
+
+    var extractedText bytes.Buffer
+    for i := 1; i <= pdfReader.NumPage(); i++ {
+        page := pdfReader.Page(i)
+        content := page.Content()
+        for _, text := range content.Text {
+            extractedText.WriteString(text.S)
+            extractedText.WriteString(" ")
+        }
+    }
+
+    result := extractedText.String()
+    if result == "" {
+        log.Println("Text extraction from PDF returned empty result.")
         return "", nil
     }
 
