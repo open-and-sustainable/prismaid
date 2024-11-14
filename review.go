@@ -332,6 +332,15 @@ func runSingleModelReview(llm review.Model, options review.Options, query review
 		}
 	}
 
+	if llm.ID == "" {			
+		// ask if continuing given the total cost
+		check := check.RunUserCheck(cost.ComputeCosts(query.Prompts, llm.Provider, llm.Model, llm.APIKey), llm.Provider)
+		if check != nil {
+			log.Printf("Error:\n%v", check)
+			exit(0) // if the user stops the execution it is still a success run, hence exit code = 0, but the reason for the exit may be different hence is logged
+		}
+	}
+
 	// Loop through the prompts
 	for i, promptText := range query.Prompts {
 		log.Println("File: ", filenames[i], " Prompt: ", promptText)
@@ -347,14 +356,6 @@ func runSingleModelReview(llm review.Model, options review.Options, query review
 			fmt.Println("Error resepecting the max input tokens limits for the following manuscripts and models.")
 			log.Printf("Error:\n%v", checkInputLimits)
 			exit(ExitCodeInputTokenError)	
-		}
-		if llm.ID == "" {			
-			// ask if continuing given the total cost
-			check := check.RunUserCheck(cost.ComputeCosts(query.Prompts, llm.Provider, llm.Model, llm.APIKey), llm.Provider)
-			if check != nil {
-				log.Printf("Error:\n%v", check)
-				exit(0) // if the user stops the execution it is still a success run, hence exit code = 0, but the reason for the exit may be different hence is logged
-			}
 		}
 
 		// Query the LLM
