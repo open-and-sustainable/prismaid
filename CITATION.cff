@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.6.2 - added Zotero integration. 
-  Integration with Zotero collections and shared groups, with direct (API) download and conversion of literature pdfs.
+  v0.6.3 - added Matrix room support and secondary pdfs conversion mechanism. 
+  Added annoucmeents and support rooms in Matrix, secondary mechanism for conversion of literature pdfs.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

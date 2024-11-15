@@ -9,9 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.6.3] - unrelased
+## [0.6.3] - 2024-11-15
 ### Added
 - secondary (fallback) pdf to txt conversion mechanism
+- disclaimer in documentation to warn about pdf format problems
 - release publishing in Matrix room for announcements
 - setup of Matrix support room and reference in documentation
 ### Fixed
