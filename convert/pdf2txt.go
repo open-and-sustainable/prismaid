@@ -1,13 +1,14 @@
 package convert
 
 import (
-    "bytes"
     "log"
     "os"
+    "regexp"
     pdf "github.com/ledongthuc/pdf"
+
 	api "github.com/pdfcpu/pdfcpu/pkg/api"
     model "github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
-    rsc "rsc.io/pdf"
+    pdfTypes "github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
 )
 
 // Primary text extraction function using github.com/ledongthuc/pdf
@@ -61,7 +62,7 @@ func readPdf(path string) (string, error) {
     // Fallback if no text was extracted
     if text == "" {
         log.Println("No text extracted from any pages of the PDF, attempting alternative method.")
-        return extractWithRscioOnly(path)
+        return extractTextWithPdfCpu(path)
     }
     return text, nil
 }
@@ -75,94 +76,146 @@ func textsToString(texts []pdf.Text) string {
     return result
 }
 
-// Fallback function using pdfcpu for preprocessing and rsc.io/pdf for extraction
-func extractWithPdfcpuAndRscio(path string) (string, error) {
-    var buf bytes.Buffer
-    file, err := os.Open(path)
-    if err != nil {
-        log.Printf("Failed to open PDF for pdfcpu: %v", err)
-        return "", err
-    }
-    defer file.Close()
+// extractTextFromPDF reads a PDF and extracts text from each page's content stream.
+func extractTextWithPdfCpu(filePath string) (string, error) {
+	// Open the PDF file
+	f, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
 
-    conf := model.NewDefaultConfiguration()
+    	// Create a pdfcpu configuration with relaxed validation
+	conf := model.NewDefaultConfiguration()
+	conf.ValidationMode = model.ValidationRelaxed
 
-    ctx, err := api.ReadValidateAndOptimize(file, conf)
-    if err != nil {
-        log.Printf("pdfcpu optimization failed: %v", err)
-        return "", err
-    }
+	// Create a pdfcpu configuration and context
+	ctx, err := api.ReadContext(f, conf)
+	if err != nil {
+		return "", err
+	}
 
-    // Write the optimized PDF to a buffer
-    err = api.Write(ctx, &buf, conf)
-    if err != nil {
-        log.Printf("Failed to write optimized PDF: %v", err)
-        return "", err
-    }
+	// Optimize the PDF context to fix minor issues
+	if err := api.OptimizeContext(ctx); err != nil {
+		log.Printf("Optimization failed: %v", err)
+	}
 
-    // Use rsc.io/pdf to extract text from the optimized PDF
-    reader, err := rsc.NewReader(bytes.NewReader(buf.Bytes()), int64(buf.Len()))
-    if err != nil {
-        log.Printf("Failed to read optimized PDF with rsc.io/pdf: %v", err)
-        return "", err
-    }
+	var extractedText string
+	// Process each page
+	for i := 1; i <= ctx.PageCount; i++ {
+		pageDict, _, _, err := ctx.PageDict(i, false)
+		if err != nil {
+			log.Printf("Error extracting page %d: %v", i, err)
+			continue
+		}
 
-    var extractedText bytes.Buffer
-    for i := 1; i <= reader.NumPage(); i++ {
-        page := reader.Page(i)
-        content := page.Content()
-        for _, text := range content.Text {
-            extractedText.WriteString(text.S)
-            extractedText.WriteString(" ")
+		contentsEntry, ok := pageDict.Find("Contents")
+        if !ok {
+            log.Printf("No content stream found for page %d", i)
+            continue
         }
-    }
 
-    result := extractedText.String()
-    if result == "" {
-        log.Println("Text extraction from optimized PDF returned empty result.")
-        return "", nil
-    }
+        var contentData []byte
 
-    return result, nil
+        switch obj := contentsEntry.(type) {
+        case pdfTypes.IndirectRef:
+            // Single content stream
+            streamDict, found, err := ctx.DereferenceStreamDict(obj)
+            if err != nil || !found {
+                log.Printf("Failed to dereference single content stream for page %d: %v", i, err)
+                continue
+            }
+
+            err = streamDict.Decode()
+            if err != nil {
+                log.Printf("Failed to decode single content stream for page %d: %v", i, err)
+                continue
+            }
+
+            contentData = append(contentData, streamDict.Content...)
+
+        case pdfTypes.Array:
+            // Array of content streams
+            for _, element := range obj {
+                // Check if the element is an indirect reference
+                indirectRef, ok := element.(pdfTypes.IndirectRef)
+                if !ok {
+                    log.Printf("Invalid content stream reference (not IndirectRef) for page %d: %T", i, element)
+                    continue
+                }
+        
+                // Dereference the indirect reference
+                obj, err := ctx.Dereference(indirectRef)
+                if err != nil {
+                    log.Printf("Failed to dereference object in array for page %d: %v", i, err)
+                    continue
+                }
+                if obj == nil {
+                    log.Printf("Dereferenced object is nil for page %d", i)
+                    continue
+                }
+
+                // Check if the object is a StreamDict
+                streamDict, ok := obj.(pdfTypes.StreamDict)
+                if !ok {
+                    log.Printf("Dereferenced object is not a StreamDict for page %d: %T", i, obj)
+                    continue
+                }
+
+                err = streamDict.Decode()
+                if err != nil {
+                    log.Printf("Failed to decode stream for page %d: %v", i, err)
+                    continue
+                }
+
+                contentData = append(contentData, streamDict.Content...)
+
+        
+                // Decode the stream content
+                err = streamDict.Decode()
+                if err != nil {
+                    log.Printf("Failed to decode stream in array for page %d: %v", i, err)
+                    continue
+                }
+        
+                contentData = append(contentData, streamDict.Content...)
+            }
+                
+
+        case *pdfTypes.StreamDict:
+            // Direct content stream
+            err := obj.Decode()
+            if err != nil {
+                log.Printf("Failed to decode direct content stream for page %d: %v", i, err)
+                continue
+            }
+        
+            contentData = append(contentData, obj.Content...)
+
+        default:
+            log.Printf("Unexpected type for 'Contents' entry on page %d: %T", i, obj)
+            continue
+        }
+
+        // Now use the collected content data
+        content := contentData
+        text := parseText(content)
+        extractedText += text + "\n"
+	}
+
+	return extractedText, nil
 }
 
-func extractWithRscioOnly(path string) (string, error) {
-    file, err := os.Open(path)
-    if err != nil {
-        log.Printf("Failed to open PDF: %v", err)
-        return "", err
-    }
-    defer file.Close()
+// parseText extracts text from PDF content using regular expressions.
+func parseText(content []byte) string {
+	re := regexp.MustCompile(`\((.*?)\)Tj`)
+	matches := re.FindAllSubmatch(content, -1)
 
-    // Get file size for rsc.io/pdf reader
-    stat, err := file.Stat()
-    if err != nil {
-        log.Printf("Failed to get file stats: %v", err)
-        return "", err
-    }
-
-    // Use rsc.io/pdf to extract text from the original PDF
-    pdfReader, err := rsc.NewReader(file, stat.Size())
-    if err != nil {
-        log.Printf("Failed to read PDF with rsc.io/pdf: %v", err)
-        return "", err
-    }
-
-    var extractedText bytes.Buffer
-    for i := 1; i <= pdfReader.NumPage(); i++ {
-        page := pdfReader.Page(i)
-        content := page.Content()
-        for _, text := range content.Text {
-            extractedText.WriteString(text.S)
-            extractedText.WriteString(" ")
-        }
-    }
-
-    result := extractedText.String()
-    if result == "" {
-        log.Println("Text extraction from PDF returned empty result.")
-        return "", nil
-    }
-
-    return result, nil
+	var text string
+	for _, match := range matches {
+		if len(match) > 1 {
+			text += string(match[1]) + " "
+		}
+	}
+	return text
 }
