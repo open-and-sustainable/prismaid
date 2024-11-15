@@ -51,7 +51,7 @@ jobs:
           git fetch origin main
           git checkout -b update-version-${GITHUB_RUN_ID}
           git add r-package/DESCRIPTION
-          git diff --staged --quiet || git commit -m "Update version to ${{ env.VERSION }}"
+          git diff --staged --quiet || git commit --allow-empty -m "Update version to ${{ env.VERSION }}"
           git push -u origin update-version-${GITHUB_RUN_ID}
           # Create Pull Request
           gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-version-${GITHUB_RUN_ID}
@@ -96,7 +96,7 @@ jobs:
           git fetch origin main
           git checkout -b update-linux-lib-${GITHUB_RUN_ID}
           git add r-package/inst/libs/linux/libprismaid_linux_amd64.so
-          git diff --staged --quiet || git commit -m "Update Linux lib."
+          git diff --staged --quiet || git commit --allow-empty -m "Update Linux lib."
           git push origin update-linux-lib-${GITHUB_RUN_ID}
           # Create Pull Request
           gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head update-linux-lib-${GITHUB_RUN_ID}
@@ -138,13 +138,13 @@ jobs:
       - name: Commit and push changes for Windows
         shell: bash
         run: |
-          copy sharedlib\libprismaid_windows_amd64.dll r-package\inst\libs\windows\libprismaid_windows_amd64.dll
+          cp sharedlib\libprismaid_windows_amd64.dll r-package\inst\libs\windows\libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
           git checkout -b update-windows-lib-${GITHUB_RUN_ID}
           git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll
-          git diff --staged --quiet || git commit -m "Update Windows lib."
+          git diff --staged --quiet || git commit --allow-empty -m "Update Windows lib."
           git push origin update-windows-lib-${GITHUB_RUN_ID}
           # Create Pull Request
           gh pr create --title "Update Windows Library" --body "Auto-update by CI/CD." --base main --head update-windows-lib-${GITHUB_RUN_ID}
@@ -190,7 +190,7 @@ jobs:
           git fetch origin main
           git checkout -b update-macos-lib-${GITHUB_RUN_ID}
           git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib
-          git diff --staged --quiet || git commit -m "Update macOS lib."
+          git diff --staged --quiet || git commit --allow-empty -m "Update macOS lib."
           git push origin update-macos-lib-${GITHUB_RUN_ID}
           # Create Pull Request
           gh pr create --title "Update macOS Library" --body "Auto-update by CI/CD." --base main --head update-macos-lib-${GITHUB_RUN_ID}
