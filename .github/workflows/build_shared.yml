@@ -50,7 +50,8 @@ jobs:
   build-linux-amd64:
     name: Build Linux Shared Library
     runs-on: ubuntu-latest
-
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -94,7 +95,8 @@ jobs:
   build-windows-amd64:
     name: Build Windows Shared Library
     runs-on: windows-latest
-
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -141,7 +143,8 @@ jobs:
   build-macos-arm64:
     name: Build macOS Arm64 Shared Library
     runs-on: macos-latest
-
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
