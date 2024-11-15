@@ -138,7 +138,7 @@ jobs:
       - name: Commit and push changes for Windows
         shell: bash
         run: |
-          cp sharedlib\libprismaid_windows_amd64.dll r-package\inst\libs\windows\libprismaid_windows_amd64.dll
+          cp sharedlib/libprismaid_windows_amd64.dll r-package/inst/libs/windows/libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
