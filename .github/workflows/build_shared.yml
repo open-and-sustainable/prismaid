@@ -51,7 +51,7 @@ jobs:
     name: Build Linux Shared Library
     runs-on: ubuntu-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
     name: Build Windows Shared Library
     runs-on: windows-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -144,7 +144,7 @@ jobs:
     name: Build macOS Arm64 Shared Library
     runs-on: macos-latest
     env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.PAT_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
