@@ -112,6 +112,8 @@ Removing unnecessary content helps reduce costs and resource usage and may impro
 
 Additionally, the tool supports integration with Zotero, allowing you to incorporate collections and groups of literature manuscripts directly into the review process. For more details on this feature, see the [Zotero Integration](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#zotero-integration) section.
 
+**<span class="blink">ATTENTION</span>**: This tool provides methods to convert PDFs and other manuscript formats into text. However, due to limitations inherent in the PDF format, these conversions might be imperfect. **Please manually check any converted manuscripts for completeness before further processing.** Special attention may be required to ensure accuracy.
+
 ### Cost Estimation at Startup
 After loading the project configuration, prismAId provides an estimated cost (in USD) to run the review using the specified OpenAI model. This estimate primarily reflects the input processing cost, which is typically the largest component in review projects.
 
