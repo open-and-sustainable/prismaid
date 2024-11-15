@@ -1,9 +1,8 @@
 name: Build and Deploy Shared Libraries
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [created]
 
 permissions:
   contents: write
@@ -43,20 +42,27 @@ jobs:
         
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
-  
+        
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
-          git checkout -b update-version-${GITHUB_RUN_ID}
+          # Check for changes in the DESCRIPTION file
           git add r-package/DESCRIPTION
-          git diff --staged --quiet || git commit --allow-empty -m "Update version to ${{ env.VERSION }}"
+          if git diff --staged --quiet; then
+            echo "No changes detected. Skipping branch creation and pull request."
+            exit 0
+          fi
+          # Create a new branch only if there are changes
+          git checkout -b update-version-${GITHUB_RUN_ID}
+          git commit -m "Update version to ${{ env.VERSION }}"
           git push -u origin update-version-${GITHUB_RUN_ID}
           # Create Pull Request
           gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-version-${GITHUB_RUN_ID}
-          # Automatically approve and merge the PR
+          # Automatically merge the PR
           gh pr merge --auto --squash --delete-branch
+
   
   build-linux-amd64:
     name: Build Linux Shared Library
