@@ -68,6 +68,7 @@ Parameters:
 - **`api_key`**: A private API key for accessing the Zotero API. Create one by going to [Zotero Settings](https://www.zotero.org/settings) and selecting "Create new private key". When creating the key, ensure that you enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions".
 - **`group`**: The name of the collection or group containing the documents you wish to review. If the collection or group is nested, represent the hierarchy using a forward slash (/), e.g., "Parent Collection/Sub Collection".
 
+**<span class="blink">ATTENTION</span>**: The Zotero integration automatically converts PDFs into text using the same methods as those activated by the `input_conversion` field of `[project.configuration]`. However, due to the inherent limitations of the PDF format, these conversions might be imperfect. **Therefore, both for `input_conversion` of PDF documents and Zotero integration, please manually check any converted manuscripts for completeness before further processing.**
 
 ### LLM Configuration
 ```toml

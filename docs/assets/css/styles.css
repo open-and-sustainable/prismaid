@@ -41,3 +41,12 @@
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+@keyframes blinker {
+    50% { opacity: 0; }
+}
+  
+.blink {
+animation: blinker 1s linear infinite;
+}
+  
