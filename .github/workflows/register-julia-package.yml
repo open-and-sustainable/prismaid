@@ -33,7 +33,7 @@ jobs:
           using LocalRegistry;
           LocalRegistry.register(
               "julia/PRISMAID",
-              registry = nothing,
+              registry = "OpenRegistry", # Use the name from Registry.toml
               commit = true,
               push = true,
               branch = "main",
