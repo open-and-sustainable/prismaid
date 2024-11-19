@@ -29,10 +29,11 @@ jobs:
 
       - name: Register Package
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_PAT: ${{ secrets.REGISTRY_PAT }}
         run: |
           # Clone the custom registry
-          git clone https://github.com/open-and-sustainable/julia.git registry
+          git clone https://x-access-token:${{ secrets.REGISTRY_PAT }}@github.com/open-and-sustainable/julia.git registry
+
           # Register the package
           julia -e '
             using LocalRegistry
@@ -41,5 +42,9 @@ jobs:
               registry="OpenRegistry",
               registry_path="registry",
               commit_message="Register new version",
-              repo=LocalRegistry.GitRepo(origin="https://x-access-token:${ENV["GITHUB_TOKEN"]}@github.com/open-and-sustainable/julia.git")
+              repo=LocalRegistry.GitRepo(origin="https://x-access-token:$(ENV["REGISTRY_PAT"])@github.com/open-and-sustainable/julia.git")
             )'
+
+          # Push changes to the registry
+          cd registry
+          git push origin master
