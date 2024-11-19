@@ -29,12 +29,6 @@ jobs:
         run: |
           git clone https://github.com/open-and-sustainable/julia.git /tmp/local-registry
 
-      # Ensure the correct branch is checked out
-      - name: Checkout Main Branch
-        run: |
-          cd /tmp/local-registry
-          git checkout main
-
       # Register the package
       - name: Register Package
         env:
@@ -47,7 +41,8 @@ jobs:
               registry = "/tmp/local-registry", # Path to the cloned registry
               commit = true,
               push = true,
-              branch = "main"                  # Ensure main branch is used
+              branch = "main",                  # Ensure main branch is used
+              allow_package_dirty = true       # Allow minor uncommitted changes (optional)
           )'
 
 
