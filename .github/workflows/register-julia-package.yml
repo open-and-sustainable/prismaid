@@ -32,12 +32,13 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              package_dir = "julia/PRISMAID",
-              registry = nothing, # Allows pushing directly to the default registry
+              "julia/PRISMAID",
+              registry = nothing,
               commit = true,
               push = true,
               branch = "main",
               repo = "https://github.com/open-and-sustainable/julia.git"
           )'
+
 
 
