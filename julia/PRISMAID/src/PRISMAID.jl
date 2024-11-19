@@ -1,9 +1,7 @@
 module PRISMAID
 
-using Libdl
-
 function get_library_path()
-    lib_dir = joinpath(@__DIR__, "..", "deps", "lib")
+    lib_dir = joinpath(@__DIR__, "..", "deps")
     arch = Sys.ARCH
     if Sys.islinux()
         return joinpath(lib_dir, "linux-$arch", "libprismaid_linux_amd64.so")
@@ -17,12 +15,14 @@ function get_library_path()
 end
 
 const library_path = get_library_path()
-const lib = Libdl.dlopen(library_path)
 
-# Use `lib` with `ccall` as needed
-# Example:
-# function my_function(arg1::Int)
-#     ccall((:function_in_lib, lib), ReturnType, (Cint,), arg1)
-# end
+function run_review(input::String)
+    # Call the C function, passing the String directly
+    c_output = ccall((:RunReviewPython, library_path), Cstring, (Cstring,), input)
+    result = unsafe_string(c_output)
+    # Free the C string if necessary
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
 
 end # module PRISMAID
