@@ -14,29 +14,18 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # Set up Julia environment
-      - name: Set Up Julia
-        uses: julia-actions/setup-julia@v1
-        with:
-          version: '1.6'
+      # Install GitHub CLI (if not already available)
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh
 
-      # Install Registrator.jl
-      - name: Install Registrator.jl
-        run: julia -e 'using Pkg; Pkg.add("Registrator")'
-
-
-      # Trigger Registrator.jl
+      # Post Registrator Comment
       - name: Trigger Registrator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          julia -e '
-          using Registrator;
-          Registrator.run(
-              subdir = "julia/PRISMAID",             # Path to your package directory
-              registry = "https://github.com/open-and-sustainable/julia", # Custom registry URL
-              github_token = ENV["GITHUB_TOKEN"]     # Pass the GitHub token
-          )'
+          gh pr comment --repo open-and-sustainable/prismaid \
+            --body "@JuliaRegistrator register subdir=julia/PRISMAID branch=85-add-package-release-in-julia"
+
 
 
 
