@@ -24,6 +24,11 @@ jobs:
       - name: Install LocalRegistry.jl
         run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
 
+      # Clone the registry
+      - name: Clone Registry
+        run: |
+          git clone https://github.com/open-and-sustainable/julia.git /tmp/local-registry
+
       # Register the package
       - name: Register Package
         env:
@@ -32,13 +37,13 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              "julia/PRISMAID",  # First positional argument: Path to the package
-              registry = nothing,
-              repo = "https://github.com/open-and-sustainable/julia.git",
+              "julia/PRISMAID",                     # First positional argument: Path to the package
+              registry = "/tmp/local-registry",      # Path to the locally cloned registry
               commit = true,
               push = true,
               branch = "main"
           )'
+
 
 
 
