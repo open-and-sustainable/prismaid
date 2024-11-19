@@ -24,16 +24,18 @@ jobs:
       - name: Install Registrator.jl
         run: julia -e 'using Pkg; Pkg.add("Registrator")'
 
-      # Register the package
-      - name: Register Package
+
+      # Trigger Registrator.jl
+      - name: Trigger Registrator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           julia -e '
           using Registrator;
-          Registrator.register(
-              "julia/PRISMAID",                     # Path to the package
-              registry = "https://github.com/open-and-sustainable/julia" # Registry URL
+          Registrator.run(
+              subdir = "julia/PRISMAID",             # Path to your package directory
+              registry = "https://github.com/open-and-sustainable/julia", # Custom registry URL
+              github_token = ENV["GITHUB_TOKEN"]     # Pass the GitHub token
           )'
 
 
