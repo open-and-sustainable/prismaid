@@ -6,24 +6,40 @@ on:
       - 85-add-package-release-in-julia
 
 jobs:
-  register-package:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for accurate tagging
 
-      # Install GitHub CLI (if not already available)
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
+      - name: Set up Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.9'  # Specify the Julia version you use
 
-      # Post Registrator Comment on Issue #85
-      - name: Trigger Registrator
+      - name: Navigate to Package Directory
+        working-directory: ./julia/PRISMAID
+        run: echo "Moved to package directory"
+
+      - name: Install LocalRegistry
+        run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
+
+      - name: Register Package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue comment --repo open-and-sustainable/prismaid \
-            --body "@JuliaRegistrator register subdir=julia/PRISMAID branch=85-add-package-release-in-julia registry=https://github.com/open-and-sustainable/julia" \
-            85
-
+          # Clone the custom registry
+          git clone https://github.com/open-and-sustainable/julia.git registry
+          # Register the package
+          julia -e '
+            using LocalRegistry
+            LocalRegistry.register(
+              pkgdir=pwd(),
+              registry="OpenRegistry",
+              registry_path="registry",
+              commit_message="Register new version",
+              repo=LocalRegistry.GitRepo(origin="https://x-access-token:${ENV["GITHUB_TOKEN"]}@github.com/open-and-sustainable/julia.git")
+            )'
