@@ -20,31 +20,21 @@ jobs:
         with:
           version: '1.6'
 
-      # Install LocalRegistry.jl
-      - name: Install LocalRegistry.jl
-        run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
-
-      # Clone the registry
-      - name: Clone Registry
-        run: |
-          git clone https://github.com/open-and-sustainable/julia.git /tmp/local-registry
+      # Install Registrator.jl
+      - name: Install Registrator.jl
+        run: julia -e 'using Pkg; Pkg.add("Registrator")'
 
       # Register the package
       - name: Register Package
         env:
-          GITHUB_TOKEN: ${{ secrets.REGISTRY_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           julia -e '
-          using LocalRegistry;
-          LocalRegistry.register(
-              "julia/PRISMAID",                # Path to the package
-              registry = "/tmp/local-registry", # Path to the cloned registry
-              commit = true,
-              push = true,
-              branch = "main",                  # Ensure main branch is used
-              allow_package_dirty = true       # Allow minor uncommitted changes (optional)
+          using Registrator;
+          Registrator.register(
+              "julia/PRISMAID",                     # Path to the package
+              registry = "https://github.com/open-and-sustainable/julia" # Registry URL
           )'
-
 
 
 
