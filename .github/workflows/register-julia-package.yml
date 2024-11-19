@@ -32,7 +32,7 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              package = "julia/PRISMAID",
+              "julia/PRISMAID",  # First positional argument: Path to the package
               registry = nothing,
               repo = "https://github.com/open-and-sustainable/julia.git",
               commit = true,
