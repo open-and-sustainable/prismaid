@@ -32,13 +32,13 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              "julia/PRISMAID",
-              registry = "OpenRegistry", # Use the name from Registry.toml
+              package = "julia/PRISMAID",
+              registry = "https://github.com/open-and-sustainable/julia.git",
               commit = true,
               push = true,
-              branch = "main",
-              repo = "https://github.com/open-and-sustainable/julia.git"
+              branch = "main"
           )'
+
 
 
 
