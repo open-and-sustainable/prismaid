@@ -32,7 +32,9 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              package_dir = "julia/PRISMAID",
-              registry = "https://github.com/open-and-sustainable/julia.git",
-              subdir = "julia/PRISMAID"
+              "julia/PRISMAID",
+              "https://github.com/open-and-sustainable/julia.git";
+              commit = true,
+              push = true
           )'
+
