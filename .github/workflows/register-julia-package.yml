@@ -1,0 +1,37 @@
+name: Register Julia Package to Custom Registry
+
+on:
+  pull_request:
+    branches:
+      - 85-add-package-release-in-julia
+
+jobs:
+  register-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the code
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Set up Julia environment
+      - name: Set Up Julia
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: '1.6' # Specify your desired Julia version
+
+      # Install Registrator.jl
+      - name: Install Registrator.jl
+        run: julia -e 'using Pkg; Pkg.add("Registrator")'
+
+      # Run Registrator to register the package
+      - name: Register Package
+        env:
+          GITHUB_TOKEN: ${{ secrets.REGISTRY_PAT }}
+        run: |
+          julia -e '
+          using Registrator;
+          Registrator.register(
+              subdir = "julia/PRISMAID",
+              registry = "https://github.com/open-and-sustainable/julia.git"
+          )'
