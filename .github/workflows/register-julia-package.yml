@@ -29,6 +29,12 @@ jobs:
         run: |
           git clone https://github.com/open-and-sustainable/julia.git /tmp/local-registry
 
+      - name: Check Registry Structure
+        run: |
+          ls -la /tmp/local-registry
+          cat /tmp/local-registry/Registry.toml
+
+
       # Register the package
       - name: Register Package
         env:
