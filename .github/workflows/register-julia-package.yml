@@ -13,38 +13,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # Fetch all history for accurate tagging
+          fetch-depth: 0
 
-      - name: Set up Julia
-        uses: julia-actions/setup-julia@v1
+      - name: Use LocalRegistryAction to Register Package
+        uses: ericphanson/LocalRegistryAction.jl@v1
         with:
-          version: '1.9'  # Specify the Julia version you use
-
-      - name: Navigate to Package Directory
-        working-directory: ./julia/PRISMAID
-        run: echo "Moved to package directory"
-
-      - name: Install LocalRegistry
-        run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
-
-      - name: Register Package
+          registry: 'https://github.com/open-and-sustainable/julia.git'
+          registry-name: 'OpenRegistry'
+          package-dir: 'julia/PRISMAID'
         env:
-          REGISTRY_PAT: ${{ secrets.REGISTRY_PAT }}
-        run: |
-          # Clone the custom registry
-          git clone https://x-access-token:${{ secrets.REGISTRY_PAT }}@github.com/open-and-sustainable/julia.git registry
-
-          # Register the package
-          julia -e '
-            using LocalRegistry
-            LocalRegistry.register(
-              pkgdir=pwd(),
-              registry="OpenRegistry",
-              registry_path="registry",
-              commit_message="Register new version",
-              repo=LocalRegistry.GitRepo(origin="https://x-access-token:$(ENV["REGISTRY_PAT"])@github.com/open-and-sustainable/julia.git")
-            )'
-
-          # Push changes to the registry
-          cd registry
-          git push origin master
+          GITHUB_TOKEN: ${{ secrets.REGISTRY_PAT }}
