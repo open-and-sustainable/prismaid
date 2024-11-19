@@ -18,10 +18,12 @@ jobs:
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
-      # Post Registrator Comment
+      # Post Registrator Comment on Issue #85
       - name: Trigger Registrator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh issue comment --repo open-and-sustainable/prismaid \
-            --body "@JuliaRegistrator register subdir=julia/PRISMAID branch=85-add-package-release-in-julia"
+            --body "@JuliaRegistrator register subdir=julia/PRISMAID branch=85-add-package-release-in-julia" \
+            85
+
