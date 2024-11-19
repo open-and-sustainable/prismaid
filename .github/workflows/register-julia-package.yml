@@ -18,20 +18,21 @@ jobs:
       - name: Set Up Julia
         uses: julia-actions/setup-julia@v1
         with:
-          version: '1.6' # Specify your desired Julia version
+          version: '1.6'
 
-      # Install Registrator.jl
-      - name: Install Registrator.jl
-        run: julia -e 'using Pkg; Pkg.add("Registrator")'
+      # Install LocalRegistry.jl
+      - name: Install LocalRegistry.jl
+        run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
 
-      # Run Registrator to register the package
+      # Register the package locally
       - name: Register Package
         env:
           GITHUB_TOKEN: ${{ secrets.REGISTRY_PAT }}
         run: |
           julia -e '
-          using Registrator;
-          Registrator.register(
-              subdir = "julia/PRISMAID",
-              registry = "https://github.com/open-and-sustainable/julia.git"
+          using LocalRegistry;
+          LocalRegistry.register(
+              package_dir = "julia/PRISMAID",
+              registry = "https://github.com/open-and-sustainable/julia.git",
+              subdir = "julia/PRISMAID"
           )'
