@@ -29,11 +29,11 @@ jobs:
         run: |
           git clone https://github.com/open-and-sustainable/julia.git /tmp/local-registry
 
-      - name: Check Registry Structure
+      # Ensure the correct branch is checked out
+      - name: Checkout Main Branch
         run: |
-          ls -la /tmp/local-registry
-          cat /tmp/local-registry/Registry.toml
-
+          cd /tmp/local-registry
+          git checkout main
 
       # Register the package
       - name: Register Package
@@ -43,12 +43,13 @@ jobs:
           julia -e '
           using LocalRegistry;
           LocalRegistry.register(
-              "julia/PRISMAID",                     # First positional argument: Path to the package
-              registry = "/tmp/local-registry",      # Path to the locally cloned registry
+              "julia/PRISMAID",                # Path to the package
+              registry = "/tmp/local-registry", # Path to the cloned registry
               commit = true,
               push = true,
-              branch = "main"
+              branch = "main"                  # Ensure main branch is used
           )'
+
 
 
 
