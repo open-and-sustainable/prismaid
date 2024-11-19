@@ -1,7 +1,7 @@
 name: Register Julia Package to Custom Registry
 
 on:
-  pull_request:
+  push:
     branches:
       - 85-add-package-release-in-julia
 
