@@ -24,7 +24,7 @@ jobs:
       - name: Install LocalRegistry.jl
         run: julia -e 'using Pkg; Pkg.add("LocalRegistry")'
 
-      # Register the package locally
+      # Register the package
       - name: Register Package
         env:
           GITHUB_TOKEN: ${{ secrets.REGISTRY_PAT }}
@@ -33,7 +33,8 @@ jobs:
           using LocalRegistry;
           LocalRegistry.register(
               package = "julia/PRISMAID",
-              registry = "https://github.com/open-and-sustainable/julia.git",
+              registry = nothing,
+              repo = "https://github.com/open-and-sustainable/julia.git",
               commit = true,
               push = true,
               branch = "main"
