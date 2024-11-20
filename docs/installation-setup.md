@@ -10,11 +10,13 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 1. **Go Package**: Full functionality for Go-based projects.
 
-2. **Python Package** on PyPI: For integration in Python scripts and Jupyter notebooks.
+2. **Binaries**: Standalone executables for Windows, macOS, and Linux, requiring no coding skills.
 
-3. **R Package** on R-universe: Compatible with R and RStudio environments.
+3. **Python Package** on PyPI: For integration in Python scripts and Jupyter notebooks.
 
-4. **Binaries**: Standalone executables for Windows, macOS, and Linux, requiring no coding skills.
+4. **R Package** on R-universe: Compatible with R and RStudio environments.
+
+5. **Julia Package** from the Github repo: For integration in Julia workflows and Jupyter notebooks.
 
 ## Workflow Overview
 1. **AI Model Provider Account and API Key**:
@@ -45,8 +47,17 @@ import "github.com/open-and-sustainable/prismaid"
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
 
+### Option 2. Binaries (Supported: Linux, macOS, Windows; AMD64, Arm64)
 
-### Option 2. Python Package (Supported: Linux AMD64, macOS Arm64)
+Download the appropriate executable for your OS from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases). No coding is required.
+
+prismAId uses a human-readable `.toml` project configuration file for setup. You can find a template and example in the [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Once your `.toml` file is ready, execute the project with:
+```bash
+# For Windows
+./prismAId_windows_amd64.exe -project your_project.toml
+```
+
+### Option 3. Python Package (Supported: Linux and Windows AMD64, macOS Arm64)
 
 Install the prismAId package from [PYPI](https://pypi.org/project/prismaid/) with:
 ```bash
@@ -68,7 +79,7 @@ else:
     print("RunReview completed successfully")
 ```
 
-### Option 3. R Package (Supported: Linux AMD64, macOS Arm64)
+### Option 4. R Package (Supported: Linux AMD64, macOS Arm64)
 
 Install the prismAId R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
 ```r
@@ -82,17 +93,29 @@ toml_content <- paste(readLines("proj_test.toml"), collapse = "\n")
 RunReview(toml_content)
 ```
 
-### Option 4. Binaries (Supported: Linux, macOS, Windows; AMD64, Arm64)
+### Option 5. Julia Package (Supported: Linux and Windows AMD64, macOS Arm64)
 
-Download the appropriate executable for your OS from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases). No coding is required.
-
-prismAId uses a human-readable `.toml` project configuration file for setup. You can find a template and example in the [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Once your `.toml` file is ready, execute the project with:
-```bash
-# For Windows
-./prismAId_windows_amd64.exe -project your_project.toml
+Install the PRISMAID package using Julia's package manager and running the following commands in your Julia REPL. This will add the PRISMAID package directly from its subdirectory in the GitHub repository:
+```julia
+using Pkg
+Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PRISMAID")
 ```
 
-## Addiitonal Setup Information
+This Julia package provides an interface that wraps a C shared library, allowing configuration and review processing within Julia workflows and Jupyter notebooks. Once installed, import prismAId and use it to load and execute review projects, as shown in the example below:
+```julia
+# Load the package
+using PRISMAID
+# Input a review project configuration
+toml_test = """
+       [project]
+       name = "Test of prismAId"
+       ...
+       """
+# Run the review
+PRISMAID.run_review(toml_test)
+```
+
+## Additional Setup Information
 
 ### Initialize the Configuration File
 prismAId binaries and Go module offer an interactive terminal application to help create draft configuration files. Use the -init flag to start the setup: 
