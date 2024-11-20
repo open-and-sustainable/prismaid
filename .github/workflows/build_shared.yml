@@ -354,5 +354,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh issue comment --repo open-and-sustainable/prismaid \
-            --body "@JuliaRegistrator register subdir=julia/PRISMAID " \
+            --body "@JuliaRegistrator register subdir=julia/PRISMAID" \
             85

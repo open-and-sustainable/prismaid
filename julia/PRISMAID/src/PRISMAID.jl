@@ -17,11 +17,22 @@ end
 const library_path = get_library_path()
 
 function run_review(input::String)
+    # Validate input
+    if isempty(input)
+        throw(ArgumentError("Input cannot be empty"))
+    end
+    
     # Call the C function, passing the String directly
     c_output = ccall((:RunReviewPython, library_path), Cstring, (Cstring,), input)
+    if c_output == C_NULL
+        throw(RuntimeError("The C shared library returned a null pointer."))
+    end
+
     result = unsafe_string(c_output)
+    
     # Free the C string if necessary
     ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    
     return result
 end
 

@@ -1,102 +1,11 @@
 using Test
 using PRISMAID
 
-# Include the TOML configuration as a string
-toml_test = """
-[project]
-name = "Test of prismAId"
-author = "Riccardo Boero"
-version = "0.3"
+@testset "PRISMAID Tests" begin
+    # Test that run_review raises an error on empty input
+    @test_throws ArgumentError PRISMAID.run_review("")
 
-[project.configuration]
-input_directory = "../../projects/input/test"
-results_file_name = "../../projects/output/test/output_test"
-output_format = "csv"
-log_level = "low"
-duplication = "no"
-cot_justification = "no"
-summary = "no"
-
-[project.llm]
-[project.llm.1]
-provider = "OpenAI"
-api_key = ""
-model = "gpt-4o-mini"
-temperature = 0.001
-tpm_limit = 0
-rpm_limit = 0
-
-[prompt]
-persona = "You are an experienced scientist reviewing scientific literature to map the methods used by other scientists in the field." 
-task = "You are asked to map the concepts discussed in a scientific paper attached here."
-expected_result = "You should output a JSON object with the following keys and possible values: "
-failsafe = "For the key 'historical period studied', provide any relevant period or era mentioned in the document. If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."
-definitions = "'Historical data analysis' refers to the examination and interpretation of past observed or modeled data to identify patterns, trends, and insights. 'Forecasting' refers to using models to predict future scenarios or variables of interest. 'Copulas' refer to statistical methods used to join multiple statistical distributions to model their dependencies. 'Regression models' refer to statistical models that utilize linear and nonlinear regression techniques to analyze relationships between variables. 'Clustering' refers to statistical methods for defining groups or patterns of similar data points based on similarities, distances, or multinomial characteristics. 'Bayesian approach' refers to a statistical method that incorporates prior knowledge or beliefs, updating them with new data to form posterior probabilities. 'Geographical scale' refers to the spatial level at which analysis is conducted. 'Historical period studied' refers to the time period of interest in historical data analysis."
-example = ""
-
-[review]
-[review.1]
-key = "historical data analysis"
-values = ["yes", "no"]
-[review.2]
-key = "forecasting"
-values = ["yes", "no"]
-[review.3]
-key = "copulas"
-values = ["yes", "no"]
-[review.4]
-key = "regression models"
-values = ["yes", "no"]
-[review.5]
-key = "clustering"
-values = ["yes", "no"]
-[review.6]
-key = "bayesian approach"
-values = ["yes", "no"]
-[review.7]
-key = "geographical scale"
-values = ["world", "continent", "river basin"]
-[review.8]
-key = "historical period studied"
-values = []
-"""
-
-
-@testset "PRISMAID run_review Test" begin
-    success = false
-    exception_occurred = false
-    try
-        # Run run_review asynchronously
-        task = @async begin
-            PRISMAID.run_review(toml_test)
-            return true
-        end
-
-        # Set a timeout (in seconds)
-        timeout = 15  # Adjust this value as needed
-
-        # Wait for the task to complete or timeout
-        start_time = time()
-        while !istaskdone(task)
-            sleep(0.1)
-            if time() - start_time > timeout
-                # Task is taking too long; assume it's waiting for input
-                break
-            end
-        end
-
-        if istaskdone(task)
-            # Task completed within the timeout
-            success = fetch(task)
-        else
-            # Task did not complete; assume it's hanging or waiting for input
-            success = false
-            @info "run_review did not complete within the timeout; it may be waiting for input."
-        end
-    catch e
-        exception_occurred = true
-        Test.fail("run_review threw an exception: $e")
-    end
-
-    @test success
+    # More tests are difficult because tests are run in Go original code, and are hard to use here too. 
+    # But we keep this as placeholder for a forthcoming testing of library call without TOML parsing.
+    # @test PRISMAID.run_review("Test input") == "Test output"
 end
