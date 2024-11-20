@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.6.4] - unreleased
+### Added
+- julia package PRISMAID, its documentation and release automation
+
 ## [0.6.3] - 2024-11-15
 ### Added
 - secondary (fallback) pdf to txt conversion mechanism
