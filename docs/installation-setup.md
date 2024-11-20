@@ -95,16 +95,16 @@ RunReview(toml_content)
 
 ### Option 5. Julia Package (Supported: Linux and Windows AMD64, macOS Arm64)
 
-Install the PRISMAID package using Julia's package manager and running the following commands in your Julia REPL. This will add the PRISMAID package directly from its subdirectory in the GitHub repository:
+Install the PrismAIdConnect package using Julia's package manager and running the following commands in your Julia REPL. This will add the PrismAIdConnect package directly from its subdirectory in the GitHub repository:
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PRISMAID")
+Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAIdConnect")
 ```
 
 This Julia package provides an interface that wraps a C shared library, allowing configuration and review processing within Julia workflows and Jupyter notebooks. Once installed, import prismAId and use it to load and execute review projects, as shown in the example below:
 ```julia
 # Load the package
-using PRISMAID
+using PrismAIdConnect
 # Input a review project configuration
 toml_test = """
        [project]
@@ -112,7 +112,7 @@ toml_test = """
        ...
        """
 # Run the review
-PRISMAID.run_review(toml_test)
+PrismAIdConnect.run_review(toml_test)
 ```
 
 ## Additional Setup Information

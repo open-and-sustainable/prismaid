@@ -1,4 +1,4 @@
-module PRISMAID
+module PrismAIdConnect
 
 function get_library_path()
     lib_dir = joinpath(@__DIR__, "..", "deps")
@@ -36,4 +36,4 @@ function run_review(input::String)
     return result
 end
 
-end # module PRISMAID
+end # module PrismAIdConnect
