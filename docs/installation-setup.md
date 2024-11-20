@@ -34,7 +34,7 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 ### Option 1. Go Package (Supported: Linux, macOS, Windows; AMD64, Arm64)
 
-To add the prismAId Go package to your project:
+To add the `prismaid` Go package to your project:
 1. Install with:
 ```bash
 go get "github.com/open-and-sustainable/prismaid"
@@ -59,7 +59,7 @@ prismAId uses a human-readable `.toml` project configuration file for setup. You
 
 ### Option 3. Python Package (Supported: Linux and Windows AMD64, macOS Arm64)
 
-Install the prismAId package from [PYPI](https://pypi.org/project/prismaid/) with:
+Install the `prismaid` package from [PYPI](https://pypi.org/project/prismaid/) with:
 ```bash
 pip install prismaid
 ```
@@ -81,7 +81,7 @@ else:
 
 ### Option 4. R Package (Supported: Linux AMD64, macOS Arm64)
 
-Install the prismAId R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
+Install the `prismaid` R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
 ```r
 install.packages("prismaid", repos = c("https://open-and-sustainable.r-universe.dev", "https://cloud.r-project.org"))
 ```
@@ -95,16 +95,16 @@ RunReview(toml_content)
 
 ### Option 5. Julia Package (Supported: Linux and Windows AMD64, macOS Arm64)
 
-Install the PrismAIdConnect package using Julia's package manager and running the following commands in your Julia REPL. This will add the PrismAIdConnect package directly from its subdirectory in the GitHub repository:
+Install the `PrismAId` package using Julia's package manager and running the following commands in your Julia REPL. This will add the `PrismAId` package directly from its subdirectory in the GitHub repository:
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAIdConnect")
+Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAId")
 ```
 
-This Julia package provides an interface that wraps a C shared library, allowing configuration and review processing within Julia workflows and Jupyter notebooks. Once installed, import prismAId and use it to load and execute review projects, as shown in the example below:
+This Julia package provides an interface that wraps a C shared library, allowing configuration and review processing within Julia workflows and Jupyter notebooks. Once installed, import `PrismAId` and use it to load and execute review projects, as shown in the example below:
 ```julia
 # Load the package
-using PrismAIdConnect
+using PrismAId
 # Input a review project configuration
 toml_test = """
        [project]
@@ -112,7 +112,7 @@ toml_test = """
        ...
        """
 # Run the review
-PrismAIdConnect.run_review(toml_test)
+PrismAId.run_review(toml_test)
 ```
 
 ## Additional Setup Information

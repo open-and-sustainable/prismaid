@@ -97,12 +97,12 @@ jobs:
       - name: Commit and push changes
         run: |
           cp sharedlib/libprismaid_linux_amd64.so r-package/inst/libs/linux/libprismaid_linux_amd64.so
-          cp sharedlib/libprismaid_linux_amd64.so julia/PrismAIdConnect/deps/linux-x86_64/libprismaid_linux_amd64.so
+          cp sharedlib/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
           git checkout -b update-linux-lib-${GITHUB_RUN_ID}
-          git add r-package/inst/libs/linux/libprismaid_linux_amd64.so julia/PrismAIdConnect/deps/linux-x86_64/libprismaid_linux_amd64.so
+          git add r-package/inst/libs/linux/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so
           git diff --staged --quiet || git commit --allow-empty -m "Update Linux lib."
           git push origin update-linux-lib-${GITHUB_RUN_ID}
           # Create Pull Request
@@ -146,12 +146,12 @@ jobs:
         shell: bash
         run: |
           cp sharedlib/libprismaid_windows_amd64.dll r-package/inst/libs/windows/libprismaid_windows_amd64.dll
-          cp sharedlib/libprismaid_windows_amd64.dll julia/PrismAIdConnect/deps/windows-x86_64/libprismaid_windows_amd64.dll
+          cp sharedlib/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
           git checkout -b update-windows-lib-${GITHUB_RUN_ID}
-          git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll julia/PrismAIdConnect/deps/windows-x86_64/libprismaid_windows_amd64.dll
+          git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll
           git diff --staged --quiet || git commit --allow-empty -m "Update Windows lib."
           git push origin update-windows-lib-${GITHUB_RUN_ID}
           # Create Pull Request
@@ -193,12 +193,12 @@ jobs:
         shell: bash
         run: |
           cp sharedlib/libprismaid_darwin_arm64.dylib r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib
-          cp sharedlib/libprismaid_darwin_arm64.dylib julia/PrismAIdConnect/deps/macos-arm64/libprismaid_darwin_arm64.dylib
+          cp sharedlib/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git fetch origin main
           git checkout -b update-macos-lib-${GITHUB_RUN_ID}
-          git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib julia/PrismAIdConnect/deps/macos-arm64/libprismaid_darwin_arm64.dylib
+          git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib
           git diff --staged --quiet || git commit --allow-empty -m "Update macOS lib."
           git push origin update-macos-lib-${GITHUB_RUN_ID}
           # Create Pull Request
@@ -312,7 +312,7 @@ jobs:
 
       - name: Update Project.toml File
         run: |
-          sed -i "s/^version = .*/version = \"${{ env.VERSION }}\"/" julia/PrismAIdConnect/Project.toml
+          sed -i "s/^version = .*/version = \"${{ env.VERSION }}\"/" julia/PrismAId/Project.toml
         
       - name: Install GitHub CLI
         run: sudo apt-get install gh -y
@@ -323,7 +323,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git fetch origin main
           # Check for changes in the Project.toml file
-          git add julia/PrismAIdConnect/Project.toml
+          git add julia/PrismAId/Project.toml
           if git diff --staged --quiet; then
             echo "No changes detected. Skipping branch creation and pull request."
             exit 0
@@ -354,5 +354,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh issue comment --repo open-and-sustainable/prismaid \
-            --body "@JuliaRegistrator register subdir=julia/PrismAIdConnect" \
+            --body "@JuliaRegistrator register subdir=julia/PrismAId" \
             85

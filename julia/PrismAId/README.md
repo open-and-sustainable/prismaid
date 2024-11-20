@@ -1,23 +1,23 @@
-# ![prismAId Logo](https://raw.githubusercontent.com/ricboer0/prismAId/main/figures/prismAId_logo.png) PrismAIdConnect
+# ![prismAId Logo](https://raw.githubusercontent.com/ricboer0/prismAId/main/figures/prismAId_logo.png) PrismAId
 
-PrismAIdConnect is a Julia package designed to facilitate access to the [prismAId](https://github.com/open-and-sustainable/prismaid) tools directly from Julia code and workflows.
+`PrismAId` is a Julia package designed to facilitate access to the [prismAId](https://github.com/open-and-sustainable/prismaid) tools directly from Julia code and workflows.
 
 ## Installation
-To install PrismAIdConnect using Julia's package manager, run the following commands in your Julia REPL. This will add the PrismAIdConnect package directly from its subdirectory in the GitHub repository:
+To install `PrismAId` using Julia's package manager, run the following commands in your Julia REPL. This will add the `PrismAId` package directly from its subdirectory in the GitHub repository:
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAIdConnect")
+Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAId")
 ```
 
 ## Usage
 
-To utilize PrismAIdConnect in your Julia environment, you need to load the package and execute the `run_review` function, which requires a TOML-formatted review project configuration.
+To utilize `PrismAId` in your Julia environment, you need to load the package and execute the `run_review` function, which requires a TOML-formatted review project configuration.
 
 ### Quick Start Example
 
-1. Start by loading the PRISMAID package:
+1. Start by loading the `PrismAId` package:
    ```julia
-   using PrismAIdConnect   
+   using PrismAId
    ```
    
 2. Prepare your review project configuration in TOML format. You can use the template provided in the `proj_test.toml` file located in the `projects` folder of our [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Here’s a simplified example of what the TOML content might look like:
@@ -30,7 +30,7 @@ toml_test = """
 ```
 3. Run the review process by passing the TOML configuration string to the `run_review` function:
    ```julia
-   PrismAIdConnect.run_review(toml_test)
+   PrismAId.run_review(toml_test)
    ```
 
 ### Expected Output
@@ -44,7 +44,7 @@ Do you want to continue? (y/n):
 ```
 At this prompt, you can decide whether to continue processing the review project. If you proceed, the results of the review process will be saved in the output folder specified in your project configuration.
 
-**ATTENTION**: Interaction with prismAId functionalities is mediated through a C shared library, which can make debugging challenging. It is recommended to set the `log_level` to "high" in your project configuration to ensure comprehensive logging of any issues encountered during the review process, with logs stored in the specified output directory.
+**ATTENTION**: Interaction with `PrismAId` functionalities is mediated through a C shared library, which can make debugging challenging. It is recommended to set the `log_level` to `high` in your project configuration to ensure comprehensive logging of any issues encountered during the review process, with logs stored in the specified output directory.
 
 ## Documentation
 
@@ -53,4 +53,4 @@ Comprehensive documentation for PRISMAID, including detailed descriptions of its
 [prismAId Documentation](https://open-and-sustainable.github.io/prismaid)
 
 ## License
-PrismAIdConnect is made available under the GNU Affero General Public License v3 (AGPL v3).
+PrismAId is made available under the GNU Affero General Public License v3 (AGPL v3).

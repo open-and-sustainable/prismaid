@@ -7,7 +7,7 @@ layout: default
 
 
 ## Purpose and Benefits
-prismAId revolutionizes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
+prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
 
 ### Key Advantages
 
