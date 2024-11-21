@@ -32,7 +32,9 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 ## Step-by-Step Installation
 
-### Option 1. Go Package (Supported: Linux, macOS, Windows; AMD64, Arm64)
+### Option 1. Go Package
+
+**(Supported: Linux, macOS, Windows; AMD64, Arm64)**
 
 To add the `prismaid` Go package to your project:
 1. Install with:
@@ -47,7 +49,9 @@ import "github.com/open-and-sustainable/prismaid"
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
 
-### Option 2. Binaries (Supported: Linux, macOS, Windows; AMD64, Arm64)
+### Option 2. Binaries
+
+**(Supported: Linux, macOS, Windows; AMD64, Arm64)**
 
 Download the appropriate executable for your OS from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases). No coding is required.
 
@@ -57,7 +61,9 @@ prismAId uses a human-readable `.toml` project configuration file for setup. You
 ./prismAId_windows_amd64.exe -project your_project.toml
 ```
 
-### Option 3. Python Package (Supported: Linux and Windows AMD64, macOS Arm64)
+### Option 3. Python Package
+
+**(Supported: Linux and Windows AMD64, macOS Arm64)**
 
 Install the `prismaid` package from [PYPI](https://pypi.org/project/prismaid/) with:
 ```bash
@@ -79,7 +85,9 @@ else:
     print("RunReview completed successfully")
 ```
 
-### Option 4. R Package (Supported: Linux AMD64, macOS Arm64)
+### Option 4. R Package
+
+**(Supported: Linux AMD64, macOS Arm64)**
 
 Install the `prismaid` R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
 ```r
@@ -93,7 +101,9 @@ toml_content <- paste(readLines("proj_test.toml"), collapse = "\n")
 RunReview(toml_content)
 ```
 
-### Option 5. Julia Package (Supported: Linux and Windows AMD64, macOS Arm64)
+### Option 5. Julia Package
+
+**(Supported: Linux and Windows AMD64, macOS Arm64)**
 
 Install the `PrismAId` package using Julia's package manager and running the following commands in your Julia REPL. This will add the `PrismAId` package directly from its subdirectory in the GitHub repository:
 ```julia
