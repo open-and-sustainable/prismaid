@@ -329,11 +329,11 @@ jobs:
             exit 0
           fi
           # Create a new branch only if there are changes
-          git checkout -b update-version-${GITHUB_RUN_ID}
-          git commit -m "Update version to ${{ env.VERSION }}"
-          git push -u origin update-version-${GITHUB_RUN_ID}
+          git checkout -b update-julia-version-${GITHUB_RUN_ID}
+          git commit -m "Update Julia package version to ${{ env.VERSION }}"
+          git push -u origin update-julia-version-${GITHUB_RUN_ID}
           # Create Pull Request
-          gh pr create --title "Update Julia Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-version-${GITHUB_RUN_ID}
+          gh pr create --title "Update Julia Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-julia-version-${GITHUB_RUN_ID}
           # Automatically merge the PR
           gh pr merge --auto --squash --delete-branch
 
