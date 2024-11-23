@@ -25,8 +25,9 @@ var modelRates = map[string]decimal.Decimal{ // dollar prices per input M token
 	"command-r":              decimal.NewFromFloat(0.15).Div(decimal.NewFromInt(1000000)),
 	"command-light":          decimal.NewFromFloat(0.3).Div(decimal.NewFromInt(1000000)),
 	"command":                decimal.NewFromFloat(1).Div(decimal.NewFromInt(1000000)),
-	anthropic.ModelClaude_3_5_Sonnet_20240620:      decimal.NewFromFloat(3).Div(decimal.NewFromInt(1000000)),
-	anthropic.ModelClaude_3_Opus_20240229:          decimal.NewFromFloat(15).Div(decimal.NewFromInt(1000000)),
+	anthropic.ModelClaude3_5SonnetLatest:      decimal.NewFromFloat(3).Div(decimal.NewFromInt(1000000)),
+	anthropic.ModelClaude3_5HaikuLatest:        decimal.NewFromFloat(1).Div(decimal.NewFromInt(1000000)),
+	anthropic.ModelClaude3OpusLatest:          decimal.NewFromFloat(15).Div(decimal.NewFromInt(1000000)),
 	anthropic.ModelClaude_3_Sonnet_20240229:        decimal.NewFromFloat(3).Div(decimal.NewFromInt(1000000)),
 	anthropic.ModelClaude_3_Haiku_20240307:         decimal.NewFromFloat(0.25).Div(decimal.NewFromInt(1000000)),
 }

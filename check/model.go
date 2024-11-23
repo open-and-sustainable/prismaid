@@ -116,9 +116,11 @@ func getAnthropicModel(prompt string, modelName string, key string) string {
 	case "": // cost optimization
 		// all models have the same context window size, hence leave to haiku as the cheapest
 	case "claude-3-5-sonnet":
-		model = anthropic.ModelClaude_3_5_Sonnet_20240620
+		model = anthropic.ModelClaude3_5SonnetLatest
+	case "claude-3-5-haiku":
+		model = anthropic.ModelClaude3_5HaikuLatest
 	case "claude-3-opus":
-		model = anthropic.ModelClaude_3_Opus_20240229
+		model = anthropic.ModelClaude3OpusLatest
 	case "claude-3-sonnet":
 		model = anthropic.ModelClaude_3_Sonnet_20240229
 	case "claude-3-haiku":

@@ -11,7 +11,8 @@ Security: For vulnerabilities.
 
 ## [0.6.4] - unreleased
 ### Added
-- julia package PRISMAID, its documentation and release automation
+- Julia package "PrismAId", its documentation and deployment on Julia General registry
+- Support for Anthropic's Claude 3.5 Haiku
 
 ## [0.6.3] - 2024-11-15
 ### Added

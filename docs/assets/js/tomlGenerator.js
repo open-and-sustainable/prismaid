@@ -139,7 +139,7 @@ function addLLMProvider() {
         OpenAI: ['gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', ''],
         GoogleAI: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', ''],
         Cohere: ['command-r-plus', 'command-r', 'command-light', 'command', ''],
-        Anthropic: ['claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', '']
+        Anthropic: ['claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', '']
     };
 
     // HTML content for the provider

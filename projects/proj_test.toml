@@ -14,9 +14,9 @@ summary = "no"
 
 [project.llm]
 [project.llm.1]
-provider = "OpenAI"
+provider = "Anthropic"
 api_key = ""
-model = "gpt-4o-mini"
+model = "claude-3-5-haiku"
 temperature = 0.001
 tpm_limit = 0
 rpm_limit = 0

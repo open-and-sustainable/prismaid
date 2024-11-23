@@ -27,7 +27,7 @@ No coding skills are required to use prismAId.
     1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini.
     2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash.
     3. **Cohere**: Command, Command Light, Command R, and Command R+.
-    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Sonnet
+    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet.
 - **Output format**: Outputs data in CSV or JSON formats.
 - **Performance**: Designed to process extensive datasets efficiently with minimal user setup and **no coding** required.
 - **Programming Language**: Developed in Go.

@@ -40,9 +40,10 @@ var ModelMaxTokens = map[string]int{
 	"command-r":        CommandRMaxTokens,
 	"command-light":    CommandLightMaxTokens,
 	"command":          CommandMaxTokens,
-    anthropic.ModelClaude_3_5_Sonnet_20240620:      AnthropicMaxTokens,
+    anthropic.ModelClaude3_5SonnetLatest:      AnthropicMaxTokens,
+    anthropic.ModelClaude3_5HaikuLatest:      AnthropicMaxTokens,
+    anthropic.ModelClaude3OpusLatest:      AnthropicMaxTokens,
     anthropic.ModelClaude_3_Sonnet_20240229:      AnthropicMaxTokens,
-    anthropic.ModelClaude_3_Opus_20240229:      AnthropicMaxTokens,
     anthropic.ModelClaude_3_Haiku_20240307:      AnthropicMaxTokens,
 }
 

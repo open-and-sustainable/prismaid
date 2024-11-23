@@ -91,7 +91,7 @@ The **`[project.llm.#]`** fields manage LLM usage:
     - **OpenAI**: Models include `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
     - **GoogleAI**: Choose from `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`.
     - **Cohere**: Options are `command-r-plus`, `command-r`, `command-light`, `command`.
-    - **Anthropic**: Includes `claude-3-5-sonnet`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
+    - **Anthropic**: Includes `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
 - **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay). Use a non-zero value based on your provider TPM limits (see Rate Limits in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below).
 - **`rpm_limits`**: Sets maximum requests per minute. Default is `0` (no limit). See provider’s RPM restrictions in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below.
@@ -202,6 +202,11 @@ Each model has specific limits for input size and costs, as summarized below:
             <td style="text-align: left;">Claude 3.5 Sonnet</td>
             <td style="text-align: right;">200,000</td>
             <td style="text-align: right;">$3.00</td>
+        </tr>
+                <tr>
+            <td style="text-align: left;">Claude 3.5 Haiku</td>
+            <td style="text-align: right;">200,000</td>
+            <td style="text-align: right;">$1.00</td>
         </tr>
         <tr>
             <td style="text-align: left;">Claude 3 Sonnet</td>
@@ -353,7 +358,9 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 **Note**: Daily request limits are not automatically enforced, so manual monitoring is required for users with daily limits.
 
 
-#### OpenAI Rate Limits (August 2024, tier 1 users)
+#### OpenAI Rate Limits 
+**(August 2024, tier 1 users)**
+
 <table class="table-spacing">
     <thead>
         <tr>
@@ -397,7 +404,9 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 </table>
 
 
-#### GoogleAI Rate Limits (October 2024)
+#### GoogleAI Rate Limits 
+**(October 2024)**
+
 **Free Tier**:
 <table class="table-spacing">
     <thead>
@@ -465,7 +474,8 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 #### Cohere Rate Limits
 Cohere production keys have no limit, but trial keys are limited to 20 API calls per minute. 
 
-#### Anthropic Rate Limits (October 2024)
+#### Anthropic Rate Limits 
+**(November 2024, tier 1 users)**
 <table class="table-spacing">
     <thead>
         <tr>
@@ -481,6 +491,12 @@ Cohere production keys have no limit, but trial keys are limited to 20 API calls
             <td style="text-align: right;">50</td>
             <td style="text-align: right;">40,000</td>
             <td style="text-align: right;">1,000,000</td>
+        </tr>
+        <tr>
+            <td style="text-align: left;">Claude 3.5 Haiku</td>
+            <td style="text-align: right;">50</td>
+            <td style="text-align: right;">50,000</td>
+            <td style="text-align: right;">5,000,000</td>
         </tr>
         <tr>
             <td style="text-align: left;">Claude 3 Opus</td>

@@ -384,6 +384,7 @@ func collectModelItems() []ModelItem {
 					{Text: "claude-3-haiku", Note: "Claude 3 Haiku."},
 					{Text: "claude-3-sonnet", Note: "Claude 3 Sonnet."},
 					{Text: "claude-3-opus", Note: "Claude 3 Opus."},
+					{Text: "claude-3-5-haiku", Note: "Claude 3.5 Haiku."},
 					{Text: "claude-3-5-sonnet", Note: "Claude 3.5 Sonnet."},
 				},
 				choose.WithHelp(true),)
