@@ -9,9 +9,9 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.6.4] - unreleased
+## [0.6.4] - 2024-11-23
 ### Added
-- Julia package "PrismAId", its documentation and deployment on Julia General registry
+- Julia package 'PrismAId', its documentation and deployment on Julia General registry
 - Support for Anthropic's Claude 3.5 Haiku
 
 ## [0.6.3] - 2024-11-15

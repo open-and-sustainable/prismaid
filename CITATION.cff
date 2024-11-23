@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.6.4 - added Julia package deployment and support for new models. 
-  Added announcements and support rooms in Matrix, secondary mechanism for conversion of literature pdfs.
+  v0.6.4 - added Julia package deployment and support for Claude 3.5 Haiku. 
+  Added Julia package 'PrismAId', its documentation and deployment on Julia General registry; support for Anthropic's Claude 3.5 Haiku.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
