@@ -31,7 +31,7 @@ Systematic literature reviews (SLRs) play a crucial role in synthesizing researc
 # Features and Capabilities
 `prismAId` is compatible with any systematic review protocol [@schiavo_prospero_2019], including the widely adopted PRISMA 2020 guidelines [@page_prisma_2021]. It focuses specifically on the analysis phase, which is a key concluding component of all systematic review protocols, alongside the reporting stage.
 
-![Traditional approach to literature analysis vs. `prismAId`-supported review workflow.\label{fig:workflow}](workflow.png){width="50%"}
+![Traditional approach to literature analysis vs. `prismAId`-supported review workflow.\label{fig:workflow}](workflow.png){width="70%"}
 
 As illustrated in \autoref{fig:workflow}, `prismAId` plays a crucial role in the data extraction activities. The tool leverages generative AI models to analyze scientific documents, extracting information in a structured and quantifiable manner. Users only need to configure a review project by specifying the necessary parameters and providing the documents to be analyzed. `prismAId` then automates the entire extraction process, outputting a comprehensive database of results.
 
@@ -54,7 +54,7 @@ The primary access to `prismAId` is through standalone binaries, compiled for Wi
 
 For users with more technical expertise, there are additional programmatic options for accessing `prismAId`. One option is to integrate the tool directly by using the Go module available on the GitHub repo. Alternatively, `prismAId` can be installed as a Python package via PyPI, as a Julia package from the General package registry, or as an R package through R-universe. These options offer more flexibility and are suitable for integrating `prismAId` into custom workflows and advanced scripting environments.
 
-![`prismAId` use case diagram.\label{fig:use-case}](use-case.png){width="60%"}
+![`prismAId` use case diagram.\label{fig:use-case}](use-case.png){width="70%"}
 
 The tool requires a single input: the project configuration file, which defines all the necessary parameters for conducting a systematic review. This file specifies key details, including the location of the manuscripts to be reviewed and the desired file name and directory for the results. The main steps for creating a project configuration file are illustrated in \autoref{fig:use-case}. Users need to define the input and output paths, select the AI models to be used, configure any advanced features, and specify both the prompt design and the information model for data extraction. This structured approach ensures that `prismAId` can efficiently manage the review process based on clear user-defined parameters.
 
@@ -62,7 +62,7 @@ The tool includes a template.toml file, which outlines and explains all the conf
 
 The second initializer is web-based, accessible via the `prismAId` documentation website [@prismaid-doc]. This version offers a dynamic interface where users can specify all configuration components interactively. It also provides a real-time preview of the configuration file in the web browser, with the option to download the finalized file for further editing or direct use with `prismAId`.
 
-![Prompt blocks in `prismAId`.\label{fig:prompt}](prompt.png){width="60%"}
+![Prompt blocks in `prismAId`.\label{fig:prompt}](prompt.png){width="70%"}
 
 A key component in ensuring the replicability of SLRs conducted with `prismAId` is the project configuration file itself. When this file is published alongside the review report, it enables others to replicate the original analysis, extend the review to cover new bodies of knowledge, or update the existing review with additional literature. Beyond replicability, `prismAId` also emphasizes quality support, especially through the standardization of prompt design, which guides users in crafting robust and accurate prompts, as illustrated in \autoref{fig:prompt}.
 
