@@ -602,7 +602,7 @@ Once you have added your Zotero API credentials to your project configuration in
 
 For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
 
-All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismaid** will convert them into text files and run the review process. 
+All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismAId** will convert them into text files and run the review process. 
 
 The manuscript files are stored locally and are available for inspection and further cleaning and analysis without the need to connect to the Zotero API again.
 
