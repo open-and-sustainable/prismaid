@@ -68,8 +68,6 @@ Parameters:
 - **`api_key`**: A private API key for accessing the Zotero API. Create one by going to [Zotero Settings](https://www.zotero.org/settings) and selecting "Create new private key". When creating the key, ensure that you enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions".
 - **`group`**: The name of the collection or group containing the documents you wish to review. If the collection or group is nested, represent the hierarchy using a forward slash (/), e.g., "Parent Collection/Sub Collection".
 
-**<span class="blink">ATTENTION</span>**: The Zotero integration automatically converts PDFs into text using the same methods as those activated by the `input_conversion` field of `[project.configuration]`. However, due to the inherent limitations of the PDF format, these conversions might be imperfect. **Therefore, both for `input_conversion` of PDF documents and Zotero integration, please manually check any converted manuscripts for completeness before further processing.**
-
 ### LLM Configuration
 ```toml
 [project.llm]
@@ -532,7 +530,9 @@ In **Section 1** of the project configuration:
   - Cohere uses its [API](https://docs.cohere.com/docs/rate-limits).
   - Anthropic approximates token counts via OpenAI’s tokenizer.
 
-Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing). **Note**: Cost estimates are indicative and may vary.
+Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing). 
+
+**Note**: Cost estimates are indicative and may vary.
 
 ### Ensemble Review
 Specifying multiple LLMs enables an 'ensemble' review, allowing result validation and uncertainty quantification. You can select multiple models from one or more providers, configuring each with specific parameters.
@@ -575,24 +575,54 @@ rpm_limit = 0
 ```
 
 ### Zotero Integration
+The tool can automatically download and process literature from your specified Zotero collections or groups. 
 
-The tool can automatically download and process literature from your specified Zotero collections or groups. To enable this, you must configure access credentials and group structure in the `[project.zotero]` section.
+#### Configuration
+To enable this, you must configure access credentials and group structure in the `[project.zotero]` section, for example:
+```toml
+[project.zotero]
+user = "12345678"
+api_key = "fdjkdfnjhfd4556"
+group = "My Group/My Sub Collection"
+```
 
-To get your credentials, go to the [Zotero Settings](https://www.zotero.org/settings) page, navigate to the Privacy tab, and then to the Applications section. You will find your user ID and the button to generate an API key, as shown below:
+To get your credentials, go to the [Zotero Settings](https://www.zotero.org/settings) page, navigate to the **Security** tab, and then to the **Applications** section. You will find your **user ID** and the button to generate an **API key**, as shown below:
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 600px;">
 </div>
 
-When creating a new API key, you must enable "Allow library access" and set the permissions to "Read Only" for all groups under "Default Group Permissions". You must also provide a name for the key, such as "test" or "prismaid".
+When creating a new API key, you must **enable** "Allow library access" and set the **permissions** to "Read Only" for all groups under "Default Group Permissions". You must also provide a name for the key, such as "test" or "prismaid".
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 600px;">
 </div>
 
-Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library. For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
+Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library. 
 
-All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismaid** will convert them into text files and run the review process. The files are stored locally and are available for inspection and further cleaning and analysis without the need to connect to the Zotero API again.
+For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
+
+All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismaid** will convert them into text files and run the review process. 
+
+The manuscript files are stored locally and are available for inspection and further cleaning and analysis without the need to connect to the Zotero API again.
+
+#### Review Workflow Integration
+Zotero is a powerful and open-source reference management system designed to help you store, organize, and share your literature. You can structure your manuscripts and references using either **collections** or **groups**.
+
+- **Collections** are private and accessible only to the user who creates them. For step-by-step instructions on creating collections, refer to the [University of Ottawa Library's guide](https://uottawa.libguides.com/how_to_use_zotero/create_collections).
+
+- **Groups** allow multiple users to access and collaborate on shared references, making them ideal for teamwork and collaborative research. To learn how to create a group, follow the [University of Ottawa Library's guide](https://uottawa.libguides.com/how_to_use_zotero/groups).
+
+In the workflow of a systematic literature review, following any protocol, a Zotero collection or group is the perfect place to store the downloaded manuscripts after identifying them through literature search engines and a carefully defined selection query.
+
+The integration of Zotero with **prismAId** supports the next step in the workflow: manuscripts are automatically converted and then passed to LLMs for analysis and information extraction.
+
+Once the literature to be reviewed is defined, the Zotero integration only needs to be activated once, as all manuscripts are downloaded and stored in the `zotero` subdirectory. Subsequent analyses and refinements can be performed on the downloaded texts without requiring further connections to the Zotero API. 
+
+To disable the Zotero integration, simply leave its fields empty in the `[project.zotero]` section of the project configuration.
+
+#### Warning
+**<span class="blink">ATTENTION</span>**: The Zotero integration automatically converts PDFs into text using the same methods as those activated by the `input_conversion` field of `[project.configuration]`. However, due to the inherent limitations of the PDF format, these conversions might be imperfect. **Therefore, both for `input_conversion` of PDF documents and Zotero integration, please manually check any converted manuscripts for completeness before further processing.**
 
 
 <div id="wcb" class="carbonbadge"></div>
