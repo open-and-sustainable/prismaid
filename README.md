@@ -22,7 +22,7 @@ No coding skills are required to use prismAId.
 
 ## Specifications
 - **Review protocol**: Designed to support any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
-- **Distribution**: Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid), Python [package](https://pypi.org/project/prismaid/), R [package](https://open-and-sustainable.r-universe.dev/prismaid), Julia [package](https://github.com/open-and-sustainable/prismaid/julia/PrismAId), and 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
+- **Distribution**: Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid), Python [package](https://pypi.org/project/prismaid/), R [package](https://open-and-sustainable.r-universe.dev/prismaid), Julia [package](https://github.com/JuliaRegistries/General/tree/master/P/PrismAId), and 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
 - **Supported LLMs**: 
     1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini.
     2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash.
@@ -35,7 +35,7 @@ No coding skills are required to use prismAId.
 ---
 
 ## Documentation
-All the information to install, use, and improve prismAId can be found at [open-and-sustainable.github.io/prismAId](https://open-and-sustainable.github.io/prismAId/).
+All the information to install, use, and improve prismAId can be found at [open-and-sustainable.github.io/prismAId](https://open-and-sustainable.github.io/prismaid/).
 
 ---
 
@@ -57,7 +57,7 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 ---
 
 ## Contributing
-Contributions are welcome! Please follow guidelines at [open-and-sustainable.github.io/prismAId/for-developers.html](https://open-and-sustainable.github.io/prismAId/for-developers.html).
+Contributions are welcome! Please follow guidelines at [open-and-sustainable.github.io/prismaid/research-development.html](https://open-and-sustainable.github.io/prismaid/research-development.html#contributing).
 
 ---
 

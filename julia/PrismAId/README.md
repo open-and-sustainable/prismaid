@@ -3,10 +3,10 @@
 `PrismAId` is a Julia package designed to facilitate access to the [prismAId](https://github.com/open-and-sustainable/prismaid) tools directly from Julia code and workflows.
 
 ## Installation
-To install `PrismAId` using Julia's package manager, run the following commands in your Julia REPL. This will add the `PrismAId` package directly from its subdirectory in the GitHub repository:
+To install `PrismAId` using Julia's package manager and official registry, run the following commands in your Julia REPL:
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/open-and-sustainable/prismaid.git", subdir="julia/PrismAId")
+Pkg.add("PrismAId")
 ```
 
 ## Usage
