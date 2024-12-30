@@ -88,7 +88,12 @@ function generateTOMLString(data) {
 
     toml.push("\n[project.configuration]");
     Object.keys(data.configuration).forEach(function(key) {
-        toml.push(`${key} = "${data.configuration[key]}"`);
+        let value = data.configuration[key];
+        // Check if the value contains backslashes
+        if (value.includes("\\")) {
+            value = value.replace(/\\/g, "/"); // Replace backslashes with forward slashes
+        }
+        toml.push(`${key} = "${value}"`);
     });
 
     toml.push("\n[project.zotero]");
@@ -100,9 +105,12 @@ function generateTOMLString(data) {
     // Append LLM provider configurations to the TOML string
     data.llm_providers.forEach((provider, index) => {
         toml.push(`\n[project.llm.${index + 1}]`);
-        Object.keys(provider).forEach(key => {
-            toml.push(`${key} = "${provider[key]}"`);
-        });
+        toml.push(`provider = "${provider.provider}"`);
+        toml.push(`api_key = "${provider.api_key}"`);
+        toml.push(`model = "${provider.model}"`);
+        toml.push(`temperature = ${provider.temperature}`);
+        toml.push(`tpm_limit = ${provider.tpm_limit}`);
+        toml.push(`rpm_limit = ${provider.rpm_limit}`);
     });
 
     toml.push("\n[prompt]");
