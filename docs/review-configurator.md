@@ -66,7 +66,7 @@ layout: default
     </div>
 
     <div class="form-group">
-        <p class="description" style="font-style: italic;">Set the log level for the process. Low logs minimal information, medium logs more, and high logs all details.</p>
+        <p class="description" style="font-style: italic;">Set the log level for the process. Low logs minimal information, medium logs more and prints out on screen, and high logs all details also on file.</p>
         <label for="log_level" class="form-label">Log Level:</label>
         <select id="log_level" name="log_level" class="form-input">
             <option value="low" selected>Low</option>

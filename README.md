@@ -35,7 +35,7 @@ No coding skills are required to use prismAId.
 ---
 
 ## Documentation
-All the information to install, use, and improve prismAId can be found at [open-and-sustainable.github.io/prismAId](https://open-and-sustainable.github.io/prismaid/).
+All the information to install, use, and improve prismAId can be found at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/).
 
 ---
 
