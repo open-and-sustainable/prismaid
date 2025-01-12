@@ -36,6 +36,7 @@ var ModelMaxTokens = map[string]int{
     "gemini-1.5-flash": Gemini15FlashMaxTokens,
     "gemini-1.5-pro":   Gemini15ProMaxTokens,
     "gemini-1.0-pro":   Gemini10ProMaxTokens,
+    "command-r7b-12-2024": CommandRMaxTokens,
 	"command-r-plus":   CommandRPlusMaxTokens,
 	"command-r":        CommandRMaxTokens,
 	"command-light":    CommandLightMaxTokens,

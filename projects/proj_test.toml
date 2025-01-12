@@ -14,9 +14,9 @@ summary = "no"
 
 [project.llm]
 [project.llm.1]
-provider = "Anthropic"
+provider = "Cohere"
 api_key = ""
-model = "claude-3-5-haiku"
+model = "command-r7b-12-2024"
 temperature = 0.001
 tpm_limit = 0
 rpm_limit = 0

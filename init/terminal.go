@@ -375,6 +375,7 @@ func collectModelItems() []ModelItem {
 					{Text: "command-light", Note: "Command Light."},
 					{Text: "command-r", Note: "Command R."},
 					{Text: "command-r-plus", Note: "Command R+."},
+					{Text: "command-r7b-12-2024", Note: "Command R7B."},
 				},
 				choose.WithHelp(true),)
 		} else if provider == "Anthropic" {
