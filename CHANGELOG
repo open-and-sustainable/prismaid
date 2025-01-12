@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.6.5] - unrelased
+### Added
+- Support for Cohere's Command R7B
+
 ## [0.6.4] - 2024-11-23
 ### Added
 - Julia package 'PrismAId', its documentation and deployment on Julia General registry

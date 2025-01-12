@@ -64,7 +64,7 @@ This function interfaces with a shared library to perform a review process on th
 \itemize{
 \item OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", or "" (default).
 \item GoogleAI: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", or "" (default).
-\item Cohere: "command-r-plus", "command-r", "command-light", "command", or "" (default).
+\item Cohere: "command-r7b-12-2024", "command-r-plus", "command-r", "command-light", "command", or "" (default).
 \item Anthropic: "claude-3-5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default).
 }
 \item \code{temperature}: Controls model randomness. Range: 0 to 1 (or 0 to 2 for GoogleAI). Lower values reduce randomness.

@@ -167,6 +167,11 @@ Each model has specific limits for input size and costs, as summarized below:
             <td></td>
         </tr>
         <tr>
+            <td style="text-align: left;">Command R7B</td>
+            <td style="text-align: right;">128,000</td>
+            <td style="text-align: right;">$0.0375</td>
+        </tr>
+        <tr>
             <td style="text-align: left;">Command R+</td>
             <td style="text-align: right;">128,000</td>
             <td style="text-align: right;">$2.50</td>

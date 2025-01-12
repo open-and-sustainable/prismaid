@@ -103,6 +103,8 @@ func getCohereModel(prompt string, modelName string, key string) string {
 		model = modelName
 	case "command-r-plus":
 		model = modelName
+	case "command-r7b-12-2024":
+		model = modelName			
 	default:
 		log.Println("Unsopported model: ", modelName)
 		return ""
