@@ -91,10 +91,10 @@ func getGoogleAIModel(prompt string, modelName string, key string) string {
 }
 
 func getCohereModel(prompt string, modelName string, key string) string {
-	model := "command-r"
+	model := "command-r7b-12-2024"
 	switch modelName {
 	case "": 
-		// cost optimization, command-r is currently the cheapest and with the most input tokens allowed
+		// cost optimization, command-r7b is currently the cheapest and with the most input tokens allowed
 	case "command": // leave the model selected by the user, but chek if supported
 		model = modelName
 	case "command-light":
