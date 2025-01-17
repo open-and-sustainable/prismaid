@@ -31,6 +31,7 @@ var modelRates = map[string]decimal.Decimal{ // dollar prices per input M token
 	anthropic.ModelClaude3OpusLatest:          decimal.NewFromFloat(15).Div(decimal.NewFromInt(1000000)),
 	anthropic.ModelClaude_3_Sonnet_20240229:        decimal.NewFromFloat(3).Div(decimal.NewFromInt(1000000)),
 	anthropic.ModelClaude_3_Haiku_20240307:         decimal.NewFromFloat(0.25).Div(decimal.NewFromInt(1000000)),
+	"deepseek-chat":           decimal.NewFromFloat(0.14).Div(decimal.NewFromInt(1000000)),
 }
 
 func numCentsFromTokens(numTokens int, model string) decimal.Decimal {

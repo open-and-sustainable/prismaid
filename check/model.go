@@ -35,6 +35,8 @@ func GetModel(prompt string, providerName string, modelName string, key string) 
 		modelFunc = getCohereModel
 	case "Anthropic":
 		modelFunc = getAnthropicModel
+	case "DeepSeek":
+		modelFunc = getDeepSeekModel
 	default:
 		log.Println("Unsupported LLM provider: ", providerName)
 		return ""
@@ -127,6 +129,20 @@ func getAnthropicModel(prompt string, modelName string, key string) string {
 		model = anthropic.ModelClaude_3_Sonnet_20240229
 	case "claude-3-haiku":
 		model = anthropic.ModelClaude_3_Haiku_20240307
+	default:
+		log.Println("Unsopported model: ", modelName)
+		return ""
+	}
+	return model
+}
+
+func getDeepSeekModel(prompt string, modelName string, key string) string {
+	model := "deepseek-chat"
+	switch modelName {
+	case "": 
+		// cost optimization.. there is only one model available, use that
+	case "deepseek-chat": // leave the model selected by the user, but chek if supported
+		model = modelName
 	default:
 		log.Println("Unsopported model: ", modelName)
 		return ""

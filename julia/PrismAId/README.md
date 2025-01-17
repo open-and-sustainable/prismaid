@@ -48,7 +48,7 @@ At this prompt, you can decide whether to continue processing the review project
 
 ## Documentation
 
-Comprehensive documentation for PRISMAID, including detailed descriptions of its functionalities, installation guide, usage examples, and configuration settings, is available online. You can access the complete documentation by visiting the following URL:
+Comprehensive documentation for `PrismAId`, including detailed descriptions of its functionalities, installation guide, usage examples, and configuration settings, is available online. You can access the complete documentation by visiting the following URL:
 
 [prismAId Documentation](https://open-and-sustainable.github.io/prismaid)
 

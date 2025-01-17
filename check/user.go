@@ -26,6 +26,8 @@ func RunUserCheck(totalCost string, provider string) error {
 		fmt.Println("Unless you are using a free tier with Google AI, the total cost (USD - $) to run this review is at least:", totalCost)
 	} else if provider == "Anthropic" {
 		fmt.Println("Anthropic tokenizer is not available, hence the estimation of the number of token is very imprecise.\nThe total cost (USD - $) to run this review should be at least:", totalCost)
+	} else if provider == "DeepSeek" {
+		fmt.Println("DeepSeek tokenizer is not available, hence the estimation of the number of token is very imprecise.\nThe total cost (USD - $) to run this review should be at least:", totalCost)
 	} else {
 		fmt.Println("The total cost (USD - $) to run this review is at least:", totalCost)
 	}

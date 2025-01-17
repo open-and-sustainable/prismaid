@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.6.6] - 2025-01-18
+### Added
+- Support of new provider and model: DeepSeek Chat v3
+
 ## [0.6.5] - 2025-01-12
 ### Added
 - Support of new model: Cohere's Command R7B

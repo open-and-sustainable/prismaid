@@ -14,7 +14,8 @@
                 "OPENAI_API_KEY": "PUT_THE_API_KEY_HERE",
                 "GOOGLE_AI_API_KEY": "PUT_GOOGLE_AI_API_KEY_HERE",
                 "CO_API_KEY": "PUT_COHERE_API_KEY_HERE",
-                "ANTHROPIC_API_KEY": "PUT_ANTHROPIC_API_KEY_HERE"
+                "ANTHROPIC_API_KEY": "PUT_ANTHROPIC_API_KEY_HERE",
+                "DEEPSEEK_API_KEY": "PUT_DEEPSEEK_API_KEY_HERE"
             },
             "args": ["--project", "../projects/proj_test.toml"], // Relative path to the project config
             //"args": ["--init"],

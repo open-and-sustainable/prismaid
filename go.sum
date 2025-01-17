@@ -41,6 +41,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cohere-ai/cohere-go/v2 v2.12.2 h1:8WJqqcCe3q6TB1CdhgzJOgRO2ouno8xcYcOoeWtI8Pk=
 github.com/cohere-ai/cohere-go/v2 v2.12.2/go.mod h1:MuiJkCxlR18BDV2qQPbz2Yb/OCVphT1y6nD2zYaKeR0=
+github.com/cohesion-org/deepseek-go v0.0.0-20241216210207-8ae1bb3c99dc h1:F39hO6SdqxdSaEGDga4WPt2vYtqvQX73Nb7fVD5IVxY=
+github.com/cohesion-org/deepseek-go v0.0.0-20241216210207-8ae1bb3c99dc/go.mod h1:je2+GYTRsFGimyZNP4hpAcARQ7dcMaidT5YisexH0w0=
 github.com/cqroot/multichoose v0.1.1 h1:diGuKYKea9ePOTwUyUDor9zKRqKFWXGkYGqUa9+firU=
 github.com/cqroot/multichoose v0.1.1/go.mod h1:BJzIGqbQZNADPDuA3IzhmTMpRc2F3fZKysMRYP+Ydw8=
 github.com/cqroot/prompt v0.9.4 h1:uFRlhXuOP3CSD+Pii0Z8VJhgXpavSloFf7/KAERwjz8=

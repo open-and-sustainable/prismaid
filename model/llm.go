@@ -40,6 +40,8 @@ func (dqs DefaultQueryService) QueryLLM(prompt string, llm review.Model, options
         queryFunc = queryCohere
     case "Anthropic":
         queryFunc = queryAnthropic
+    case "DeepSeek":
+        queryFunc = queryDeepSeek
     default:
         return "", "", "", fmt.Errorf("unsupported LLM provider: %s", llm.Provider)
     }

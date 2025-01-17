@@ -41,6 +41,8 @@ func (rtc RealTokenCounter) GetNumTokensFromPrompt(prompt string, provider strin
         numTokens = numTokensFromPromptCohere(prompt, model, key)
     case "Anthropic":
         numTokens = numTokensFromPromptOpenAI(prompt, "gpt-4o", key)
+    case "DeepSeek":
+        numTokens = numTokensFromPromptOpenAI(prompt, "gpt-4o", key)
     default:
         log.Println("Unsupported LLM provider: ", provider)
         return 0
