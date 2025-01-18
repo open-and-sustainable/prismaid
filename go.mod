@@ -1,13 +1,14 @@
 module github.com/open-and-sustainable/prismaid
 
-go 1.22.7
+go 1.23.3
 
-toolchain go1.23.2
+toolchain go1.23.4
 
 require (
 	github.com/BurntSushi/toml v1.4.0
 	github.com/anthropics/anthropic-sdk-go v0.2.0-alpha.4
 	github.com/cohere-ai/cohere-go/v2 v2.12.2
+	github.com/cohesion-org/deepseek-go v0.0.0-20241216210207-8ae1bb3c99dc
 	github.com/cqroot/prompt v0.9.4
 	github.com/fumiama/go-docx v0.0.0-20240924153044-f7d29bb5c371
 	github.com/google/generative-ai-go v0.18.0

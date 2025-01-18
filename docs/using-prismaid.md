@@ -90,6 +90,7 @@ The **`[project.llm.#]`** fields manage LLM usage:
     - **GoogleAI**: Choose from `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`.
     - **Cohere**: Options are `command-r-plus`, `command-r`, `command-light`, `command`.
     - **Anthropic**: Includes `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
+    - **DeepSeek**: Provides `deepseek-chat`, version 3.
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
 - **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay). Use a non-zero value based on your provider TPM limits (see Rate Limits in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below).
 - **`rpm_limits`**: Sets maximum requests per minute. Default is `0` (no limit). See provider’s RPM restrictions in [Advanced Features](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#rate-limits) below.
@@ -225,6 +226,16 @@ Each model has specific limits for input size and costs, as summarized below:
             <td style="text-align: left;">Claude 3 Haiku</td>
             <td style="text-align: right;">200,000</td>
             <td style="text-align: right;">$0.25</td>
+        </tr>
+        <tr>
+            <td style="text-align: left; font-style: italic;">DeepSeek</td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td style="text-align: left;">DeepSeek-V3</td>
+            <td style="text-align: right;">64,000</td>
+            <td style="text-align: right;">$0.14</td>
         </tr>
     </tbody>
 </table>
@@ -522,6 +533,9 @@ Cohere production keys have no limit, but trial keys are limited to 20 API calls
     </tbody>
 </table>
 
+#### DeepSeek Rate Limits
+DeepSeek does not impose rate limits.
+
 **Note**: To ensure adherence to provider limits, users should manually set the lowest applicable `tpm` and `rpm` values in the configuration, as prismAId does not enforce automatic checks.
 
 ### Cost Minimization
@@ -534,15 +548,16 @@ In **Section 1** of the project configuration:
   - Google’s token estimation uses the [CountTokens API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/count-tokens).
   - Cohere uses its [API](https://docs.cohere.com/docs/rate-limits).
   - Anthropic approximates token counts via OpenAI’s tokenizer.
+  - DeepSeek approximates token counts via OpenAI’s tokenizer.
 
-Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing). 
+Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), and [DeepSeek](https://platform.deepseek.com/usage). 
 
 **Note**: Cost estimates are indicative and may vary.
 
 ### Ensemble Review
 Specifying multiple LLMs enables an 'ensemble' review, allowing result validation and uncertainty quantification. You can select multiple models from one or more providers, configuring each with specific parameters.
 
-To set up an ensemble review in the `[project.llm]` section, for instance with models from four different providers, use:
+To set up an ensemble review in the `[project.llm]` section, for instance with models from five different providers, use:
 
 ```toml
 [project.llm]
@@ -575,6 +590,14 @@ provider = "Anthropic"
 api_key = "" 
 model = "claude-3-haiku"
 temperature = 0.01 
+tpm_limit = 0 
+rpm_limit = 0
+
+[project.llm.5]
+provider = "DeepSeek"
+api_key = "" 
+model = "deepseek-chat"
+temperature = 0.01
 tpm_limit = 0 
 rpm_limit = 0
 ```

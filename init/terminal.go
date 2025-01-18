@@ -337,6 +337,7 @@ func collectModelItems() []ModelItem {
 				{Text: "GoogleAI", Note: "GoogleAI Gemini models."},
 				{Text: "Cohere", Note: "Cohere language models."},
 				{Text: "Anthropic", Note: "Anthropic Claude models."},
+				{Text: "DeepSeek", Note: "DeepSeek models."},
 			},
 			choose.WithHelp(true),)
 		checkErr(err)
@@ -387,6 +388,13 @@ func collectModelItems() []ModelItem {
 					{Text: "claude-3-opus", Note: "Claude 3 Opus."},
 					{Text: "claude-3-5-haiku", Note: "Claude 3.5 Haiku."},
 					{Text: "claude-3-5-sonnet", Note: "Claude 3.5 Sonnet."},
+				},
+				choose.WithHelp(true),)
+		} else if provider == "DeepSeek" {
+			model, err = prompt.New().Ask("Enter model to be used:").AdvancedChoose(
+				[]choose.Choice{
+					{Text: "", Note: "Model chosen automatically to minimize costs."},
+					{Text: "deepseek-chat", Note: "DeepSeek Chat - v3."},
 				},
 				choose.WithHelp(true),)
 		}

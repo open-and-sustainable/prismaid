@@ -26,6 +26,8 @@ const (
 	CommandRPlusMaxTokens = 128000
     // Anthropic Models
     AnthropicMaxTokens = 200000
+    // DeepSeek Models
+    DeepSeekChatMaxTokens = 64000
 )
 
 var ModelMaxTokens = map[string]int{
@@ -46,6 +48,7 @@ var ModelMaxTokens = map[string]int{
     anthropic.ModelClaude3OpusLatest:      AnthropicMaxTokens,
     anthropic.ModelClaude_3_Sonnet_20240229:      AnthropicMaxTokens,
     anthropic.ModelClaude_3_Haiku_20240307:      AnthropicMaxTokens,
+    "deepseek-chat": DeepSeekChatMaxTokens,
 }
 
 // RunInputLimitsCheck verifies if the number of tokens in given prompts exceed the allowed limits for a specified model.

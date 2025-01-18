@@ -147,7 +147,8 @@ function addLLMProvider() {
         OpenAI: ['gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', ''],
         GoogleAI: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', ''],
         Cohere: ['command-r7b-12-2024', 'command-r-plus', 'command-r', 'command-light', 'command', ''],
-        Anthropic: ['claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', '']
+        Anthropic: ['claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', ''],
+        DeepSeek: ['deepseek-chat', '']
     };
 
     // HTML content for the provider
@@ -159,6 +160,7 @@ function addLLMProvider() {
             <option value="GoogleAI">GoogleAI</option>
             <option value="Cohere">Cohere</option>
             <option value="Anthropic">Anthropic</option>
+            <option value="DeepSeek">DeepSeek</option>
         </select><br>
 
         <label class="form-label">API Key:</label>
