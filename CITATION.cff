@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.6.5 - added support of Command R7B. 
-  Support of new model: Cohere's Command R7B.
+  v0.6.6 - support for DeepSeek Chat v3. 
+  Support for new provider and model: DeepSeek Chat v3.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
