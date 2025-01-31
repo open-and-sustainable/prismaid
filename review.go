@@ -10,7 +10,6 @@ import (
 	"github.com/open-and-sustainable/prismaid/check"
 	"github.com/open-and-sustainable/prismaid/config"
 	"github.com/open-and-sustainable/prismaid/convert"
-	"github.com/open-and-sustainable/prismaid/cost"
 	"github.com/open-and-sustainable/prismaid/debug"
 	"github.com/open-and-sustainable/prismaid/model"
 	"github.com/open-and-sustainable/prismaid/prompt"
@@ -189,10 +188,6 @@ func RunReview(tomlConfiguration string) error {
 	// differentiate logic if simgle model review or ensemble
 	ensemble := false
 	if len(models) > 1 {ensemble = true}
-
-	if ensemble {
-		fmt.Println("Cost estimates are available for single model reviews only.")
-	}
 	
 	for _, model := range models {
 		if !ensemble {model.ID = ""}
@@ -329,15 +324,6 @@ func runSingleModelReview(llm review.Model, options review.Options, query review
 		if err != nil {
 			log.Println("Error starting JSON array:", err)
 			return err
-		}
-	}
-
-	if llm.ID == "" {			
-		// ask if continuing given the total cost
-		check := check.RunUserCheck(cost.ComputeCosts(query.Prompts, llm.Provider, llm.Model, llm.APIKey), llm.Provider)
-		if check != nil {
-			log.Printf("Error:\n%v", check)
-			exit(0) // if the user stops the execution it is still a success run, hence exit code = 0, but the reason for the exit may be different hence is logged
 		}
 	}
 

@@ -85,6 +85,8 @@ else:
     print("RunReview completed successfully")
 ```
 
+**NOTE**: when using prismAId legacy versions <= 0.6.6 in Jupyter notebooks follow instructions [presented below](https://open-and-sustainable.github.io/prismaid/installation-setup.html#use-in-jupyter-notebooks) to run single model reviews.
+
 ### Option 4. R Package
 
 **(Supported: Linux AMD64, macOS Arm64)**
@@ -147,15 +149,56 @@ Additionally, the tool supports integration with Zotero, allowing you to incorpo
 
 **<span class="blink">ATTENTION</span>**: This tool provides methods to convert PDFs and other manuscript formats into text. However, due to limitations inherent in the PDF format, these conversions might be imperfect. **Please manually check any converted manuscripts for completeness before further processing.** Special attention may be required to ensure accuracy.
 
-### Cost Estimation at Startup
-After loading the project configuration, prismAId provides an estimated cost (in USD) to run the review using the specified OpenAI model. This estimate primarily reflects the input processing cost, which is typically the largest component in review projects.
+### Use in Jupyter Notebooks
+When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmatiom to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).
 
-To proceed, the user must confirm by entering 'y'; otherwise, the process exits without making API calls, ensuring no cost is incurred:
-```bash
-Total cost (USD - $): 0.0035965
-Do you want to continue? (y/n): 
+To overcome this problem, it is possible to intercept the IO on the terminal as it follows:
+```python
+import pty
+import os
+import time
+import select
+
+def run_review_with_auto_input(input_str):
+    master, slave = pty.openpty()  # Create a pseudo-terminal
+
+    pid = os.fork()
+    if pid == 0:  # Child process
+        os.dup2(slave, 0)  # Redirect stdin
+        os.dup2(slave, 1)  # Redirect stdout
+        os.dup2(slave, 2)  # Redirect stderr
+        os.close(master)
+        import prismaid
+        prismaid.RunReviewPython(input_str.encode("utf-8"))
+        os._exit(0)
+
+    else:  # Parent process
+        os.close(slave)
+        try:
+            while True:
+                rlist, _, _ = select.select([master], [], [], 5)
+                if master in rlist:
+                    output = os.read(master, 1024).decode("utf-8", errors="ignore")
+                    if not output:
+                        break  # Process finished
+
+                    print(output, end="")
+
+                    if "Do you want to continue?" in output:
+                        print("\n[SENDING INPUT: y]")
+                        os.write(master, b"y\n")
+                        time.sleep(1)
+        finally:
+            os.close(master)
+            os.waitpid(pid, 0)  # Ensure the child process is cleaned up
+
+# Load your review (TOML) configuration
+with open("config.toml", "r") as file:
+    input_str = file.read()
+
+# Run the review function
+run_review_with_auto_input(input_str)
 ```
-**Note**: Cost estimation is only available when a single model is configured; ensemble reviews do not include this feature.
 
 
 <div id="wcb" class="carbonbadge"></div>
