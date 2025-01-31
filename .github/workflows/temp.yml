@@ -157,8 +157,10 @@ jobs:
           name: prismaid-python-package
           path: dist/
 
-      - name: Install Twine
-        run: python -m pip install --upgrade twine
+      - name: Install Twine and pkginfo
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade twine pkginfo
 
       - name: Publish distribution to PyPI
         env:
