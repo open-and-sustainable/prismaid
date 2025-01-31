@@ -9,11 +9,11 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.6.7] - unreleased
+## [0.6.7] - 2025-01-31
 ### Added
 - Instructions to use legacy versions <= 0.6.6 in Jupyter notebooks
 ### Removed
-- Automatic confirmation request for single model reviews
+- User confirmation request for single model reviews
 
 ## [0.6.6] - 2025-01-18
 ### Added

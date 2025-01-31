@@ -543,16 +543,18 @@ In **Section 1** of the project configuration:
 - **`model`**: Leaving this field empty (`''`) enables automatic selection of the most cost-efficient model from the chosen provider. This may result in varying models for manuscripts based on length and token limits.
 
 #### How Costs are Computed
-- **Token Libraries**: prismAId uses libraries specific to each provider:
-  - OpenAI’s cost estimation uses the [Tiktoken library](https://github.com/pkoukk/tiktoken-go).
-  - Google’s token estimation uses the [CountTokens API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/count-tokens).
+Cost minimization considers both the cost of using the model for each unit (token) of input and the total number of input tokens, because more economical models may have stricter limits on how much data they can handle.
+
+- **Tokenization Libraries**: prismAId uses libraries specific to each provider:
+  - OpenAI’s cost minimization uses the [Tiktoken library](https://github.com/pkoukk/tiktoken-go).
+  - Google’s token minimization uses the [CountTokens API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/count-tokens).
   - Cohere uses its [API](https://docs.cohere.com/docs/rate-limits).
   - Anthropic approximates token counts via OpenAI’s tokenizer.
   - DeepSeek approximates token counts via OpenAI’s tokenizer.
 
 Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), and [DeepSeek](https://platform.deepseek.com/usage). 
 
-**Note**: Cost estimates are indicative and may vary.
+**Note**: Cost estimates are approximate and subject to change. Users with strict budgets should verify all costs thoroughly before conducting reviews.
 
 ### Ensemble Review
 Specifying multiple LLMs enables an 'ensemble' review, allowing result validation and uncertainty quantification. You can select multiple models from one or more providers, configuring each with specific parameters.

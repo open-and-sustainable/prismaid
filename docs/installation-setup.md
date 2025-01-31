@@ -85,7 +85,7 @@ else:
     print("RunReview completed successfully")
 ```
 
-**NOTE**: when using prismAId legacy versions <= 0.6.6 in Jupyter notebooks follow instructions [presented below](https://open-and-sustainable.github.io/prismaid/installation-setup.html#use-in-jupyter-notebooks).
+**NOTE**: when using prismAId legacy versions <= 0.6.6 in Jupyter notebooks follow instructions [presented below](https://open-and-sustainable.github.io/prismaid/installation-setup.html#use-in-jupyter-notebooks) to run single model reviews.
 
 ### Option 4. R Package
 
@@ -149,18 +149,8 @@ Additionally, the tool supports integration with Zotero, allowing you to incorpo
 
 **<span class="blink">ATTENTION</span>**: This tool provides methods to convert PDFs and other manuscript formats into text. However, due to limitations inherent in the PDF format, these conversions might be imperfect. **Please manually check any converted manuscripts for completeness before further processing.** Special attention may be required to ensure accuracy.
 
-### Cost Estimation at Startup
-After loading the project configuration, prismAId provides an estimated cost (in USD) to run the review using the specified OpenAI model. This estimate primarily reflects the input processing cost, which is typically the largest component in review projects.
-
-To proceed, the user must confirm by entering 'y'; otherwise, the process exits without making API calls, ensuring no cost is incurred:
-```bash
-Total cost (USD - $): 0.0035965
-Do you want to continue? (y/n): 
-```
-**Note**: Cost estimation is only available when a single model is configured; ensemble reviews do not include this feature.
-
 ### Use in Jupyter Notebooks
-When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmatiom to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models.
+When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmatiom to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).
 
 To overcome this problem, it is possible to intercept the IO on the terminal as it follows:
 ```python
