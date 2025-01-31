@@ -10,7 +10,7 @@ authors = [{ name = "Riccardo Boero", email = "ribo@nilu.no" }]
 keywords = ["open science", "systematic reviews", "AI"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "License :: OSI Approved :: GNU Affero General Public License v3.0 only (AGPL-3.0-only)",
     "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Information Analysis"
