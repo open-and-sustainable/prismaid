@@ -146,7 +146,7 @@ jobs:
     name: Publish Python distribution to PyPI
     needs: package-python  # Ensure it waits for the packaging job
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -163,6 +163,8 @@ jobs:
           python -m pip install --upgrade twine pkginfo
 
       - name: Publish distribution to PyPI
+         with:
+           verbose: true
         env:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
