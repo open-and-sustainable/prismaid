@@ -129,7 +129,8 @@ jobs:
       - name: Install build tools
         working-directory: ./python
         run: |
-          python -m pip install --upgrade pip hatch wheel build
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade hatch wheel build packaging
       
       - name: Set Hatch Version
         run: echo "HATCH_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
