@@ -163,11 +163,10 @@ jobs:
           python -m pip install --upgrade twine pkginfo
 
       - name: Publish distribution to PyPI
-         with:
-           verbose: true
         env:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
         run: |
           twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
-
+        with:
+          verbose: true
