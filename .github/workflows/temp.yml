@@ -132,7 +132,7 @@ jobs:
           python -m pip install --upgrade pip hatch wheel build
       
       - name: Set Hatch Version
-        run: echo "HATCH_VERSION=$(git describe --tags --always --dirty)" >> $GITHUB_ENV
+        run: echo "HATCH_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Build Python package
         working-directory: ./python
