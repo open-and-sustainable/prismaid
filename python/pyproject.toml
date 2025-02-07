@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -30,7 +30,8 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 testing = ["pytest", "pytest-cov"]
 
 [tool.hatch.version]
-source = "vcs"
+source = "env"
+variable = "HATCH_VERSION"
 
 [tool.hatch.metadata]
 allow-direct-references = true
