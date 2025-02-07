@@ -29,6 +29,9 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
 
+[tool.hatch.version]
+source = "setuptools-git"
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
