@@ -245,7 +245,10 @@ jobs:
       - name: Install build tools
         working-directory: ./python
         run: |
-          python -m pip install --upgrade pip setuptools wheel build
+          python -m pip install --upgrade pip hatch wheel build
+      
+      - name: Set Hatch Version
+        run: echo "HATCH_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
 
       - name: Build Python package
         working-directory: ./python
@@ -274,14 +277,16 @@ jobs:
           path: dist/
 
       - name: Install Twine
-        run: python -m pip install --upgrade twine
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade twine pkginfo packaging
 
       - name: Publish distribution to PyPI
         env:
           TWINE_USERNAME: "__token__"
           TWINE_PASSWORD: "${{ secrets.PYPY_API_TOKEN }}"
         run: |
-          twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+          twine upload --verbose --repository-url https://upload.pypi.org/legacy/ dist/*
 
   update-version-for-julia:
     runs-on: ubuntu-latest
