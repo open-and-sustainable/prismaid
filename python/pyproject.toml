@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "setuptools-git-versioning>=2.0,<3"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -30,7 +30,7 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 testing = ["pytest", "pytest-cov"]
 
 [tool.hatch.version]
-source = "setuptools-git"
+source = "vcs"
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -49,9 +49,4 @@ include = [
     "prismaid/libprismaid_darwin_amd64.dylib",
     "prismaid/libprismaid_darwin_arm64.dylib"
 ]
-
-[tool.setuptools-git-versioning]
-enabled = true
-dev_template = "{tag}"
-dirty_template = "{tag}"
 
