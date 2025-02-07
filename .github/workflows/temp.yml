@@ -129,8 +129,7 @@ jobs:
       - name: Install build tools
         working-directory: ./python
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade hatch wheel build packaging
+          python -m pip install --upgrade pip hatch wheel build
       
       - name: Set Hatch Version
         run: echo "HATCH_VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
@@ -164,7 +163,7 @@ jobs:
       - name: Install Twine and pkginfo
         run: |
           python -m pip install --upgrade pip
-          python -m pip install --upgrade twine pkginfo
+          python -m pip install --upgrade twine pkginfo packaging
 
       - name: Publish distribution to PyPI
         env:
