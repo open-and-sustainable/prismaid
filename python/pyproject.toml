@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools-git-versioning>=2.0,<3"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "setuptools-git-versioning>=2.0,<3"]
+build-backend = "hatchling.build"
 
 [project]
 name = "prismaid"
@@ -17,8 +17,8 @@ classifiers = [
 ]
 requires-python = ">=3.6"
 readme = "README.md"
-license = { text = "AGPL-3.0" }
-license-files = ["LICENSE"]
+license = { text = "AGPL-3.0-only" }
+license-files = ["LICEN[CS]E*"]
 
 [project.urls]
 homepage = "https://github.com/open-and-sustainable/prismaid"
@@ -29,16 +29,26 @@ issues = "https://github.com/open-and-sustainable/prismaid/issues"
 [project.optional-dependencies]
 testing = ["pytest", "pytest-cov"]
 
-[tool.setuptools]
-include-package-data = true
+[tool.hatch.metadata]
+allow-direct-references = true
 
-[tool.setuptools.package-data]
-prismaid = ["libprismaid_linux_amd64.so", "libprismaid_linux_arm64.so", "libprismaid_windows_amd64.dll", "libprismaid_darwin_amd64.dylib", "libprismaid_darwin_arm64.dylib"]
+[tool.hatch.build.targets.sdist]
+include = ["prismaid", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["prismaid"]
+
+[tool.hatch.build]
+include = [
+    "prismaid/libprismaid_linux_amd64.so",
+    "prismaid/libprismaid_linux_arm64.so",
+    "prismaid/libprismaid_windows_amd64.dll",
+    "prismaid/libprismaid_darwin_amd64.dylib",
+    "prismaid/libprismaid_darwin_arm64.dylib"
+]
 
 [tool.setuptools-git-versioning]
 enabled = true
 dev_template = "{tag}"
 dirty_template = "{tag}"
-
-
 
