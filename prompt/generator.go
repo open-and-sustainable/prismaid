@@ -3,12 +3,14 @@ package prompt
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"github.com/open-and-sustainable/prismaid/config"
 	"sort"
 	"strings"
+
+	"github.com/open-and-sustainable/prismaid/config"
+
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 // ParsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
@@ -36,7 +38,7 @@ func ParsePrompts(config *config.Config) ([]string, []string) {
 	// Load text files
 	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 	}
 
 	for _, file := range files {
@@ -44,7 +46,7 @@ func ParsePrompts(config *config.Config) ([]string, []string) {
 			filePath := filepath.Join(config.Project.Configuration.InputDirectory, file.Name())
 			documentText, err := os.ReadFile(filePath)
 			if err != nil {
-				log.Println("Error reading file:", err)
+				logger.Error("Error reading file:", err)
 				return nil, nil
 			}
 
@@ -77,7 +79,7 @@ func parseExpectedResults(config *config.Config) string {
 	// Convert sorted map to JSON
 	reviewJSON, err := json.Marshal(sortedReviewItems)
 	if err != nil {
-		log.Fatalf("Error marshalling review items to JSON: %v", err)
+		logger.Error("Error marshalling review items to JSON: %v", err)
 	}
 
 	// Combine the expected result with the JSON-formatted review items

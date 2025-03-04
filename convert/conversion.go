@@ -2,11 +2,11 @@ package convert
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 // Convert processes files from the input directory specified in the configuration and converts them into plain text files.
@@ -29,7 +29,7 @@ func Convert(inputDir, selectedFormats string) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)
 	if err != nil {
-		log.Println("Error: ", err)
+		logger.Error("Error: ", err)
 		return fmt.Errorf("error reading input directory: %v", err)
 	}
 	// formats
@@ -47,7 +47,7 @@ func Convert(inputDir, selectedFormats string) error {
 					
 					err = writeText(txt_content, txtPath)
 					if err != nil {
-						log.Println("Error: ", err)
+						logger.Error("Error: ", err)
 						return fmt.Errorf("error writing to file: %v", err)
 					}
 				}
@@ -58,7 +58,7 @@ func Convert(inputDir, selectedFormats string) error {
 					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
 					err = writeText(txt_content, txtPath)
 					if err != nil {
-						log.Println("Error: ", err)
+						logger.Error("Error: ", err)
 						return fmt.Errorf("error writing to file: %v", err)
 					}
 				}
@@ -78,7 +78,7 @@ func readText(file string, format string) (string, error) {
 	case "html":
 		modelFunc = readHtml
 	default:
-		log.Println("Unsupported document type: ", format)
+		logger.Error("Unsupported document type: ", format)
 		return "", fmt.Errorf("unsupported document type: %s", format)
 	}
 	return modelFunc(file)
@@ -100,6 +100,6 @@ func writeText(text string, txtPath string) error {
 		return fmt.Errorf("error writing to file: %v", err)
 	}
 
-	log.Printf("Successfully wrote to %s\n", txtPath)
+	logger.Info("Successfully wrote to %s\n", txtPath)
 	return nil
 }
