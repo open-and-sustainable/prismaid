@@ -1,20 +1,23 @@
 package prismaid
 
 import (
-	"encoding/csv"
-	"github.com/open-and-sustainable/alembica/utils/logger"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/alembica/extraction"
+	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid/config"
 	"github.com/open-and-sustainable/prismaid/convert"
 	"github.com/open-and-sustainable/prismaid/debug"
 	"github.com/open-and-sustainable/prismaid/prompt"
 	"github.com/open-and-sustainable/prismaid/results"
 	"github.com/open-and-sustainable/prismaid/zotero"
-	"sync"
-	"time"
 )
 
 const (
@@ -37,6 +40,11 @@ func exit(code int) {
 // Global variable to store the timestamps of requests
 var requestTimestamps []time.Time
 var mutex sync.Mutex
+
+// prompts for specific functionalities
+const justification_query = "For each one of the keys and answers you provided, provide a justification for your answer as a chain of thought. In particular, I want a textual description of the few stages of the chin of thought that lead you to the answer you provided and the sentences in the text you analyzes that support your decision. If the value of a key was 'no' or empty '' because of lack of information on that topic in the text analyzed, explicitly report this reason. Please provide only th einformation requested, neither introductory nor concluding remarks."
+const summary_query = "Summarize in very few sentences the text provided to you before for your review."
+
 
 // RunReview is the main function responsible for orchestrating the systematic review process.
 // It takes a TOML string as input, which defines the configuration for the review, and executes 
@@ -129,13 +137,13 @@ func RunReview(tomlConfiguration string) error {
 	if config.Project.Zotero.User != "" {
 		client := &http.Client{}
 		// downlaod pdfs
-		err := zotero.DownloadPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, getDirectoryPath(config.Project.Configuration.ResultsFileName))
+		err := zotero.DownloadPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, results.GetDirectoryPath(config.Project.Configuration.ResultsFileName))
 		if err != nil {
 			logger.Error("Error:\n%v", err)
 			return err
 		}
 		// convert pdfs
-		err = convert.Convert(getDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
+		err = convert.Convert(results.GetDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
 		if err != nil {
 			logger.Error("Error:\n%v", err)
 			exit(ExitCodeErrorInReviewLogic)
@@ -160,40 +168,26 @@ func RunReview(tomlConfiguration string) error {
 	prompts, filenames := prompt.ParsePrompts(config)
 	logger.Info("Found", len(prompts), "files")
 
-	// build options object
-	options, err := review.NewOptions(config.Project.Configuration.ResultsFileName, config.Project.Configuration.OutputFormat, config.Project.Configuration.CotJustification, config.Project.Configuration.Summary)
+	// convert to JSON format
+	jsonString, err := convertToJSON(config, prompts)
 	if err != nil {
-		log.Printf("Error:\n%v", err)
+		logger.Error("Error converting to JSON:", err)
 		return err
 	}
 
-	// build query object
-	query, err := review.NewQuery(prompts, prompt.SortReviewKeysAlphabetically(config))
+	// run review
+	reviewResults, err := extraction.Extract(jsonString)
+
+	logger.Info("Results:\n", reviewResults)
+	
+	// save results
+	keys := prompt.SortReviewKeysAlphabetically(config)
+	err = results.Save(config, reviewResults, filenames, keys)
 	if err != nil {
-		log.Printf("Error:\n%v", err)
+		logger.Error("Error saving results:", err)
 		return err
 	}
 
-	// build models object
-	models, err := review.NewModels(config.Project.LLM)
-	if err != nil {
-		log.Printf("Error:\n%v", err)
-		return err
-	}
-	
-	// differentiate logic if simgle model review or ensemble
-	ensemble := false
-	if len(models) > 1 {ensemble = true}
-	
-	for _, model := range models {
-		if !ensemble {model.ID = ""}
-		err = runSingleModelReview(model, options, query, filenames)
-		if err != nil {
-			log.Printf("Error:\n%v", err)
-			return err
-		}	
-	}
-	
 	// cleanup eventual debugging temporary files
 	if config.Project.Configuration.Duplication == "yes" {
 		debug.RemoveDuplicateInput(config)
@@ -203,113 +197,64 @@ func RunReview(tomlConfiguration string) error {
 	return nil
 }
 
-func getDirectoryPath(resultsFileName string) string {
-	dir := filepath.Dir(resultsFileName)
-
-	// If the directory is ".", return an empty string
-	if dir == "." {
-		return ""
+// Convert TOML config to JSON structure
+func convertToJSON(config *config.Config, prompts []string) (string, error) {
+	// Populate metadata
+	jsonSchema := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       config.Project.Version,
+			SchemaVersion: "1.0", // Hardcoded since it's not in TOML
+			Timestamp:     time.Now().Format(time.RFC3339),
+		},
 	}
-	return dir
-}
 
-func runSingleModelReview(llm review.Model, options review.Options, query review.Query, filenames []string) error {
+	// Populate models
+	for _, llm := range config.Project.LLM {
+		jsonSchema.Models = append(jsonSchema.Models, definitions.Model{
+			Provider:    llm.Provider,
+			APIKey:      llm.ApiKey,
+			Model:       llm.Model,
+			Temperature: llm.Temperature,
+			TPMLimit:    int(llm.TpmLimit),
+			RPMLimit:    int(llm.RpmLimit),
+		})
+	}
 
-	// start writer for results.. the file will be project_name[.csv or .json] in the path where the toml is
-	resultsFileName := options.ResultsFileName
-	outputFilePath := resultsFileName + "." + options.OutputFormat
-	if llm.ID != "" {outputFilePath = resultsFileName + "_" + llm.ID + "." + options.OutputFormat}
-	outputFile, err := os.Create(outputFilePath)
+	// Populate prompts
+	for i, promptText := range prompts {
+		y := 1
+		jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+			PromptContent:  promptText,
+			SequenceID:     strconv.Itoa(i + 1),
+			SequenceNumber: 1,
+		})
+		// add justifications
+		if config.Project.Configuration.CotJustification == "yes" {
+			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+				PromptContent:  justification_query,
+				SequenceID:     strconv.Itoa(i + 1),
+				SequenceNumber: y+1,
+			})
+			y++
+		}
+		// add summaries
+		if config.Project.Configuration.Summary == "yes" {
+			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+				PromptContent:  summary_query,
+				SequenceID:     strconv.Itoa(i + 1),
+				SequenceNumber: y+1,
+			})
+			y++
+		}
+	}
+
+	// Convert to JSON string
+	jsonData, err := json.MarshalIndent(jsonSchema, "", "  ")
 	if err != nil {
-		log.Println("Error creating output file:", err)
-		return err
-	}
-	defer outputFile.Close() // Ensure the file is closed after all operations are done
-
-	var writer *csv.Writer
-	if options.OutputFormat == "csv" {
-		writer = results.CreateCSVWriter(outputFile, query.Keys) // Pass the file to CreateWriter
-		defer writer.Flush()                                // Ensure data is flushed after all writes	
-	} else if options.OutputFormat == "json" {
-		err = results.StartJSONArray(outputFile)
-		if err != nil {
-			log.Println("Error starting JSON array:", err)
-			return err
-		}
+		logger.Error("Error marshaling JSON:", err)
+		return "", err
 	}
 
-	// Loop through the prompts
-	for i, promptText := range query.Prompts {
-		log.Println("File: ", filenames[i], " Prompt: ", promptText)
-
-		// clean model names
-		llm.Model = check.GetModel(promptText, llm.Provider, llm.Model, llm.APIKey)
-		fmt.Println("Processing file "+fmt.Sprint(i+1)+"/"+fmt.Sprint(len(query.Prompts))+" "+filenames[i]+" with model "+llm.Model)
-		
-		// check if prompts resepct input tokens limits for selected models
-		counter := tokens.RealTokenCounter{}
-		checkInputLimits := check.RunInputLimitsCheck(promptText, llm.Provider, llm.Model, llm.APIKey, counter)
-		if checkInputLimits != nil {
-			fmt.Println("Error resepecting the max input tokens limits for the following manuscripts and models.")
-			log.Printf("Error:\n%v", checkInputLimits)
-			exit(ExitCodeInputTokenError)	
-		}
-
-		// Query the LLM
-		realQueryService := model.DefaultQueryService{}
-		response, justification, summary, err := realQueryService.QueryLLM(promptText, llm, options)
-		if err != nil {
-			log.Println("Error querying LLM:", err)
-			return err
-		}
-
-		// Handle the output format
-		if options.OutputFormat == "json" {
-			results.WriteJSONData(response, filenames[i], outputFile) // Write formatted JSON to file
-			// add comma if it's not the last element
-			if i < len(query.Prompts)-1 {
-				results.WriteCommaInJSONArray(outputFile)
-			}
-		} else {
-			if options.OutputFormat == "csv" {
-				results.WriteCSVData(response, filenames[i], writer, query.Keys)
-			}
-		}
-		// save justifications
-		if options.Justification {
-			justificationFilePath := getDirectoryPath(resultsFileName) + "/" + filenames[i] + "_justification.txt"
-			if llm.ID != "" {justificationFilePath = getDirectoryPath(resultsFileName) + "/" + filenames[i] + "_justification_"+llm.ID+".txt"}
-			err := os.WriteFile(justificationFilePath, []byte(justification), 0644)
-			if err != nil {
-				log.Println("Error writing justification file:", err)
-				return err
-			}
-		}
-		// save summaries
-		if options.Summary {
-			summaryFilePath := getDirectoryPath(resultsFileName) + "/" + filenames[i] + "_summary.txt"
-			if llm.ID != "" {summaryFilePath = getDirectoryPath(resultsFileName) + "/" + filenames[i] + "_summary_"+llm.ID+".txt"}
-			err := os.WriteFile(summaryFilePath, []byte(summary), 0644)
-			if err != nil {
-				log.Println("Error writing summary file:", err)
-				return err
-			}
-		}
-
-		// Sleep before the next prompt if it's not the last one
-		if i < len(query.Prompts)-1 {
-			waitWithStatus(getWaitTime(promptText, llm))
-		}
-	}
-
-	// close JSON array if needed
-	if options.OutputFormat == "json" {
-		err = results.CloseJSONArray(outputFile)
-		if err != nil {
-			log.Println("Error closing JSON array:", err)
-			return err
-		}
-	}	
-	
-	return nil
+	return string(jsonData), nil
 }
+

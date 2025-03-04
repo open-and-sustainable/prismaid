@@ -1,11 +1,12 @@
 package debug
 
 import (
-	"log"
 	"os"
 	"path/filepath"
-	"github.com/open-and-sustainable/prismaid/config"
 	"strings"
+	
+	"github.com/open-and-sustainable/prismaid/config"
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 const duplication_extension = "duplicate"
@@ -23,7 +24,7 @@ func DuplicateInput(config *config.Config) error {
 	// Load text files from the input directory
 	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 		return err
 	}
 
@@ -37,7 +38,7 @@ func DuplicateInput(config *config.Config) error {
 			// Read the file content
 			content, err := os.ReadFile(filePath)
 			if err != nil {
-				log.Printf("Failed to read file %s: %v", file.Name(), err)
+				logger.Error("Failed to read file %s: %v", file.Name(), err)
 				return err
 			}
 
@@ -49,11 +50,11 @@ func DuplicateInput(config *config.Config) error {
 			// Write the duplicated content to the new file
 			err = os.WriteFile(newFilePath, content, 0644)
 			if err != nil {
-				log.Printf("Failed to write duplicated file %s: %v", newFileName, err)
+				logger.Error("Failed to write duplicated file %s: %v", newFileName, err)
 				return err
 			}
 
-			log.Printf("File %s duplicated as %s", file.Name(), newFileName)
+			logger.Info("File %s duplicated as %s", file.Name(), newFileName)
 		}
 	}
 
@@ -64,7 +65,7 @@ func RemoveDuplicateInput(config *config.Config) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 		return err
 	}
 
@@ -83,11 +84,11 @@ func RemoveDuplicateInput(config *config.Config) error {
 				// Remove the file
 				err := os.Remove(filePath)
 				if err != nil {
-					log.Printf("Failed to remove file %s: %v", file.Name(), err)
+					logger.Error("Failed to remove file %s: %v", file.Name(), err)
 					return err
 				}
 
-				log.Printf("Removed duplicated file: %s", file.Name())
+				logger.Info("Removed duplicated file: %s", file.Name())
 			}
 		}
 	}

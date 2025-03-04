@@ -13,7 +13,7 @@ func TestStartJSONArray(t *testing.T) {
     }
     defer os.Remove(outputFile.Name()) // Clean up
 
-    err = StartJSONArray(outputFile)
+    err = startJSONArray(outputFile)
     if err != nil {
         t.Fatalf("Failed to start JSON array: %v", err)
     }
@@ -40,7 +40,7 @@ func TestWriteJSONData(t *testing.T) {
     response := `{"key": "value"}`
     filename := "testfile"
 
-    WriteJSONData(response, filename, outputFile)
+    writeJSONData(response, filename, outputFile)
 
     // Check the contents of the file
     content, err := os.ReadFile(outputFile.Name())
@@ -62,19 +62,19 @@ func TestWriteCommaAndCloseJSONArray(t *testing.T) {
     defer os.Remove(outputFile.Name()) // Clean up
 
     // Start array
-    StartJSONArray(outputFile)
+    startJSONArray(outputFile)
 
     // Write some data
-    WriteJSONData(`{"key": "value"}`, "testfile", outputFile)
+    writeJSONData(`{"key": "value"}`, "testfile", outputFile)
 
     // Write a comma
-    WriteCommaInJSONArray(outputFile)
+    writeCommaInJSONArray(outputFile)
 
     // Write another data element
-    WriteJSONData(`{"key2": "value2"}`, "testfile2", outputFile)
+    writeJSONData(`{"key2": "value2"}`, "testfile2", outputFile)
 
     // Close the array
-    CloseJSONArray(outputFile)
+    closeJSONArray(outputFile)
 
     // Check the contents of the file
     content, err := os.ReadFile(outputFile.Name())

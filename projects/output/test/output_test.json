@@ -1,19 +1,78 @@
 [
 {
-    "bayesian_approach": "no",
+    "bayesian approach": "no",
     "clustering": "no",
     "copulas": "yes",
     "filename": "lit_test",
     "forecasting": "yes",
-    "geographical_scale": "river basin",
-    "historical_data_analysis": "yes",
-    "historical_period_studied": [
-        "1970--1999",
-        "2000--2017",
-        "2020--2039",
-        "2040--2069",
-        "2070--2099"
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970–1999",
+        "2000–2017",
+        "2020–2039",
+        "2040–2069",
+        "2070–2099"
     ],
-    "regression_models": "yes"
+    "model": "deepseek-chat",
+    "provider": "DeepSeek",
+    "regression models": "yes"
 }
+,
+{
+    "bayesian approach": "no",
+    "clustering": "no",
+    "copulas": "yes",
+    "filename": "lit_test_duplicate",
+    "forecasting": "yes",
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970–1999",
+        "2000–2017",
+        "2020–2039",
+        "2040–2069",
+        "2070–2099"
+    ],
+    "model": "deepseek-chat",
+    "provider": "DeepSeek",
+    "regression models": "yes"
+}
+,
+{
+    "bayesian approach": "no",
+    "clustering": "no",
+    "copulas": "yes",
+    "filename": "lit_test",
+    "forecasting": "yes",
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970-1999",
+        "2000-2017",
+        "2018-2100"
+    ],
+    "model": "gpt-4o-mini",
+    "provider": "OpenAI",
+    "regression models": "yes"
+}
+,
+{
+    "bayesian approach": "no",
+    "clustering": "no",
+    "copulas": "yes",
+    "filename": "lit_test_duplicate",
+    "forecasting": "yes",
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970-1999",
+        "2000-2017",
+        "2018-2100"
+    ],
+    "model": "gpt-4o-mini",
+    "provider": "OpenAI",
+    "regression models": "yes"
+}
+
 ]

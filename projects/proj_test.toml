@@ -6,17 +6,25 @@ version = "0.3"
 [project.configuration]
 input_directory = "../projects/input/test"
 results_file_name = "../projects/output/test/output_test"
-output_format = "csv"
+output_format = "json"
 log_level = "low"
 duplication = "no"
-cot_justification = "no"
-summary = "no"
+cot_justification = "yes"
+summary = "yes"
 
 [project.llm]
 [project.llm.1]
 provider = "DeepSeek"
 api_key = ""
 model = "deepseek-chat"
+temperature = 0.001
+tpm_limit = 0
+rpm_limit = 0
+
+[project.llm.2]
+provider = "OpenAI"
+api_key = ""
+model = "gpt-4o-mini"
 temperature = 0.001
 tpm_limit = 0
 rpm_limit = 0
