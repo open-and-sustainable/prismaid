@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"os"
+	"sort"
+	"strconv"
 
 	"github.com/open-and-sustainable/prismaid/config"
 	"github.com/open-and-sustainable/alembica/definitions"
@@ -16,7 +18,10 @@ func Save(config *config.Config, results string, filenames []string, keys []stri
 	outputFormat := config.Project.Configuration.OutputFormat
 	outputFilePath := resultsFileName + "." + outputFormat
 
-	saveJustificationsAndSummaries(config, resultsFileName, results, filenames)
+	// Save justifications & summaries ONLY if CSV format
+	if outputFormat == "csv" {
+		saveJustificationsAndSummaries(config, resultsFileName, results, filenames)
+	}
 
 	if outputFormat == "json" {
 		return saveJSON(outputFilePath, results, filenames)
@@ -26,6 +31,7 @@ func Save(config *config.Config, results string, filenames []string, keys []stri
 		return fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
 }
+
 
 func saveJSON(filePath string, resultsString string, filenames []string) error {
 	outputFile, err := os.Create(filePath)
@@ -100,29 +106,42 @@ func saveJSON(filePath string, resultsString string, filenames []string) error {
 }
 
 func saveCSV(filePath string, resultsString string, filenames []string, keys []string) error {
-    outputFile, err := os.Create(filePath)
-    if err != nil {
-        return err
-    }
-    defer outputFile.Close()
+	outputFile, err := os.Create(filePath)
+	if err != nil {
+		logger.Error("Error creating CSV file: %v", err)
+		return err
+	}
+	defer outputFile.Close()
 
-    writer := createCSVWriter(outputFile, keys)
-    defer writer.Flush()
+	writer := createCSVWriter(outputFile, keys)
+	defer writer.Flush()
 
-    var parsedResults definitions.Output
-    if err := json.Unmarshal([]byte(resultsString), &parsedResults); err != nil {
-        return err
-    }
+	// Parse JSON results
+	var parsedResults definitions.Output
+	if err := json.Unmarshal([]byte(resultsString), &parsedResults); err != nil {
+		logger.Error("Error parsing results JSON: %v", err)
+		return err
+	}
 
-    for i, response := range parsedResults.Responses {
-        filenameIndex := i % len(filenames) // Repeat filenames if needed
+	// Process responses
+	for i, response := range parsedResults.Responses {
+		// Skip justifications & summaries (SequenceNumber > 1)
+		if response.SequenceNumber > 1 {
+			logger.Info("Skipping justification/summary in CSV (SeqNum: %d)", response.SequenceNumber)
+			continue
+		}
 
-        for _, modelResponse := range response.ModelResponses {
-            writeCSVData(modelResponse, filenames[filenameIndex], response.Provider, response.Model, writer, keys)
-        }
-    }
+		// Ensure correct filename mapping
+		filenameIndex := i % len(filenames) // Prevent index out of range
 
-    return nil
+		// Write the main response data
+		for _, modelResponse := range response.ModelResponses {
+			writeCSVData(modelResponse, filenames[filenameIndex], response.Provider, response.Model, writer, keys)
+		}
+	}
+
+	logger.Info("CSV results successfully saved to: %s", filePath)
+	return nil
 }
 
 func GetDirectoryPath(resultsFileName string) string {
@@ -135,58 +154,86 @@ func GetDirectoryPath(resultsFileName string) string {
 	return dir
 }
 
-// saveJustificationsAndSummaries extracts provider, model, and content from resultsString
 func saveJustificationsAndSummaries(config *config.Config, resultsFileName string, resultsString string, filenames []string) error {
+	justificationEnabled := config.Project.Configuration.CotJustification == "yes"
+	summaryEnabled := config.Project.Configuration.Summary == "yes"
+
+	if !justificationEnabled && !summaryEnabled {
+		fmt.Println("Skipping justification and summary saving as they are not enabled.")
+		return nil
+	}
+
 	// Unmarshal results JSON
 	var parsedResults definitions.Output
 	if err := json.Unmarshal([]byte(resultsString), &parsedResults); err != nil {
-		logger.Error("Error parsing results JSON:", err)
+		logger.Error("Error parsing results JSON: %v", err)
 		return err
 	}
 
-	// Loop through responses and save justifications & summaries
-	for i, response := range parsedResults.Responses {
-		filenameIndex := i % len(filenames) // Prevent index out-of-range
-		filename := filenames[filenameIndex]
-		provider := response.Provider
-		model := response.Model
+	// Ensure we have filenames
+	if len(filenames) == 0 {
+		return fmt.Errorf("no filenames provided")
+	}
 
-		// Construct file paths with provider & model
-		justificationFilePath := GetDirectoryPath(resultsFileName) + "/" + filename + "_justification_" + provider + "_" + model + ".txt"
-		summaryFilePath := GetDirectoryPath(resultsFileName) + "/" + filename + "_summary_" + provider + "_" + model + ".txt"
+	// Group responses by sequenceId
+	sequenceResponses := make(map[string][]definitions.Response)
+	for _, response := range parsedResults.Responses {
+		sequenceResponses[response.SequenceID] = append(sequenceResponses[response.SequenceID], response)
+	}
 
-		// Extract justification & summary from JSON (modify keys as needed)
-		justificationContent := "No justification found"
-		summaryContent := "No summary found"
+	// Process grouped responses
+	for seqID, responses := range sequenceResponses {
+		if len(responses) < 2 { 
+			continue // Not enough responses to contain a justification or summary
+		}
 
-		// Check if JSON contains justification & summary
-		if response.ModelResponses != nil && len(response.ModelResponses) > 0 {
-			var responseData map[string]interface{}
-			if err := json.Unmarshal([]byte(response.ModelResponses[0]), &responseData); err == nil {
-				if val, exists := responseData["justification"]; exists {
-					justificationContent = val.(string)
-				}
-				if val, exists := responseData["summary"]; exists {
-					summaryContent = val.(string)
+		// Sort responses by SequenceNumber
+		sort.SliceStable(responses, func(i, j int) bool {
+			return responses[i].SequenceNumber < responses[j].SequenceNumber
+		})
+
+		// Identify filename mapping
+		seqIndex, err := strconv.Atoi(seqID)
+		if err != nil || seqIndex < 1 || seqIndex > len(filenames) {
+			logger.Error("Invalid sequence ID mapping for file: %s", seqID)
+			continue
+		}
+		originalFilename := filenames[seqIndex-1]
+
+		// Get provider and model (assuming they are the same within a sequence)
+		provider := responses[0].Provider
+		model := responses[0].Model
+		baseFilename := fmt.Sprintf("%s/%s_%s_%s", GetDirectoryPath(resultsFileName), originalFilename, provider, model)
+
+		// Identify and save Justification (if enabled)
+		if justificationEnabled {
+			for _, response := range responses {
+				if response.SequenceNumber == 2 && len(response.ModelResponses) > 0 {
+					justificationFilePath := baseFilename + "_justification.txt"
+					justificationContent := response.ModelResponses[0] // Correctly extract model output
+					if err := os.WriteFile(justificationFilePath, []byte(justificationContent), 0644); err != nil {
+						logger.Error("Error writing justification file: %v", err)
+						return err
+					}
+					logger.Info("Saved justification to: %s", justificationFilePath)
+					break
 				}
 			}
 		}
 
-		// Save Justifications
-		if config.Project.Configuration.CotJustification == "yes" {
-			err := os.WriteFile(justificationFilePath, []byte(justificationContent), 0644)
-			if err != nil {
-				logger.Error("Error writing justification file:", err)
-				return err
-			}
-		}
-
-		// Save Summaries
-		if config.Project.Configuration.Summary == "yes" {
-			err := os.WriteFile(summaryFilePath, []byte(summaryContent), 0644)
-			if err != nil {
-				logger.Error("Error writing summary file:", err)
-				return err
+		// Identify and save Summary (if enabled)
+		if summaryEnabled {
+			for _, response := range responses {
+				if response.SequenceNumber == 3 && len(response.ModelResponses) > 0 {
+					summaryFilePath := baseFilename + "_summary.txt"
+					summaryContent := response.ModelResponses[0] // Correctly extract model output
+					if err := os.WriteFile(summaryFilePath, []byte(summaryContent), 0644); err != nil {
+						logger.Error("Error writing summary file: %v", err)
+						return err
+					}
+					logger.Info("Saved summary to: %s", summaryFilePath)
+					break
+				}
 			}
 		}
 	}

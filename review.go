@@ -1,15 +1,12 @@
 package prismaid
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 
-	"github.com/open-and-sustainable/alembica/definitions"
 	"github.com/open-and-sustainable/alembica/extraction"
 	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid/config"
@@ -40,11 +37,6 @@ func exit(code int) {
 // Global variable to store the timestamps of requests
 var requestTimestamps []time.Time
 var mutex sync.Mutex
-
-// prompts for specific functionalities
-const justification_query = "For each one of the keys and answers you provided, provide a justification for your answer as a chain of thought. In particular, I want a textual description of the few stages of the chin of thought that lead you to the answer you provided and the sentences in the text you analyzes that support your decision. If the value of a key was 'no' or empty '' because of lack of information on that topic in the text analyzed, explicitly report this reason. Please provide only th einformation requested, neither introductory nor concluding remarks."
-const summary_query = "Summarize in very few sentences the text provided to you before for your review."
-
 
 // RunReview is the main function responsible for orchestrating the systematic review process.
 // It takes a TOML string as input, which defines the configuration for the review, and executes 
@@ -165,20 +157,17 @@ func RunReview(tomlConfiguration string) error {
 	}
 
 	// generate prompts
-	prompts, filenames := prompt.ParsePrompts(config)
-	logger.Info("Found", len(prompts), "files")
-
-	// convert to JSON format
-	jsonString, err := convertToJSON(config, prompts)
+	jsonString, filenames, err := prompt.PrepareInput(config)
 	if err != nil {
-		logger.Error("Error converting to JSON:", err)
+		logger.Error("Error generating prompts:", err)
 		return err
 	}
+	logger.Info("Found", len(filenames), "files")
 
 	// run review
 	reviewResults, err := extraction.Extract(jsonString)
 
-	logger.Info("Results:\n", reviewResults)
+	logger.Info("Results:\n%s", reviewResults)
 	
 	// save results
 	keys := prompt.SortReviewKeysAlphabetically(config)
@@ -195,66 +184,5 @@ func RunReview(tomlConfiguration string) error {
 
 	logger.Info("Done!")
 	return nil
-}
-
-// Convert TOML config to JSON structure
-func convertToJSON(config *config.Config, prompts []string) (string, error) {
-	// Populate metadata
-	jsonSchema := definitions.Input{
-		Metadata: definitions.InputMetadata{
-			Version:       config.Project.Version,
-			SchemaVersion: "1.0", // Hardcoded since it's not in TOML
-			Timestamp:     time.Now().Format(time.RFC3339),
-		},
-	}
-
-	// Populate models
-	for _, llm := range config.Project.LLM {
-		jsonSchema.Models = append(jsonSchema.Models, definitions.Model{
-			Provider:    llm.Provider,
-			APIKey:      llm.ApiKey,
-			Model:       llm.Model,
-			Temperature: llm.Temperature,
-			TPMLimit:    int(llm.TpmLimit),
-			RPMLimit:    int(llm.RpmLimit),
-		})
-	}
-
-	// Populate prompts
-	for i, promptText := range prompts {
-		y := 1
-		jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-			PromptContent:  promptText,
-			SequenceID:     strconv.Itoa(i + 1),
-			SequenceNumber: 1,
-		})
-		// add justifications
-		if config.Project.Configuration.CotJustification == "yes" {
-			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-				PromptContent:  justification_query,
-				SequenceID:     strconv.Itoa(i + 1),
-				SequenceNumber: y+1,
-			})
-			y++
-		}
-		// add summaries
-		if config.Project.Configuration.Summary == "yes" {
-			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-				PromptContent:  summary_query,
-				SequenceID:     strconv.Itoa(i + 1),
-				SequenceNumber: y+1,
-			})
-			y++
-		}
-	}
-
-	// Convert to JSON string
-	jsonData, err := json.MarshalIndent(jsonSchema, "", "  ")
-	if err != nil {
-		logger.Error("Error marshaling JSON:", err)
-		return "", err
-	}
-
-	return string(jsonData), nil
 }
 
