@@ -17,7 +17,7 @@ import (
 )
 
 // prompts for specific functionalities
-const justification_query = `Provide a JSON object containing justifications for each key and answer provided.
+const justification_query = `For each one of the keys and answers you provided, provide a justification for your answer as a chain of thought. In particular, I want a textual description of the few stages of the chain of thought that lead you to the answer you provided and the sentences in the text you analyzes that support your decision. If the value of a key was 'no' or empty '' because of lack of information on that topic in the text analyzed, explicitly report this reason. Please provide only the information requested, neither introductory nor concluding remarks.
 Format:
 {
   "justifications": {
@@ -28,10 +28,10 @@ Format:
     ...
   }
 }
-If the answer is 'no' or empty '', include an explanation in the "reasoning_steps" field.`
+`
 
-const summary_query = `Provide a JSON object summarizing the provided text.
-Format:
+const summary_query = `Summarize in very few sentences the text provided to you before for your review, provide a JSON object summarizing the reviewed text.
+JSON object format for response:
 {
   "summary": "Your concise summary here."
 }`
