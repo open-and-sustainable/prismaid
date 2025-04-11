@@ -1,19 +1,31 @@
 cff-version: 1.2.0
-title: "An Introduction to prismAId: Open-Source and Open Science AI for Advancing Information Extraction in Systematic Reviews"
+title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
+message: >-
+  v0.6.6 - support for DeepSeek Chat v3. 
+  Support for new provider and model: DeepSeek Chat v3.
 type: software
+doi: 10.5281/zenodo.11210796
 authors:
   - given-names: Riccardo
     family-names: Boero
     email: ribo@nilu.no
     orcid: 'https://orcid.org/0000-0002-7468-9096'
     affiliation: NILU
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.11210796
+    description: This DOI represents all software versions.
 repository-code: 'https://github.com/open-and-sustainable/prismaid'
 url: 'https://open-and-sustainable.github.io/prismaid/'
 abstract: >-
-  `prismAId` is an open-source tool designed to streamline systematic literature reviews by leveraging generative AI models for information extraction. It offers an accessible, efficient, and replicable method for extracting and analyzing data from scientific literature, eliminating the need for coding expertise. Supporting various review protocols, including PRISMA 2020, `prismAId` is distributed across multiple platforms -- Go, Python, Julia, R -- and provides user-friendly binaries compatible with Windows, macOS, and Linux. The tool integrates with leading large language models (LLMs) such as OpenAI's GPT series, Google's Gemini, Cohere's Command, and Anthropic's Claude, ensuring comprehensive and up-to-date literature analysis. `prismAId` facilitates systematic reviews, enabling researchers to conduct thorough, fast, and reproducible analyses, thereby advancing open science initiatives.
+  prismAId uses generative AI models to extract data from
+  scientific literature. It offers simple-to-use, efficient,
+  and replicable methods for analyzing literature when
+  conducting systematic reviews. No coding skills are
+  required to use prismAId.
 keywords:
   - Systematic Review
   - Generative AI
-  - Open-Source
+  - Open Source
   - Open Science
 license: AGPL-3.0-only
