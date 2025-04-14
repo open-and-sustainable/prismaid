@@ -9,6 +9,17 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.7.0] - 2025-04-14
+### Removed
+- Direct support of all LLMs and provider
+### Added
+- Update to the most recent possible version of all dependencies
+- LLMs support though `alembica` project https://github.com/open-and-sustainable/alembica
+
+## [joss] - 2025-04-11
+### Changed
+- Reviewed software release euivalent to 0.6.7 for JOSS pubblication: https://doi.org/10.21105/joss.07616
+
 ## [0.6.7] - 2025-01-31
 ### Added
 - Instructions to use legacy versions <= 0.6.6 in Jupyter notebooks
@@ -63,7 +74,7 @@ Security: For vulnerabilities.
 ## [0.5.5] - 2024-10-23
 ### Added
 - unit testing of each go package
-- automated testing through CI/CD 
+- automated testing through CI/CD
 ### Changed
 - light refactoring through interfaces for supporting testing without actual API access
 
@@ -115,7 +126,7 @@ Security: For vulnerabilities.
 ### Added
 - project parameter CoT justification
 - automatic generation of CoT justification in OpenAI and Google AI models, as aditional prompt in same chat
-- project parameter for duplicate runs (for debugging purposes)  
+- project parameter for duplicate runs (for debugging purposes)
 - implementation and testing of duplication algorithm
 - documentation of these features
 - examples of these features

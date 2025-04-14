@@ -3,13 +3,38 @@ package prompt
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"github.com/open-and-sustainable/prismaid/config"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/open-and-sustainable/prismaid/config"
+	"github.com/open-and-sustainable/alembica/definitions"
+
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
+
+// prompts for specific functionalities
+const justification_query = `For each one of the keys and answers you provided, provide a justification for your answer as a chain of thought. In particular, I want a textual description of the few stages of the chain of thought that lead you to the answer you provided and the sentences in the text you analyzes that support your decision. If the value of a key was 'no' or empty '' because of lack of information on that topic in the text analyzed, explicitly report this reason. Please provide only the information requested, neither introductory nor concluding remarks.
+Format:
+{
+  "justifications": {
+    "<key>": {
+      "reasoning_steps": ["Step 1", "Step 2", "Step 3"],
+      "supporting_sentences": ["Sentence 1", "Sentence 2"]
+    },
+    ...
+  }
+}
+`
+
+const summary_query = `Summarize in very few sentences the text provided to you before for your review, provide a JSON object summarizing the reviewed text.
+JSON object format for response:
+{
+  "summary": "Your concise summary here."
+}`
 
 // ParsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
 // The function combines different parts of the prompts to create a structured list of inputs.
@@ -21,7 +46,7 @@ import (
 // - Two slices of strings: 
 //   - The first slice contains the generated prompts.
 //   - The second slice contains the filenames associated with each prompt.
-func ParsePrompts(config *config.Config) ([]string, []string) {
+func parsePrompts(config *config.Config) ([]string, []string) {
 	// This slice will store all combined prompts
 	var prompts []string
 	// This slice will store the filenames corresponding to each prompt
@@ -36,7 +61,7 @@ func ParsePrompts(config *config.Config) ([]string, []string) {
 	// Load text files
 	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 	}
 
 	for _, file := range files {
@@ -44,7 +69,7 @@ func ParsePrompts(config *config.Config) ([]string, []string) {
 			filePath := filepath.Join(config.Project.Configuration.InputDirectory, file.Name())
 			documentText, err := os.ReadFile(filePath)
 			if err != nil {
-				log.Println("Error reading file:", err)
+				logger.Error("Error reading file:", err)
 				return nil, nil
 			}
 
@@ -77,7 +102,7 @@ func parseExpectedResults(config *config.Config) string {
 	// Convert sorted map to JSON
 	reviewJSON, err := json.Marshal(sortedReviewItems)
 	if err != nil {
-		log.Fatalf("Error marshalling review items to JSON: %v", err)
+		logger.Error("Error marshalling review items to JSON: %v", err)
 	}
 
 	// Combine the expected result with the JSON-formatted review items
@@ -129,4 +154,83 @@ func SortReviewKeysAlphabetically(config *config.Config) []string {
 	}
 	sort.Strings(keys) // Sort keys alphabetically for consistent and logical output
 	return keys
+}
+
+// Obtain input object from TOML config
+func PrepareInput(config *config.Config) (string, []string, error) {
+	prompts, filenames := parsePrompts(config)
+
+	logger.Info("Generating input JSON with %d prompts.", len(prompts))
+
+	// Populate metadata
+	jsonSchema := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       config.Project.Version,
+			SchemaVersion: "1.0", // Hardcoded since it's not in TOML
+			Timestamp:     time.Now().Format(time.RFC3339),
+		},
+	}
+
+	// Populate models
+	for _, llm := range config.Project.LLM {
+		jsonSchema.Models = append(jsonSchema.Models, definitions.Model{
+			Provider:    llm.Provider,
+			APIKey:      llm.ApiKey,
+			Model:       llm.Model,
+			Temperature: llm.Temperature,
+			TPMLimit:    int(llm.TpmLimit),
+			RPMLimit:    int(llm.RpmLimit),
+		})
+	}
+	logger.Info("Added %d models to input JSON.", len(jsonSchema.Models))
+
+	// Populate prompts
+	for i, promptText := range prompts {
+		sequenceNumber := 1 // Track sequence numbering dynamically
+
+		// Append the main prompt
+		jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+			PromptContent:  promptText,
+			SequenceID:     strconv.Itoa(i + 1),
+			SequenceNumber: sequenceNumber,
+		})
+
+		// Add justification query if enabled
+		if config.Project.Configuration.CotJustification == "yes" {
+			sequenceNumber++
+			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+				PromptContent:  justification_query,
+				SequenceID:     strconv.Itoa(i + 1),
+				SequenceNumber: sequenceNumber,
+			})
+		}
+
+		// Add summary query if enabled
+		if config.Project.Configuration.Summary == "yes" {
+			sequenceNumber++
+			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+				PromptContent:  summary_query,
+				SequenceID:     strconv.Itoa(i + 1),
+				SequenceNumber: sequenceNumber,
+			})
+		}
+	}
+
+	logger.Info("Total prompts generated: %d", len(jsonSchema.Prompts))
+
+	// Log each generated prompt (only in debug mode to avoid excessive logs in production)
+	for _, prompt := range jsonSchema.Prompts {
+		logger.Info("Generated prompt: %s (SeqID: %s, SeqNum: %d)", prompt.PromptContent, prompt.SequenceID, prompt.SequenceNumber)
+	}
+
+	// Convert to JSON string
+	jsonData, err := json.MarshalIndent(jsonSchema, "", "  ")
+	if err != nil {
+		logger.Error("Error marshaling JSON: %v", err)
+		return "", nil, err
+	}
+
+	logger.Info("Input JSON successfully generated.")
+
+	return string(jsonData), filenames, nil
 }

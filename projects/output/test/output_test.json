@@ -1,19 +1,227 @@
 [
 {
-    "bayesian_approach": "no",
+    "bayesian approach": "no",
     "clustering": "no",
     "copulas": "yes",
     "filename": "lit_test",
     "forecasting": "yes",
-    "geographical_scale": "river basin",
-    "historical_data_analysis": "yes",
-    "historical_period_studied": [
-        "1970--1999",
-        "2000--2017",
-        "2020--2039",
-        "2040--2069",
-        "2070--2099"
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970-1999",
+        "2000-2017",
+        "2020-2039",
+        "2040-2069",
+        "2070-2099"
     ],
-    "regression_models": "yes"
+    "model": "deepseek-chat",
+    "provider": "DeepSeek",
+    "regression models": "yes"
 }
+,
+{
+    "filename": "lit_test",
+    "justifications": {
+        "bayesian approach": {
+            "reasoning_steps": [
+                "The paper discusses statistical methods and models but does not mention the use of Bayesian statistics.",
+                "The methods described, such as copulas and regression models, are frequentist in nature."
+            ],
+            "supporting_sentences": [
+                "The estimation of the concurrent distribution consists of finding a suitable multidimensional representation of (possibly) correlated data.",
+                "We use the R package fitdistrplus, which supports a number of probability distributions such as normal, gamma, normal, log-normal, exponential, gumbel, and beta."
+            ]
+        },
+        "clustering": {
+            "reasoning_steps": [
+                "The paper does not mention any clustering techniques or methods for grouping similar data points.",
+                "The focus is on modeling and forecasting rather than identifying groups or patterns within the data."
+            ],
+            "supporting_sentences": []
+        },
+        "copulas": {
+            "reasoning_steps": [
+                "The paper explicitly discusses the use of copulas for modeling the joint distribution of hydrological variables.",
+                "It details the process of fitting copulas to data and selecting the best fit."
+            ],
+            "supporting_sentences": [
+                "The multidimensional representation of the joint distributions of relevant hydrological climate impacts is based on the concept of statistical copulas.",
+                "We iterate through a series of copulas to find the best fit using a quasi-Newton method."
+            ]
+        },
+        "forecasting": {
+            "reasoning_steps": [
+                "The paper discusses future scenarios and predictions based on historical data and models.",
+                "It uses Earth System Models (ESMs) to predict future flooding hazards."
+            ],
+            "supporting_sentences": [
+                "Future scenarios use hazard and damage data predicted for the period 2018–2100.",
+                "We use predictions about flooding hazards in CRB until the end of this century to study three scenarios of 𝐸[𝐻]."
+            ]
+        },
+        "geographical scale": {
+            "reasoning_steps": [
+                "The study focuses on the Colorado River Basin (CRB), a specific river basin.",
+                "It mentions the use of U.S. Census blocks within the CRB for spatial analysis."
+            ],
+            "supporting_sentences": [
+                "The hazard data we use to develop our adaptation model refer spatially to 395,526 U.S. Census blocks that intersect the CRB.",
+                "Our economic model is calibrated using data for the 1997–2017 (current) period."
+            ]
+        },
+        "historical data analysis": {
+            "reasoning_steps": [
+                "The paper analyzes historical data from 1977 to 2017 to understand past hazard expectations.",
+                "It uses historical data to calibrate models and predict future scenarios."
+            ],
+            "supporting_sentences": [
+                "The hazard data we use for analyzing paste hazard expectations extend from 1977 to 2017.",
+                "We consider a historical period (1970–1999) along with current (2000–2017) and multiple future scenarios for different times (2020–2039, 2040–2069, and 2070–2099)."
+            ]
+        },
+        "historical period studied": {
+            "reasoning_steps": [
+                "The paper explicitly mentions several historical and future periods for analysis.",
+                "These periods are used for modeling and forecasting purposes."
+            ],
+            "supporting_sentences": [
+                "We consider a historical period (1970–1999) along with current (2000–2017) and multiple future scenarios for different times (2020–2039, 2040–2069, and 2070–2099).",
+                "The hazard data we use for analyzing paste hazard expectations extend from 1977 to 2017."
+            ]
+        },
+        "regression models": {
+            "reasoning_steps": [
+                "The paper describes the use of regression models, specifically a zero-inflated negative binomial model, for analyzing damage data.",
+                "It details the calibration process and the selection of covariates for the model."
+            ],
+            "supporting_sentences": [
+                "Following recent empirical modeling approaches [19,20,21,49] to the adaptation to climate disasters and extremes, we calibrate the adaptation model by using count variables regression approaches and accounting for statistical over dispersion in the data.",
+                "We fit a zero-inflated negative binomial (ZINB) model to overdispersed count data with excess zero counts."
+            ]
+        }
+    },
+    "model": "deepseek-chat",
+    "provider": "DeepSeek"
+}
+,
+{
+    "filename": "lit_test",
+    "model": "deepseek-chat",
+    "provider": "DeepSeek",
+    "summary": "The paper presents a study on modeling human adaptation to flooding in the Colorado River Basin (CRB) using statistical methods, including copulas and regression models, to analyze historical data (1970-2017) and forecast future scenarios (2018-2100). It emphasizes the role of hazard expectations in adaptation strategies and the importance of scientific credibility in risk assessment."
+}
+,
+{
+    "bayesian approach": "no",
+    "clustering": "no",
+    "copulas": "yes",
+    "filename": "lit_test",
+    "forecasting": "yes",
+    "geographical scale": "river basin",
+    "historical data analysis": "yes",
+    "historical period studied": [
+        "1970-1999",
+        "2000-2017",
+        "2018-2100"
+    ],
+    "model": "gpt-4o-mini",
+    "provider": "OpenAI",
+    "regression models": "yes"
+}
+,
+{
+    "filename": "lit_test",
+    "justifications": {
+        "bayesian approach": {
+            "reasoning_steps": [
+                "Step 1: Look for any mention of Bayesian methods or principles.",
+                "Step 2: Identify if the paper discusses prior knowledge or updating beliefs with new data.",
+                "Step 3: Conclude that there is no reference to Bayesian approaches in the text."
+            ],
+            "supporting_sentences": []
+        },
+        "clustering": {
+            "reasoning_steps": [
+                "Step 1: Search for any discussion of clustering methods or techniques.",
+                "Step 2: Determine if the paper describes grouping or categorizing data points based on similarities.",
+                "Step 3: Conclude that there is no mention of clustering in the text."
+            ],
+            "supporting_sentences": []
+        },
+        "copulas": {
+            "reasoning_steps": [
+                "Step 1: Identify if the paper discusses copulas as a statistical method.",
+                "Step 2: Look for explanations of how copulas are used to model dependencies between variables.",
+                "Step 3: Confirm that copulas are explicitly mentioned and described in the context of the study."
+            ],
+            "supporting_sentences": [
+                "The multidimensional representation of the joint distributions of relevant hydrological climate impacts is based on the concept of statistical copulas.",
+                "Concurrent copulas are calculated using the three flooding indicators following methods described below for each of the HUC8 basins."
+            ]
+        },
+        "forecasting": {
+            "reasoning_steps": [
+                "Step 1: Look for any references to predicting future scenarios or variables.",
+                "Step 2: Identify if the paper discusses models used for forecasting.",
+                "Step 3: Conclude that the paper includes forecasting methods for future flooding scenarios."
+            ],
+            "supporting_sentences": [
+                "Future scenarios use hazard and damage data predicted for the period 2018–2100.",
+                "We use predictions about flooding hazards in CRB until the end of this century to study three scenarios of E[H]."
+            ]
+        },
+        "geographical scale": {
+            "reasoning_steps": [
+                "Step 1: Identify the geographical context of the study.",
+                "Step 2: Determine the specific spatial units or regions analyzed.",
+                "Step 3: Conclude that the study focuses on the Colorado River Basin."
+            ],
+            "supporting_sentences": [
+                "The hazard data we use to develop our adaptation model refer spatially to 395,526 U.S. Census blocks that intersect the CRB."
+            ]
+        },
+        "historical data analysis": {
+            "reasoning_steps": [
+                "Step 1: Look for discussions on the examination of past data.",
+                "Step 2: Identify if the paper analyzes historical trends or patterns.",
+                "Step 3: Conclude that the paper includes historical data analysis."
+            ],
+            "supporting_sentences": [
+                "The hazard data we use for analyzing past hazard expectations extend from 1977 to 2017.",
+                "We consider a historical period (1970–1999) along with current (2000–2017) and multiple future scenarios."
+            ]
+        },
+        "historical period studied": {
+            "reasoning_steps": [
+                "Step 1: Identify any specific time periods mentioned in the analysis.",
+                "Step 2: Look for references to historical data ranges or periods of interest.",
+                "Step 3: Conclude that multiple historical periods are explicitly mentioned."
+            ],
+            "supporting_sentences": [
+                "We consider a historical period (1970–1999) along with current (2000–2017) and multiple future scenarios for different times (2020–2039, 2040–2069, and 2070–2099)."
+            ]
+        },
+        "regression models": {
+            "reasoning_steps": [
+                "Step 1: Search for any mention of regression techniques or models.",
+                "Step 2: Identify if the paper discusses the use of regression for analyzing relationships between variables.",
+                "Step 3: Conclude that the paper includes regression models, specifically a zero-inflated negative binomial model."
+            ],
+            "supporting_sentences": [
+                "Following recent empirical modeling approaches to the adaptation to climate disasters and extremes, we calibrate the adaptation model by using count variables regression approaches.",
+                "In particular, we fit a zero-inflated negative binomial (ZINB) model to overdispersed count data with excess zero counts."
+            ]
+        }
+    },
+    "model": "gpt-4o-mini",
+    "provider": "OpenAI"
+}
+,
+{
+    "filename": "lit_test",
+    "model": "gpt-4o-mini",
+    "provider": "OpenAI",
+    "summary": "The paper develops an adaptation model for flooding in the Colorado River Basin using historical and future hazard data from 1970 to 2100. It employs statistical methods, including copulas and regression models, to analyze the relationship between natural hazards, human exposure, and economic damage. The study emphasizes the importance of updating hazard expectations for effective adaptation strategies in response to climate change."
+}
+
 ]

@@ -17,7 +17,7 @@ func TestCreateCSVWriter(t *testing.T) {
     keys := []string{"column1", "column2"}
 
     // Create CSV writer
-    writer := CreateCSVWriter(outputFile, keys)
+    writer := createCSVWriter(outputFile, keys)
     writer.Flush()
 
     // Reopen the file to check contents
@@ -27,7 +27,7 @@ func TestCreateCSVWriter(t *testing.T) {
     }
 
     // Check the headers
-    expectedHeader := "File Name,column1,column2\n"
+    expectedHeader := "Provider,Model,File Name,column1,column2\n"
     if string(fileContent) != expectedHeader {
         t.Errorf("Expected header %q, got %q", expectedHeader, string(fileContent))
     }
@@ -42,14 +42,16 @@ func TestWriteCSVData(t *testing.T) {
     defer os.Remove(outputFile.Name()) // Clean up
 
     keys := []string{"column1", "column2"}
-    writer := CreateCSVWriter(outputFile, keys)
+    writer := createCSVWriter(outputFile, keys)
 
     // Example data
     response := `{"column1": "value1", "column2": "value2"}`
     fileNameWithoutExt := "testfile"
+    provider := "TestProvider"
+    model := "TestModel"
 
     // Write data to CSV
-    WriteCSVData(response, fileNameWithoutExt, writer, keys)
+    writeCSVData(response, fileNameWithoutExt, provider, model, writer, keys)
     writer.Flush()
 
     // Reopen the file to check contents
@@ -59,8 +61,8 @@ func TestWriteCSVData(t *testing.T) {
     }
 
     // Check the contents, including the header and the data row
-    expectedContent := "File Name,column1,column2\n" +
-                       "testfile,value1,value2\n"
+    expectedContent := "Provider,Model,File Name,column1,column2\n" +
+                       "TestProvider,TestModel,testfile,value1,value2\n"
     if string(fileContent) != expectedContent {
         t.Errorf("Expected CSV content %q, got %q", expectedContent, string(fileContent))
     }

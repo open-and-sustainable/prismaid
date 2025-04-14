@@ -37,7 +37,7 @@ func TestParsePrompts(t *testing.T) {
     file.Close()
 
     // Execute
-    prompts, filenames := ParsePrompts(cfg)
+    prompts, filenames := parsePrompts(cfg)
 
     // Verify
     if len(prompts) == 0 || len(filenames) == 0 {

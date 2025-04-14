@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	terminal "github.com/open-and-sustainable/prismaid/init"
+
 	"github.com/open-and-sustainable/prismaid"
+	terminal "github.com/open-and-sustainable/prismaid/init"
 )
 
 // Main function
@@ -13,7 +14,6 @@ func main() {
 	// Define flags for the project configuration file and the init option
 	projectConfigPath := flag.String("project", "", "Path to the project configuration file")
 	initFlag := flag.Bool("init", false, "Run interactively to initialize a new project configuration file")
-
 	// Parse the flags
 	flag.Parse()
 

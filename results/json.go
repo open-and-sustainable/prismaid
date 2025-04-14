@@ -2,9 +2,10 @@ package results
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"strings"
+
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 // StartJSONArray begins a new JSON array in the specified output file. 
@@ -15,10 +16,10 @@ import (
 //
 // Returns:
 // - An error if writing to the file fails, otherwise returns nil.
-func StartJSONArray(outputFile *os.File) error {
+func startJSONArray(outputFile *os.File) error {
 	_, err := outputFile.WriteString("[\n")
 	if err != nil {
-		log.Println("Error starting JSON array:", err)
+		logger.Error("Error starting JSON array:", err)
 		return err
 	}
 	return nil
@@ -34,7 +35,7 @@ func StartJSONArray(outputFile *os.File) error {
 // - outputFile: A pointer to an os.File where the JSON content will be written.
 //
 // This function does not automatically close or flush the file; these operations should be handled separately.
-func WriteJSONData(response string, filename string, outputFile *os.File) {
+func writeJSONData(response string, filename string, outputFile *os.File) {
 	// Strip out markdown code fences (```json ... ```) if present
 	response = cleanJSON(response)
 
@@ -42,7 +43,7 @@ func WriteJSONData(response string, filename string, outputFile *os.File) {
 	var data map[string]interface{}
 	err := json.Unmarshal([]byte(response), &data)
 	if err != nil {
-		log.Println("Error unmarshaling JSON:", err)
+		logger.Error("Error unmarshaling JSON:", err)
 		return
 	}
 
@@ -52,14 +53,14 @@ func WriteJSONData(response string, filename string, outputFile *os.File) {
 	// Marshal the modified data back into a JSON string
 	modifiedJSON, err := json.MarshalIndent(data, "", "    ") // Indent for pretty JSON output
 	if err != nil {
-		log.Println("Error marshaling modified JSON:", err)
+		logger.Error("Error marshaling modified JSON:", err)
 		return
 	}
 
 	// Write the modified JSON to the file
 	_, err = outputFile.WriteString(string(modifiedJSON))
 	if err != nil {
-		log.Println("Error writing JSON to file:", err)
+		logger.Error("Error writing JSON to file:", err)
 	}
 }
 
@@ -71,10 +72,10 @@ func WriteJSONData(response string, filename string, outputFile *os.File) {
 //
 // Returns:
 // - An error if writing to the file fails, otherwise returns nil.
-func WriteCommaInJSONArray(outputFile *os.File) error {
+func writeCommaInJSONArray(outputFile *os.File) error {
 	_, err := outputFile.WriteString(",\n")
 	if err != nil {
-		log.Println("Error writing comma in JSON array:", err)
+		logger.Error("Error writing comma in JSON array:", err)
 		return err
 	}
 	return nil
@@ -88,11 +89,11 @@ func WriteCommaInJSONArray(outputFile *os.File) error {
 //
 // Returns:
 // - An error if writing to the file fails, otherwise returns nil.
-func CloseJSONArray(outputFile *os.File) error {
+func closeJSONArray(outputFile *os.File) error {
 	// Write the closing bracket
 	_, err := outputFile.WriteString("\n]")
 	if err != nil {
-		log.Println("Error closing JSON array:", err)
+		logger.Error("Error closing JSON array:", err)
 		return err
 	}
 

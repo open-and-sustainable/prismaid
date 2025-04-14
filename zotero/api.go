@@ -3,12 +3,13 @@ package zotero
 import (
     "encoding/json"
     "fmt"
-    "log"
     "io"
     "net/http"
     "os"
     "path/filepath"
     "strings"
+
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 
@@ -32,7 +33,7 @@ func DownloadPDFs(client HttpClient, username, apiKey, collectionName, parentDir
     if err != nil {
         return downloadPDFsFromGroup(client, username, apiKey, collectionName, parentDir)
     } else {
-        log.Println("Collection key:", collectionKey)
+        logger.Info("Collection key:", collectionKey)
     }
 
     // Construct the URL for the collection
@@ -67,38 +68,38 @@ func DownloadPDFs(client HttpClient, username, apiKey, collectionName, parentDir
         downloadURL := fmt.Sprintf("%s/users/%s/items/%s/file", baseURL, userID, item.Key)
         req, err := http.NewRequest("GET", downloadURL, nil)
         if err != nil {
-            log.Printf("Error creating request for file: %v\n", err)
+            logger.Error("Error creating request for file: %v\n", err)
             continue
         }
         req.Header.Add("Zotero-API-Key", apiKey)
 
         resp, err := client.Do(req)
         if err != nil {
-            log.Printf("Error downloading file: %v\n", err)
+            logger.Error("Error downloading file: %v\n", err)
             continue
         }
         defer resp.Body.Close()
 
         if resp.StatusCode != http.StatusOK {
-            log.Printf("Error: received non-200 response status for file: %s\n", resp.Status)
+            logger.Error("Error: received non-200 response status for file: %s\n", resp.Status)
             continue
         }
 
         outputPath := filepath.Join(outputDir, item.Data.Filename)
         outFile, err := os.Create(outputPath)
         if err != nil {
-            log.Printf("Error creating file: %v\n", err)
+            logger.Error("Error creating file: %v\n", err)
             continue
         }
         defer outFile.Close()
 
         _, err = io.Copy(outFile, resp.Body)
         if err != nil {
-            log.Printf("Error saving file: %v\n", err)
+            logger.Error("Error saving file: %v\n", err)
             continue
         }
 
-        log.Println("Downloaded:", item.Data.Filename)
+        logger.Info("Downloaded:", item.Data.Filename)
     }
 
     return nil
@@ -235,7 +236,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
     var groupID string
     groupFound := false
     for _, group := range groups {
-        log.Printf("Fetched group: '%s' with ID: %d\n", group.Data.Name, group.Data.ID)
+        logger.Info("Fetched group: '%s' with ID: %d\n", group.Data.Name, group.Data.ID)
         if group.Data.Name == groupName {
             groupID = fmt.Sprintf("%d", group.Data.ID)
             groupFound = true
@@ -255,7 +256,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
         if err != nil {
             return err
         } else {
-            log.Printf("Collection key found in group '%s': %s", groupName, collectionKey)
+            logger.Info("Collection key found in group '%s': %s", groupName, collectionKey)
         }
     }
 
@@ -299,38 +300,38 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
         downloadURL := fmt.Sprintf("%s/groups/%s/items/%s/file", baseURL, groupID, item.Key)
         req, err := http.NewRequest("GET", downloadURL, nil)
         if err != nil {
-            log.Printf("Error creating request for file: %v\n", err)
+            logger.Error("Error creating request for file: %v\n", err)
             continue
         }
         req.Header.Add("Zotero-API-Key", apiKey)
 
         resp, err := client.Do(req)
         if err != nil {
-            log.Printf("Error downloading file: %v\n", err)
+            logger.Error("Error downloading file: %v\n", err)
             continue
         }
         defer resp.Body.Close()
 
         if resp.StatusCode != http.StatusOK {
-            log.Printf("Error: received non-200 response status for file: %s\n", resp.Status)
+            logger.Error("Error: received non-200 response status for file: %s\n", resp.Status)
             continue
         }
 
         outputPath := filepath.Join(outputDir, item.Data.Filename)
         outFile, err := os.Create(outputPath)
         if err != nil {
-            log.Printf("Error creating file: %v\n", err)
+            logger.Error("Error creating file: %v\n", err)
             continue
         }
         defer outFile.Close()
 
         _, err = io.Copy(outFile, resp.Body)
         if err != nil {
-            log.Printf("Error saving file: %v\n", err)
+            logger.Error("Error saving file: %v\n", err)
             continue
         }
 
-        log.Println("Downloaded:", item.Data.Filename)
+        logger.Info("Downloaded:", item.Data.Filename)
     }
 
     return nil // Successfully downloaded from group
