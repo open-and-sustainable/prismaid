@@ -1,16 +1,16 @@
 [project]
 name = "Test of prismAId"
 author = "Riccardo Boero"
-version = "0.3"
+version = "0.4"
 
 [project.configuration]
-input_directory = "../projects/input/test"
-results_file_name = "../projects/output/test/output_test"
-output_format = "json"
+input_directory = "projects/input/test"
+results_file_name = "projects/output/test/output_test"
+output_format = "csv"
 log_level = "low"
 duplication = "no"
-cot_justification = "yes"
-summary = "yes"
+cot_justification = "no"
+summary = "no"
 
 [project.llm]
 [project.llm.1]
@@ -30,7 +30,7 @@ tpm_limit = 0
 rpm_limit = 0
 
 [prompt]
-persona = "You are an experienced scientist reviewing scientific literature to map the methods used by other scientists in the field." 
+persona = "You are an experienced scientist reviewing scientific literature to map the methods used by other scientists in the field."
 task = "You are asked to map the concepts discussed in a scientific paper attached here."
 expected_result = "You should output a JSON object with the following keys and possible values: "
 failsafe = "For the key 'historical period studied', provide any relevant period or era mentioned in the document. If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."

@@ -1,5 +1,3 @@
 Provider,Model,File Name,bayesian approach,clustering,copulas,forecasting,geographical scale,historical data analysis,historical period studied,regression models
-DeepSeek,deepseek-chat,lit_test,no,no,yes,yes,river basin,yes,[1970–1999 2000–2017 2020–2039 2040–2069 2070–2099],yes
-DeepSeek,deepseek-chat,lit_test_duplicate,no,no,yes,yes,river basin,yes,[1970–1999 2000–2017 2020–2039 2040–2069 2070–2099],yes
+DeepSeek,deepseek-chat,lit_test,no,no,yes,yes,river basin,yes,[1970-1999 2000-2017 2020-2039 2040-2069 2070-2099],yes
 OpenAI,gpt-4o-mini,lit_test,no,no,yes,yes,river basin,yes,[1970-1999 2000-2017 2018-2100],yes
-OpenAI,gpt-4o-mini,lit_test_duplicate,no,no,yes,yes,river basin,yes,[1970-1999 2000-2017 2018-2100],yes

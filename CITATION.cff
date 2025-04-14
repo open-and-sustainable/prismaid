@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.6.6 - support for DeepSeek Chat v3. 
-  Support for new provider and model: DeepSeek Chat v3.
+  v0.7.0 - support of LLMs through `alembica`.
+  `alembica` simplifies the use of Large Language Models (LLMs) to extract structured data sets from unstructured corpora of text.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

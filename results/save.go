@@ -3,14 +3,15 @@ package results
 import (
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
+	"strings"
 
-	"github.com/open-and-sustainable/prismaid/config"
 	"github.com/open-and-sustainable/alembica/definitions"
 	"github.com/open-and-sustainable/alembica/utils/logger"
+	"github.com/open-and-sustainable/prismaid/config"
 )
 
 func Save(config *config.Config, results string, filenames []string, keys []string) error {
@@ -31,7 +32,6 @@ func Save(config *config.Config, results string, filenames []string, keys []stri
 		return fmt.Errorf("unsupported output format: %s", outputFormat)
 	}
 }
-
 
 func saveJSON(filePath string, resultsString string, filenames []string) error {
 	outputFile, err := os.Create(filePath)
@@ -159,7 +159,7 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 	summaryEnabled := config.Project.Configuration.Summary == "yes"
 
 	if !justificationEnabled && !summaryEnabled {
-		fmt.Println("Skipping justification and summary saving as they are not enabled.")
+		logger.Info("Skipping justification and summary saving as they are not enabled.")
 		return nil
 	}
 
@@ -175,15 +175,17 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 		return fmt.Errorf("no filenames provided")
 	}
 
-	// Group responses by sequenceId
+	// Group responses by sequenceId AND provider AND model
 	sequenceResponses := make(map[string][]definitions.Response)
 	for _, response := range parsedResults.Responses {
-		sequenceResponses[response.SequenceID] = append(sequenceResponses[response.SequenceID], response)
+		// Create a composite key that includes all three fields
+		compositeKey := fmt.Sprintf("%s_%s_%s", response.SequenceID, response.Provider, response.Model)
+		sequenceResponses[compositeKey] = append(sequenceResponses[compositeKey], response)
 	}
 
 	// Process grouped responses
-	for seqID, responses := range sequenceResponses {
-		if len(responses) < 2 { 
+	for compositeKey, responses := range sequenceResponses {
+		if len(responses) < 2 {
 			continue // Not enough responses to contain a justification or summary
 		}
 
@@ -192,15 +194,18 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 			return responses[i].SequenceNumber < responses[j].SequenceNumber
 		})
 
+		// Extract sequenceId from the composite key (assuming format "seqId_provider_model")
+		parts := strings.Split(compositeKey, "_")
+		seqID := parts[0]
+
 		// Identify filename mapping
 		seqIndex, err := strconv.Atoi(seqID)
 		if err != nil || seqIndex < 1 || seqIndex > len(filenames) {
 			logger.Error("Invalid sequence ID mapping for file: %s", seqID)
 			continue
 		}
-		originalFilename := filenames[seqIndex-1]
 
-		// Get provider and model (assuming they are the same within a sequence)
+		originalFilename := filenames[seqIndex-1]
 		provider := responses[0].Provider
 		model := responses[0].Model
 		baseFilename := fmt.Sprintf("%s/%s_%s_%s", GetDirectoryPath(resultsFileName), originalFilename, provider, model)
