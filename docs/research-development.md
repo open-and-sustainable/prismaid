@@ -44,14 +44,7 @@ For detailed contribution guidelines, see our [`CONTRIBUTING.md`](CONTRIBUTING.m
 prismAId is developed in Go, selected for its simplicity and efficiency with concurrent operations. We prioritize the latest stable Go releases to incorporate improvements.
 
 ### Technical Foundation
-To support consistent development, we provide templates for VSCodium or Visual Studio Code that are located in the [root directory](https://github.com/open-and-sustainable/prismaid/tree/main) of our repository.
-
-**Using the Templates**:
-1. **Clone Repository**: Clone the prismAId repository.
-2. **Open in VSCodium/VSCode**.
-3. **Copy JSON Files**: Place in a `vscode` directory at the project root.
-4. **Remove `.template` Extension** and follow inline instructions.
-5. **Ignore in GIT**: Add to `.gitignore` for privacy.
+prismAId leverages the [`alembica`](https://github.com/open-and-sustainable/alembica) pure Go package to manage interactions with Large Language Models. This foundation allows us to concentrate on developing robust protocol-based information extraction tools while `alembica` handles the standardized communication with various LLMs through consistent JSON data schemas, ensuring reliability and interoperability across different AI services.
 
 ### Architecture
 - **Go Module**: Core logic and API access are implemented in Go.
