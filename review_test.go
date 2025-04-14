@@ -45,7 +45,7 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp input file: %v", err)
 	}
-	defer os.Remove(inputFile.Name()) // Clean up
+	defer os.Remove(inputFile.Name())     // Clean up
 	_, err = inputFile.WriteString("n\n") // Simulate 'n' response
 	if err != nil {
 		t.Fatalf("Failed to write to temp input file: %v", err)
@@ -91,7 +91,7 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	}
 
 	// Expect only the CSV header ("File Name")
-	expectedContent := "File Name\n"
+	expectedContent := "Provider,Model,File Name\n"
 	if string(content) != expectedContent {
 		t.Errorf("Expected output file to contain header only, got: %s", string(content))
 	}
