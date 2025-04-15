@@ -1,30 +1,60 @@
 ---
-title: Help & Resources
+title: Review Support
 layout: default
 ---
 
-# Help & Resources
+# Review Support
 
-If you need assistance, you can:
-- **Open an Issue** on our [GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
-- **Discuss in the Matrix Support Room**: [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) ![Matrix](https://img.shields.io/matrix/prismAId-support%3Amatrix.org?server_fqdn=matrix.org&logo=appveyor).
-- **Stay Updated with New Releases**: Follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
+ ---
+ *Page Contents:*
+ - [**Reasons to Use**](#reasons-to-use): benefits of adopting prismAId for systematic reviews
+ - [**Review Preparation**](#review-preparation): guidelines and tools for organizing your review process
+ - [**Information Extraction Mechanism**](#information-extraction-mechanism): understanding the technical framework powering prismAId
+ - [**Technical FAQs**](#technical-faqs): detailed answers to advanced questions about prismAId capabilities and limitations
+ ---
 
-## Common Issues
-- **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
-- **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
-- **API Keys**: These may be loaded either through system variables or the project configuration. If multiple keys are provided, the latter will have priority.
-- **Partial Results**: Results presenting only the first few entries of a review containing many more manuscripts suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
-- **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
-- **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
+## Reasons to Use
+- **Objective**: prismAId leverages Large Language Models (LLMs) for systematic scientific literature reviews, making them accessible and efficient without coding.
+- **Speed**: Faster than traditional methods, prismAId provides high-speed software for systematic reviews.
+- **Replicability**: Addresses the challenge of consistent, unbiased analysis, countering the subjective nature of human review.
+- **Cost**: More economical than custom AI solutions, with review costs typically between $0.0025 and $0.10 per paper.
+- **Audience**: Suitable for scientists conducting literature reviews, meta-analyses, project development, and research proposals.
 
-## Best Practices
+## Review Preparation
+1. **Design and register** your review and select the protocol.
+2. **Identify** the literature by designing and running queries on repositories.
+3. Download the manuscripts (see section below) and **screen** them for duplications and out of scope.
+4. **Analyze** the literature by first setting up a prismAId project and then executing it.
+
+### Literature Download
+prismAId supports the download of lists of PDFs. To use this feature:
+
+1. Create a text file containing one URL per line, with each URL pointing to an accessible article.
+2. Execute the following command:
+   ```bash
+   # For Windows
+   ./prismAId_windows_amd64.exe --download path/to/urls.txt
+   ```
+   Where `path/to/urls.txt` is the file containing your list of URLs.
+
+The downloaded PDFs will be saved in the directory of the list and can be used for further analysis in your prismAId project.
+
+### Literature Preparation
+Follow documented protocols for literature search and identification, such as [PRISMA 2020](https://doi.org/10.1136/bmj.n71). You may remove non-essential sections, like reference lists, abstracts, and introductions, which typically do not contribute relevant information. Exercise caution when including review articles unless necessary, as they can complicate analysis.
+
+Removing unnecessary content helps reduce costs and resource usage and may improve model performance, as excessive information can [negatively affect](https://arxiv.org/abs/2404.08865) analysis outcomes.
+
+Additionally, the tool supports integration with Zotero, allowing you to incorporate collections and groups of literature manuscripts directly into the review process. For more details on this feature, see the [Zotero Integration](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#zotero-integration) section.
+
+**<span class="blink">ATTENTION</span>**: This tool provides methods to convert PDFs and other manuscript formats into text. However, due to limitations inherent in the PDF format, these conversions might be imperfect. **Please manually check any converted manuscripts for completeness before further processing.** Special attention may be required to ensure accuracy.
+
 ### Learn prismAId
+- Read the short introduction on [JOSS](https://doi.org/10.21105/joss.07616) and the [extend one](https://doi.org/10.31222/osf.io/wh8qn).
 - Carefully read the technical FAQs below to avoid misusing the tool and to access emerging scientific references on issues related to the use of generative AI similar to those you may encounter in prismAId.
 - We provide an additional example in the [projects](https://github.com/open-and-sustainable/prismaid/blob/main/projects/test.toml) directory. This includes not only the project configuration but also [input files](https://github.com/open-and-sustainable/prismaid/tree/main/projects/input/test) and [output files](https://github.com/open-and-sustainable/prismaid/tree/main/projects/output/test). The input text is extracted from a study we conducted [doi.org/10.3390/cli10020027](https://doi.org/10.3390/cli10020027).
 - Multiple protocols for reporting systematic literature reviews are supported by prismAId [https://doi.org/10.1186/s13643-023-02255-9](https://doi.org/10.1186/s13643-023-02255-9). Users are encouraged to experiment and define their own prismAId methodologies.
 
-### Methodology of prismAId
+### Methodology
 1. Remove unnecessary sections from the literature to be reviewed.
 2. It's better to risk repeating an explanation of the information you are seeking through examples than not defining it clearly enough.
 3. If the budget allows, conduct a separate review process for each piece of information you want to extract. This allows for more detailed definitions for each information piece.
@@ -33,6 +63,22 @@ If you need assistance, you can:
 6. Focus on primary sources and avoid reviewing reviews unless it is intentional and carefully planned. Do not mix primary and secondary sources in the same review process.
 7. Include the project configuration (the .toml file) in the appendix of your paper, it's all about open science.
 8. Properly cite prismAId [doi.org/10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796).
+
+## Information Extraction Mechanism
+
+### LLMs Basics
+- **How LLMs Work**:
+  - Large Language Models (LLMs) are AI trained on extensive text data to understand and generate human-like text.
+  - These models handle various language tasks like text completion, summarization, translation, and more.
+- **Data Flow and Processing**:
+  - Modern LLMs offer subscription-based API access, with prismAId focusing on prompt engineering to extract targeted information.
+  - prismAId enables structured, replicable prompt creation for systematic reviews, simplifying rigorous data extraction.
+
+### Data Flow
+- prismAId’s workflow embeds protocol-based approaches:
+  - **Literature Selection**: Based on defined protocols, ensuring replicability.
+  - **Content Classification**: prismAId handles paper classification, parsing selected literature to extract user-defined information.
+  - **API Calls & Cost Management**: prismAId sends single-shot prompts for each paper, processes AI-generated JSON files, and provides token-based cost estimates for informed decision-making.
 
 ## Technical FAQs
 

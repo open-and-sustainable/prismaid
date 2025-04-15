@@ -11,18 +11,18 @@ logo: "assets/images/prismaid-logo.png"
 favicon: "assets/images/prismaid-favicon.ico"
 # configuration of navigation entries
 nav_links:
-  - name: "Installation<br>& Setup"
-    url: "/installation-setup.html"
-  - name: "Using<br>prismAId"
-    url: "/using-prismaid.html"
-  - name: "Review<br>Configurator"
-    url: "/review-configurator.html"
-  - name: "Research &<br>Development"
-    url: "/research-development.html"
-  - name: "Help &<br>Resources"
-    url: "/help-resources.html"
+    - name: "Installation<br>& Setup"
+      url: "/installation-setup.html"
+    - name: "Using<br>prismAId"
+      url: "/using-prismaid.html"
+    - name: "Review<br>Support"
+      url: "/review-support.html"
+    - name: "Review<br>Configurator"
+      url: "/review-configurator.html"
+    - name: "Help &<br>Development"
+      url: "/help-development.html"
 # configuration of custom colors
 nav_background_color: "#0056b3" # Override nav bar color (darker blue)
-nav_hover_color: "#007BFF"      # Override hover color (blue)
-nav_link_color: "#ffffff"       # Override link text color (white)
-toc-hover-color: "#007BFF"      # Override TOC hover color (blue)
+nav_hover_color: "#007BFF" # Override hover color (blue)
+nav_link_color: "#ffffff" # Override link text color (white)
+toc-hover-color: "#007BFF" # Override TOC hover color (blue)

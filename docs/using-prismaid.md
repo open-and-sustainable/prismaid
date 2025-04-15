@@ -5,6 +5,14 @@ layout: default
 
 # Using prismAId
 
+ ---
+*Page Contents:*
+- [**Section 1: 'Project' Details**](#section-1-project-details): reference guide to all entries in the first section of the project configuration
+- [**Section 2: 'Prompt' Details**](#section-2-prompt-details): instructions on configuring prompts for information extraction
+- [**Section 3: 'Review' Details**](#section-3-review-details): information content to be extracted and reviewed
+- [**Advanced Features**](#advanced-features): how to leverage debugging, validation, and integration with other tools
+ ---
+
 Prepare a project configuration file in [TOML](https://toml.io/en/), following the three-section structure, explanations, and recommendations provided in the [`template.toml`](https://github.com/open-and-sustainable/prismaid/blob/main/projects/template.toml) and below. Alternatively, you can use the terminal-based initialization option (`-init` in binaries) or the web-based tool on the [Review Configurator](review-configurator) page.
 
 **Section 1**, introduced below, focuses on essential project settings. **Sections 2** and **3** cover **prompt design** and follow in sequence, while **advanced features** in Section 1 are discussed at the end of this page.
@@ -248,9 +256,9 @@ The **`[prompt]`** section breaks down the prompt structure into essential compo
 
 ### Rationale
 - This section provides explicit instructions and context for the AI model.
-- The prompt consists of structured elements: 
-<div style="text-align: center;"> 
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prompt_struct.png" alt="Prompt Structure Diagram" style="width: 90%;"> 
+- The prompt consists of structured elements:
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prompt_struct.png" alt="Prompt Structure Diagram" style="width: 90%;">
 </div>
 
 - Each component clarifies the model’s role, task, and expected output, reducing ambiguity.
@@ -269,7 +277,7 @@ This structured approach increases consistency, reduces model hallucinations, an
 
 ### Entry Details
 
-- **`persona`**:  
+- **`persona`**:
   - Example: "You are an experienced scientist working on a systematic review of the literature."
   - Purpose: Sets the model's role, providing context to guide responses appropriately.
 
@@ -277,19 +285,19 @@ This structured approach increases consistency, reduces model hallucinations, an
   - Example: "You are asked to map the concepts discussed in a scientific paper attached here."
   - Purpose: Defines the model's specific task, clarifying its objectives.
 
-- **`expected_result`**:  
+- **`expected_result`**:
   - Example: "You should output a JSON object with the following keys and possible values."
   - Purpose: Specifies the output format, ensuring structured responses.
 
-- **`failsafe`**:  
+- **`failsafe`**:
   - Example: "If the concepts neither are clearly discussed in the document nor deducible, respond with an empty '' value."
   - Purpose: Prevents the model from generating forced responses when information is missing, enhancing accuracy.
 
-- **`definitions`**:  
+- **`definitions`**:
   - Example: "'Interest rate' is the percentage charged by a lender for borrowing money."
   - Purpose: Provides precise definitions to reduce misinterpretations.
 
-- **`example`**:  
+- **`example`**:
   - Example: "For example, given the text 'A recent global analysis based on ARIMA models suggests that wind energy products return is 4.3% annually.' the output JSON object could be: {"interest rate": 4.3, "regression models": "yes", "geographical scale": "world"}"
   - Purpose: Offers a sample output to further clarify expectations, guiding the model toward accurate responses.
 
@@ -319,26 +327,26 @@ values = ["world", "continent", "river basin"]
 
 ### Entry Details
 
-- **`[review]`**:  
+- **`[review]`**:
   - Header indicating the start of review items, defining the structure of the knowledge map.
 
-- **`[review.1]`**:  
+- **`[review.1]`**:
   - Represents the first item to review.
-  - **`key`**: "interest rate"  
+  - **`key`**: "interest rate"
     - The concept or topic to be extracted.
-  - **`values`**: `[""]`  
+  - **`values`**: `[""]`
     - An empty string allows any value.
 
-- **`[review.2]`**:  
+- **`[review.2]`**:
   - Represents the second item to review.
-  - **`key`**: "regression models"  
-  - **`values`**: `["yes", "no"]`  
+  - **`key`**: "regression models"
+  - **`values`**: `["yes", "no"]`
     - Allows "yes" or "no" as binary options.
 
-- **`[review.3]`**:  
+- **`[review.3]`**:
   - Represents the third item to review.
-  - **`key`**: "geographical scale"  
-  - **`values`**: `["world", "continent", "river basin"]`  
+  - **`key`**: "geographical scale"
+  - **`values`**: `["world", "continent", "river basin"]`
     - Specifies scale options for analysis.
 
 ## Advanced Features
@@ -372,7 +380,7 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 **Note**: Daily request limits are not automatically enforced, so manual monitoring is required for users with daily limits.
 
 
-#### OpenAI Rate Limits 
+#### OpenAI Rate Limits
 **(August 2024, tier 1 users)**
 
 <table class="table-spacing">
@@ -418,7 +426,7 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 </table>
 
 
-#### GoogleAI Rate Limits 
+#### GoogleAI Rate Limits
 **(October 2024)**
 
 **Free Tier**:
@@ -486,9 +494,9 @@ Defaults for both are `0`, meaning no delays are applied. For non-zero values, p
 </table>
 
 #### Cohere Rate Limits
-Cohere production keys have no limit, but trial keys are limited to 20 API calls per minute. 
+Cohere production keys have no limit, but trial keys are limited to 20 API calls per minute.
 
-#### Anthropic Rate Limits 
+#### Anthropic Rate Limits
 **(November 2024, tier 1 users)**
 <table class="table-spacing">
     <thead>
@@ -552,7 +560,7 @@ Cost minimization considers both the cost of using the model for each unit (toke
   - Anthropic approximates token counts via OpenAI’s tokenizer.
   - DeepSeek approximates token counts via OpenAI’s tokenizer.
 
-Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), and [DeepSeek](https://platform.deepseek.com/usage). 
+Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), and [DeepSeek](https://platform.deepseek.com/usage).
 
 **Note**: Cost estimates are approximate and subject to change. Users with strict budgets should verify all costs thoroughly before conducting reviews.
 
@@ -573,39 +581,39 @@ rpm_limit = 0
 
 [project.llm.2]
 provider = "GoogleAI"
-api_key = "" 
+api_key = ""
 model = "gemini-1.5-flash"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 
 [project.llm.3]
 provider = "Cohere"
-api_key = "" 
+api_key = ""
 model = "command-r"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 
 [project.llm.4]
 provider = "Anthropic"
-api_key = "" 
+api_key = ""
 model = "claude-3-haiku"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 
 [project.llm.5]
 provider = "DeepSeek"
-api_key = "" 
+api_key = ""
 model = "deepseek-chat"
 temperature = 0.01
-tpm_limit = 0 
+tpm_limit = 0
 rpm_limit = 0
 ```
 
 ### Zotero Integration
-The tool can automatically download and process literature from your specified Zotero collections or groups. 
+The tool can automatically download and process literature from your specified Zotero collections or groups.
 
 #### Configuration
 To enable this, you must configure access credentials and group structure in the `[project.zotero]` section, for example:
@@ -628,11 +636,11 @@ When creating a new API key, you must **enable** "Allow library access" and set 
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 600px;">
 </div>
 
-Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library. 
+Once you have added your Zotero API credentials to your project configuration in the `[project.zotero]` section (fields `user` and `api_key`), you must specify the group or collection to review in the `group` field. This field uses a filesystem-like representation for the group and collection structure of your Zotero library.
 
 For instance, if you have a parent collection called "My Collection" and a nested sub-collection called "My Sub Collection" inside that parent collection, you should specify `"My Collection/My Sub Collection"` for the `group` field. Similarly, if you have a group called "My Group" and within that a collection called "My Sub Collection", you should specify `"My Group/My Sub Collection"` for the `group` field.
 
-All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismAId** will convert them into text files and run the review process. 
+All PDFs in the selected collection or group will be copied into a `zotero` subdirectory within the directory you specified in the `[project.configuration]` section to store the `results_file_name`. Then, **prismAId** will convert them into text files and run the review process.
 
 The manuscript files are stored locally and are available for inspection and further cleaning and analysis without the need to connect to the Zotero API again.
 
@@ -647,7 +655,7 @@ In the workflow of a systematic literature review, following any protocol, a Zot
 
 The integration of Zotero with **prismAId** supports the next step in the workflow: manuscripts are automatically converted and then passed to LLMs for analysis and information extraction.
 
-Once the literature to be reviewed is defined, the Zotero integration only needs to be activated once, as all manuscripts are downloaded and stored in the `zotero` subdirectory. Subsequent analyses and refinements can be performed on the downloaded texts without requiring further connections to the Zotero API. 
+Once the literature to be reviewed is defined, the Zotero integration only needs to be activated once, as all manuscripts are downloaded and stored in the `zotero` subdirectory. Subsequent analyses and refinements can be performed on the downloaded texts without requiring further connections to the Zotero API.
 
 To disable the Zotero integration, simply leave its fields empty in the `[project.zotero]` section of the project configuration.
 

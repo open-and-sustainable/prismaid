@@ -5,6 +5,14 @@ layout: default
 
 # Installation & Workflow
 
+ ---
+*Page Contents:*
+- [**Supported Systems**](#supported-systems): platforms and languages supported by prismAId
+- [**Workflow Overview**](#workflow-overview): the recommended process for utilizing prismAId features
+- [**Step-by-Step Installation**](#step-by-step-installations): instructions for installation on any platform
+- [**Additional Setup Information**](#additional-setup-information): supplementary guidance to help you get started
+ ---
+
 ## Supported Systems
 prismAId is accessible across multiple platforms, offering flexibility based on user preference and system requirements:
 
@@ -58,7 +66,7 @@ Download the appropriate executable for your OS from our [GitHub Releases](https
 prismAId uses a human-readable `.toml` project configuration file for setup. You can find a template and example in the [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Once your `.toml` file is ready, execute the project with:
 ```bash
 # For Windows
-./prismAId_windows_amd64.exe -project your_project.toml
+./prismAId_windows_amd64.exe --project your_project.toml
 ```
 
 ### Option 3. Python Package
@@ -130,7 +138,7 @@ PrismAId.run_review(toml_test)
 ## Additional Setup Information
 
 ### Initialize the Configuration File
-prismAId binaries and Go module offer an interactive terminal application to help create draft configuration files. Use the -init flag to start the setup: 
+prismAId binaries and Go module offer an interactive terminal application to help create draft configuration files. Use the -init flag to start the setup:
 ```bash
 # For Linux on Intel
 ./prismAId_linux_amd64 -init
@@ -139,15 +147,6 @@ prismAId binaries and Go module offer an interactive terminal application to hel
 ![Terminal app for drafting project configuration file](https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/terminal.gif)
 
 A web-based initializer is also availeble on the [Review Configurator](review-configurator) page.
-
-### Literature Preparation
-Follow documented protocols for literature search and identification, such as [PRISMA 2020](https://doi.org/10.1136/bmj.n71). You may remove non-essential sections, like reference lists, abstracts, and introductions, which typically do not contribute relevant information. Exercise caution when including review articles unless necessary, as they can complicate analysis.
-
-Removing unnecessary content helps reduce costs and resource usage and may improve model performance, as excessive information can [negatively affect](https://arxiv.org/abs/2404.08865) analysis outcomes.
-
-Additionally, the tool supports integration with Zotero, allowing you to incorporate collections and groups of literature manuscripts directly into the review process. For more details on this feature, see the [Zotero Integration](https://open-and-sustainable.github.io/prismaid/using-prismaid.html#zotero-integration) section.
-
-**<span class="blink">ATTENTION</span>**: This tool provides methods to convert PDFs and other manuscript formats into text. However, due to limitations inherent in the PDF format, these conversions might be imperfect. **Please manually check any converted manuscripts for completeness before further processing.** Special attention may be required to ensure accuracy.
 
 ### Use in Jupyter Notebooks
 When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmatiom to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).

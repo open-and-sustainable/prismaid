@@ -1,5 +1,6 @@
 # this file is an example of a URL list to automatically download PDFs of papers
-# to be used from the shell with 'go run cmd/main.go --download projects/url_list_test.txt'
+# to be used from the shell with binaries or in Go
+# with 'go run cmd/main.go --download projects/url_list_test.txt'
 # it must contain one URL on each line and no other characters
 # lines starting with # or empty are ignored
 # HTML pages at URLs are interpreted and PDFs searched for
