@@ -88,6 +88,11 @@ jobs:
 
                       # Create Pull Request and capture PR number
                       pr_url=$(gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head $branch_name)
+
+                      # Wait briefly to avoid race conditions
+                      sleep 5
+
+                      # Get the PR node ID (required for GraphQL)
                       pr_node_id=$(gh pr view "$pr_url" --json id -q .id)
 
                       # Enable auto-merge via GitHub GraphQL API
