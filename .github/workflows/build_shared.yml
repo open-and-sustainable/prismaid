@@ -21,7 +21,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Install Git
-              run: sudo apt-get install git
+              run: sudo apt-get install git -y
 
             - name: Determine Version
               id: versioning
@@ -42,7 +42,7 @@ jobs:
                   sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" r-package/DESCRIPTION
 
             - name: Install GitHub CLI
-              run: sudo apt-get install gh -y
+              run: sudo apt-get install gh jq -y
 
             - name: Commit and push changes
               run: |
@@ -86,8 +86,20 @@ jobs:
                       # Push the branch (with force in case we rebased)
                       git push -f origin $branch_name
 
-                      # Create Pull Request
-                      gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head $branch_name
+                      # Create Pull Request and capture PR number
+                      pr_url=$(gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head $branch_name)
+
+                      # Wait briefly to avoid race conditions
+                      sleep 5
+
+                      # Get the PR node ID (required for GraphQL)
+                      pr_node_id=$(gh pr view "$pr_url" --json id -q .id)
+
+                      # Enable auto-merge via GitHub GraphQL API
+                      curl -X POST -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+                           -H "Content-Type: application/json" \
+                           -d '{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"'"$pr_node_id"'\" mergeMethod: SQUASH }) { pullRequest { number autoMergeRequest { enabledAt } } } }"}' \
+                           https://api.github.com/graphql
 
                       # Automatically merge the PR
                       gh pr merge --auto --squash --delete-branch
@@ -124,7 +136,7 @@ jobs:
                   path: sharedlib/libprismaid_linux_amd64.so
 
             - name: Install GitHub CLI
-              run: sudo apt-get install gh -y
+              run: sudo apt-get install gh jq -y
 
             - name: Commit and push changes
               run: |
@@ -172,17 +184,29 @@ jobs:
                       # Push the branch (with force in case we rebased)
                       git push -f origin $branch_name
 
-                      # Create Pull Request
-                      gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head $branch_name
+                      # Create Pull Request and capture PR number
+                      pr_url=$(gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head $branch_name)
 
-                      # Automatically approve and merge the PR
+                      # Wait briefly to avoid race conditions
+                      sleep 5
+
+                      # Get the PR node ID (required for GraphQL)
+                      pr_node_id=$(gh pr view "$pr_url" --json id -q .id)
+
+                      # Enable auto-merge via GitHub GraphQL API
+                      curl -X POST -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+                           -H "Content-Type: application/json" \
+                           -d '{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"'"$pr_node_id"'\" mergeMethod: SQUASH }) { pullRequest { number autoMergeRequest { enabledAt } } } }"}' \
+                           https://api.github.com/graphql
+
+                      # Automatically merge the PR
                       gh pr merge --auto --squash --delete-branch
                   else
-                      echo "No changes detected in library files. Skipping PR creation."
+                      echo "No changes detected in DESCRIPTION file. Skipping PR creation."
                   fi
 
     build-windows-amd64:
-        needs: build-linux-amd64
+        needs: update-version-for-r
         name: Build Windows Shared Library
         runs-on: windows-latest
         env:
@@ -271,7 +295,7 @@ jobs:
                   fi
 
     build-macos-arm64:
-        needs: build-windows-amd64
+        needs: update-version-for-r
         name: Build macOS Arm64 Shared Library
         runs-on: macos-latest
         env:
@@ -477,7 +501,7 @@ jobs:
                   sed -i "s/^version = .*/version = \"${{ env.VERSION }}\"/" julia/PrismAId/Project.toml
 
             - name: Install GitHub CLI
-              run: sudo apt-get install gh -y
+              run: sudo apt-get install gh jq -y
 
             - name: Commit and push changes
               run: |
@@ -494,8 +518,22 @@ jobs:
                   git checkout -b update-julia-version-${GITHUB_RUN_ID}
                   git commit -m "Update Julia package version to ${{ env.VERSION }}"
                   git push -u origin update-julia-version-${GITHUB_RUN_ID}
-                  # Create Pull Request
-                  gh pr create --title "Update Julia Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-julia-version-${GITHUB_RUN_ID}
+
+                  # Create Pull Request and capture PR number
+                  pr_url=$(gh pr create --title "Update Julia Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-julia-version-${GITHUB_RUN_ID})
+
+                  # Wait briefly to avoid race conditions
+                  sleep 5
+
+                  # Get the PR node ID (required for GraphQL)
+                  pr_node_id=$(gh pr view "$pr_url" --json id -q .id)
+
+                  # Enable auto-merge via GitHub GraphQL API
+                  curl -X POST -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+                        -H "Content-Type: application/json" \
+                        -d '{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"'"$pr_node_id"'\" mergeMethod: SQUASH }) { pullRequest { number autoMergeRequest { enabledAt } } } }"}' \
+                        https://api.github.com/graphql
+
                   # Automatically merge the PR
                   gh pr merge --auto --squash --delete-branch
 
