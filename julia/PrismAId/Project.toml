@@ -1,7 +1,7 @@
 name = "PrismAId"
 uuid = "118a867e-9825-46ae-bed0-f8987ebdd75d"
 authors = ["Riccardo Boero <ribo@nilu.no>"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
