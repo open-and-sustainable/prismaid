@@ -47,25 +47,57 @@ jobs:
 
             - name: Commit and push changes
               run: |
+                  # Get latest main branch
+                  git fetch origin main
+                  original_main_sha=$(git rev-parse origin/main)
+
+                  # Create a new branch from the latest main
+                  branch_name="update-version-${GITHUB_RUN_ID}"
+                  git checkout -b $branch_name origin/main
+
+                  # Configure git
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
-                  git fetch origin main
+
                   # Check for changes in the DESCRIPTION file
-                  git add r-package/DESCRIPTION
-                  if git diff --staged --quiet; then
-                    echo "No changes detected. Skipping branch creation and pull request."
-                    exit 0
+                  if [[ -n "$(git status --porcelain r-package/DESCRIPTION)" ]]; then
+                      echo "Changes detected in DESCRIPTION file."
+
+                      # Stage and commit changes
+                      git add r-package/DESCRIPTION
+                      git commit -m "Update version to ${{ env.VERSION }}"
+
+                      # Check if main branch has changed while we were working
+                      git fetch origin main
+                      current_main_sha=$(git rev-parse origin/main)
+
+                      if [[ "$original_main_sha" != "$current_main_sha" ]]; then
+                          echo "Main branch has been updated. Rebasing changes..."
+                          git rebase origin/main
+
+                          # Check if there are still changes after rebasing
+                          if [[ -n "$(git diff --name-only HEAD~ HEAD 2>/dev/null)" ]]; then
+                              echo "Changes still exist after rebasing. Continuing with PR creation."
+                          else
+                              echo "No changes remain after rebasing. Skipping PR creation."
+                              exit 0
+                          fi
+                      fi
+
+                      # Push the branch (with force in case we rebased)
+                      git push -f origin $branch_name
+
+                      # Create Pull Request
+                      gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head $branch_name
+
+                      # Automatically merge the PR
+                      gh pr merge --auto --squash --delete-branch
+                  else
+                      echo "No changes detected in DESCRIPTION file. Skipping PR creation."
                   fi
-                  # Create a new branch only if there are changes
-                  git checkout -b update-version-${GITHUB_RUN_ID}
-                  git commit -m "Update version to ${{ env.VERSION }}"
-                  git push -u origin update-version-${GITHUB_RUN_ID}
-                  # Create Pull Request
-                  gh pr create --title "Update R Package Version" --body "Auto-update version to ${{ env.VERSION }} by CI/CD." --base main --head update-version-${GITHUB_RUN_ID}
-                  # Automatically merge the PR
-                  gh pr merge --auto --squash --delete-branch
 
     build-linux-amd64:
+        needs: update-version-for-r
         name: Build Linux Shared Library
         runs-on: ubuntu-latest
         env:
@@ -151,6 +183,7 @@ jobs:
                   fi
 
     build-windows-amd64:
+        needs: build-linux-amd64
         name: Build Windows Shared Library
         runs-on: windows-latest
         env:
@@ -185,21 +218,61 @@ jobs:
             - name: Commit and push changes for Windows
               shell: bash
               run: |
+                  # Get latest main branch
+                  git fetch origin main
+                  original_main_sha=$(git rev-parse origin/main)
+
+                  # Create a new branch from the latest main
+                  branch_name="update-windows-lib-${GITHUB_RUN_ID}"
+                  git checkout -b $branch_name origin/main
+
+                  # Copy the Windows libraries to their destinations
                   cp sharedlib/libprismaid_windows_amd64.dll r-package/inst/libs/windows/libprismaid_windows_amd64.dll
                   cp sharedlib/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git fetch origin main
-                  git checkout -b update-windows-lib-${GITHUB_RUN_ID}
-                  git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll
-                  git diff --staged --quiet || git commit --allow-empty -m "Update Windows lib."
-                  git push origin update-windows-lib-${GITHUB_RUN_ID}
-                  # Create Pull Request
-                  gh pr create --title "Update Windows Library" --body "Auto-update by CI/CD." --base main --head update-windows-lib-${GITHUB_RUN_ID}
-                  # Automatically approve and merge the PR
-                  gh pr merge --auto --squash --delete-branch
+
+                  # Check if there are any actual changes
+                  if [[ -n "$(git status --porcelain r-package/inst/libs/windows/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll)" ]]; then
+                      echo "Changes detected in Windows library files."
+
+                      # Configure git
+                      git config --local user.email "action@github.com"
+                      git config --local user.name "GitHub Action"
+
+                      # Stage and commit changes
+                      git add r-package/inst/libs/windows/libprismaid_windows_amd64.dll julia/PrismAId/deps/windows-x86_64/libprismaid_windows_amd64.dll
+                      git commit -m "Update Windows lib."
+
+                      # Check if main branch has changed while we were working
+                      git fetch origin main
+                      current_main_sha=$(git rev-parse origin/main)
+
+                      if [[ "$original_main_sha" != "$current_main_sha" ]]; then
+                          echo "Main branch has been updated. Rebasing changes..."
+                          git rebase origin/main
+
+                          # Check if there are still changes after rebasing
+                          if [[ -n "$(git diff --name-only HEAD~ HEAD 2>/dev/null)" ]]; then
+                              echo "Changes still exist after rebasing. Continuing with PR creation."
+                          else
+                              echo "No changes remain after rebasing. Skipping PR creation."
+                              exit 0
+                          fi
+                      fi
+
+                      # Push the branch (with force in case we rebased)
+                      git push -f origin $branch_name
+
+                      # Create Pull Request
+                      gh pr create --title "Update Windows Library" --body "Auto-update by CI/CD." --base main --head $branch_name
+
+                      # Automatically merge the PR
+                      gh pr merge --auto --squash --delete-branch
+                  else
+                      echo "No changes detected in Windows library files. Skipping PR creation."
+                  fi
 
     build-macos-arm64:
+        needs: build-windows-amd64
         name: Build macOS Arm64 Shared Library
         runs-on: macos-latest
         env:
@@ -232,19 +305,58 @@ jobs:
             - name: Commit and push changes for macOS
               shell: bash
               run: |
+                  # Get latest main branch
+                  git fetch origin main
+                  original_main_sha=$(git rev-parse origin/main)
+
+                  # Create a new branch from the latest main
+                  branch_name="update-macos-lib-${GITHUB_RUN_ID}"
+                  git checkout -b $branch_name origin/main
+
+                  # Copy the macOS libraries to their destinations
                   cp sharedlib/libprismaid_darwin_arm64.dylib r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib
                   cp sharedlib/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git fetch origin main
-                  git checkout -b update-macos-lib-${GITHUB_RUN_ID}
-                  git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib
-                  git diff --staged --quiet || git commit --allow-empty -m "Update macOS lib."
-                  git push origin update-macos-lib-${GITHUB_RUN_ID}
-                  # Create Pull Request
-                  gh pr create --title "Update macOS Library" --body "Auto-update by CI/CD." --base main --head update-macos-lib-${GITHUB_RUN_ID}
-                  # Automatically approve and merge the PR
-                  gh pr merge --auto --squash --delete-branch
+
+                  # Check if there are any actual changes
+                  if [[ -n "$(git status --porcelain r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib)" ]]; then
+                      echo "Changes detected in macOS library files."
+
+                      # Configure git
+                      git config --local user.email "action@github.com"
+                      git config --local user.name "GitHub Action"
+
+                      # Stage and commit changes
+                      git add r-package/inst/libs/macos/libprismaid_darwin_arm64.dylib julia/PrismAId/deps/macos-arm64/libprismaid_darwin_arm64.dylib
+                      git commit -m "Update macOS lib."
+
+                      # Check if main branch has changed while we were working
+                      git fetch origin main
+                      current_main_sha=$(git rev-parse origin/main)
+
+                      if [[ "$original_main_sha" != "$current_main_sha" ]]; then
+                          echo "Main branch has been updated. Rebasing changes..."
+                          git rebase origin/main
+
+                          # Check if there are still changes after rebasing
+                          if [[ -n "$(git diff --name-only HEAD~ HEAD 2>/dev/null)" ]]; then
+                              echo "Changes still exist after rebasing. Continuing with PR creation."
+                          else
+                              echo "No changes remain after rebasing. Skipping PR creation."
+                              exit 0
+                          fi
+                      fi
+
+                      # Push the branch (with force in case we rebased)
+                      git push -f origin $branch_name
+
+                      # Create Pull Request
+                      gh pr create --title "Update macOS Library" --body "Auto-update by CI/CD." --base main --head $branch_name
+
+                      # Automatically merge the PR
+                      gh pr merge --auto --squash --delete-branch
+                  else
+                      echo "No changes detected in macOS library files. Skipping PR creation."
+                  fi
 
     package-python:
         name: Package Python Project with All Shared Libraries
