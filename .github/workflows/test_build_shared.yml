@@ -96,21 +96,59 @@ jobs:
               run: sudo apt-get install gh -y
 
             - name: Commit and push changes
-              shell: bash
               run: |
+                  # Get latest main branch
+                  git fetch origin main
+                  original_main_sha=$(git rev-parse origin/main)
+
+                  # Create a new branch from the latest main
+                  branch_name="update-linux-lib-${GITHUB_RUN_ID}"
+                  git checkout -b $branch_name origin/main
+
+                  # Copy the libraries to their destinations
                   cp sharedlib/libprismaid_linux_amd64.so r-package/inst/libs/linux/libprismaid_linux_amd64.so
                   cp sharedlib/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git fetch origin main
-                  git checkout -b update-linux-lib-${GITHUB_RUN_ID}
-                  git add r-package/inst/libs/linux/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so
-                  git diff --staged --quiet || git commit --allow-empty -m "Update Linux lib."
-                  git push origin update-linux-lib-${GITHUB_RUN_ID}
-                  # Create Pull Request
-                  gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head update-linux-lib-${GITHUB_RUN_ID}
-                  # Automatically approve and merge the PR (requires GitHub token)
-                  gh pr merge --auto --squash --delete-branch
+
+                  # Check if there are any actual changes
+                  if [[ -n "$(git status --porcelain r-package/inst/libs/linux/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so)" ]]; then
+                      echo "Changes detected in library files."
+
+                      # Configure git
+                      git config --local user.email "action@github.com"
+                      git config --local user.name "GitHub Action"
+
+                      # Stage and commit changes
+                      git add r-package/inst/libs/linux/libprismaid_linux_amd64.so julia/PrismAId/deps/linux-x86_64/libprismaid_linux_amd64.so
+                      git commit -m "Update Linux lib."
+
+                      # Check if main branch has changed while we were working
+                      git fetch origin main
+                      current_main_sha=$(git rev-parse origin/main)
+
+                      if [[ "$original_main_sha" != "$current_main_sha" ]]; then
+                          echo "Main branch has been updated. Rebasing changes..."
+                          git rebase origin/main
+
+                          # Check if there are still changes after rebasing
+                          if [[ -n "$(git diff --name-only HEAD~ HEAD 2>/dev/null)" ]]; then
+                              echo "Changes still exist after rebasing. Continuing with PR creation."
+                          else
+                              echo "No changes remain after rebasing. Skipping PR creation."
+                              exit 0
+                          fi
+                      fi
+
+                      # Push the branch (with force in case we rebased)
+                      git push -f origin $branch_name
+
+                      # Create Pull Request
+                      gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head $branch_name
+
+                      # Automatically approve and merge the PR
+                      gh pr merge --auto --squash --delete-branch
+                  else
+                      echo "No changes detected in library files. Skipping PR creation."
+                  fi
 
     build-windows-amd64:
         name: Build Windows Shared Library
