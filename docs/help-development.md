@@ -1,32 +1,23 @@
 ---
-title: Research & Development
+title: Help & Development
 layout: default
 ---
 
-# Research & Development
+# Help & Development
 
-## Scope
-- **Objective**: prismAId leverages Large Language Models (LLMs) for systematic scientific literature reviews, making them accessible and efficient without coding.
-- **Speed**: Faster than traditional methods, prismAId provides high-speed software for systematic reviews.
-- **Replicability**: Addresses the challenge of consistent, unbiased analysis, countering the subjective nature of human review.
-- **Cost**: More economical than custom AI solutions, with review costs typically between $0.0025 and $0.10 per paper.
-- **Audience**: Suitable for scientists conducting literature reviews, meta-analyses, project development, and research proposals.
+If you need assistance, you can:
+- **Open an Issue** on our [GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
+- **Discuss in the Matrix Support Room**: [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) ![Matrix](https://img.shields.io/matrix/prismAId-support%3Amatrix.org?server_fqdn=matrix.org&logo=appveyor).
+- **Stay Updated with New Releases**: Follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
 
-## Mechanism
+## Common Issues
+- **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
+- **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
+- **API Keys**: These may be loaded either through system variables or the project configuration. If multiple keys are provided, the latter will have priority.
+- **Partial Results**: Results presenting only the first few entries of a review containing many more manuscripts suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
+- **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
+- **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
-### LLM Basics
-- **How LLMs Work**:
-  - Large Language Models (LLMs) are AI trained on extensive text data to understand and generate human-like text.
-  - These models handle various language tasks like text completion, summarization, translation, and more.
-- **Data Flow and Processing**:
-  - Modern LLMs offer subscription-based API access, with prismAId focusing on prompt engineering to extract targeted information.
-  - prismAId enables structured, replicable prompt creation for systematic reviews, simplifying rigorous data extraction.
-
-### Data Flow
-- prismAId’s workflow embeds protocol-based approaches:
-  - **Literature Selection**: Based on defined protocols, ensuring replicability.
-  - **Content Classification**: prismAId handles paper classification, parsing selected literature to extract user-defined information.
-  - **API Calls & Cost Management**: prismAId sends single-shot prompts for each paper, processes AI-generated JSON files, and provides token-based cost estimates for informed decision-making.
 
 ## Contributing
 
@@ -79,7 +70,6 @@ prismAId actively supports Open Science principles through:
 
 6. **Scientific Innovation**
    - Standardized, reusable methods facilitate innovation, cumulative knowledge, and rapid knowledge dissemination.
-
 
 
 <div id="wcb" class="carbonbadge"></div>
