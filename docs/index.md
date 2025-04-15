@@ -23,7 +23,7 @@ prismAId changes the way researchers conduct systematic reviews using generative
 
 ## Table of Contents
 Explore this website for comprehensive guidance on using prismAId:
-1. [Installation & Workflow](installation-setup): Learn how to install prismAId and configure it for different environments.
+1. [Installation & Setup](installation-setup): Learn how to install prismAId and configure it for different environments.
 2. [Using prismAId](using-prismaid): Discover how to effectively utilize prismAId, including its advanced features.
 3. [Review Support](review-support): Learn tools and the many prismAId tools to support the systematic review process.
 4. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.

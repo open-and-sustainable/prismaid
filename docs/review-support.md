@@ -11,6 +11,7 @@ layout: default
  - [**Review Preparation**](#review-preparation): guidelines and tools for organizing your review process
  - [**Information Extraction Mechanism**](#information-extraction-mechanism): understanding the technical framework powering prismAId
  - [**Technical FAQs**](#technical-faqs): detailed answers to advanced questions about prismAId capabilities and limitations
+
  ---
 
 ## Reasons to Use

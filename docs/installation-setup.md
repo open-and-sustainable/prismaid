@@ -1,9 +1,9 @@
 ---
-title: Installation & Workflow
+title: Installation & Setup
 layout: default
 ---
 
-# Installation & Workflow
+# Installation & Setup
 
  ---
 *Page Contents:*
@@ -11,6 +11,7 @@ layout: default
 - [**Workflow Overview**](#workflow-overview): the recommended process for utilizing prismAId features
 - [**Step-by-Step Installation**](#step-by-step-installations): instructions for installation on any platform
 - [**Additional Setup Information**](#additional-setup-information): supplementary guidance to help you get started
+
  ---
 
 ## Supported Systems

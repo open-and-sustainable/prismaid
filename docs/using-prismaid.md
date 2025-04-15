@@ -11,6 +11,7 @@ layout: default
 - [**Section 2: 'Prompt' Details**](#section-2-prompt-details): instructions on configuring prompts for information extraction
 - [**Section 3: 'Review' Details**](#section-3-review-details): information content to be extracted and reviewed
 - [**Advanced Features**](#advanced-features): how to leverage debugging, validation, and integration with other tools
+
  ---
 
 Prepare a project configuration file in [TOML](https://toml.io/en/), following the three-section structure, explanations, and recommendations provided in the [`template.toml`](https://github.com/open-and-sustainable/prismaid/blob/main/projects/template.toml) and below. Alternatively, you can use the terminal-based initialization option (`-init` in binaries) or the web-based tool on the [Review Configurator](review-configurator) page.
