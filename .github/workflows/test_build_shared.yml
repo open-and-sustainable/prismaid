@@ -21,7 +21,7 @@ jobs:
                   fetch-depth: 0
 
             - name: Install Git
-              run: sudo apt-get install git jq
+              run: sudo apt-get install git -y
 
             - name: Determine Version
               id: versioning
@@ -42,7 +42,7 @@ jobs:
                   sed -i "s/^Version:.*/Version: ${{ env.VERSION }}/" r-package/DESCRIPTION
 
             - name: Install GitHub CLI
-              run: sudo apt-get install gh -y
+              run: sudo apt-get install gh jq -y
 
             - name: Commit and push changes
               run: |
@@ -136,7 +136,7 @@ jobs:
                   path: sharedlib/libprismaid_linux_amd64.so
 
             - name: Install GitHub CLI
-              run: sudo apt-get install gh -y
+              run: sudo apt-get install gh jq -y
 
             - name: Commit and push changes
               run: |
@@ -184,13 +184,25 @@ jobs:
                       # Push the branch (with force in case we rebased)
                       git push -f origin $branch_name
 
-                      # Create Pull Request
-                      gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head $branch_name
+                      # Create Pull Request and capture PR number
+                      pr_url=$(gh pr create --title "Update Linux Library" --body "Auto-update by CI/CD." --base main --head $branch_name)
 
-                      # Automatically approve and merge the PR
+                      # Wait briefly to avoid race conditions
+                      sleep 5
+
+                      # Get the PR node ID (required for GraphQL)
+                      pr_node_id=$(gh pr view "$pr_url" --json id -q .id)
+
+                      # Enable auto-merge via GitHub GraphQL API
+                      curl -X POST -H "Authorization: bearer ${{ secrets.GITHUB_TOKEN }}" \
+                           -H "Content-Type: application/json" \
+                           -d '{"query":"mutation { enablePullRequestAutoMerge(input: { pullRequestId: \"'"$pr_node_id"'\" mergeMethod: SQUASH }) { pullRequest { number autoMergeRequest { enabledAt } } } }"}' \
+                           https://api.github.com/graphql
+
+                      # Automatically merge the PR
                       gh pr merge --auto --squash --delete-branch
                   else
-                      echo "No changes detected in library files. Skipping PR creation."
+                      echo "No changes detected in DESCRIPTION file. Skipping PR creation."
                   fi
 
     build-windows-amd64:
