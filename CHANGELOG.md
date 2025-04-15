@@ -9,6 +9,11 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.7.1] - 2025-04-15
+### Added
+- Functionality to download PDFs from text lists of URLs
+- Testing and documentation of the new functionality
+
 ## [0.7.0] - 2025-04-14
 ### Removed
 - Direct support of all LLMs and provider
