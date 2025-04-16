@@ -7,7 +7,7 @@ import (
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid"
-	"github.com/open-and-sustainable/prismaid/download"
+	"github.com/open-and-sustainable/prismaid/download/list"
 	terminal "github.com/open-and-sustainable/prismaid/init"
 )
 
@@ -30,7 +30,7 @@ func main() {
 	// Handle download logic if -download flag is provided
 	if *downloadPath != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		download.RunListDownload(*downloadPath)
+		list.RunListDownload(*downloadPath)
 		return
 	}
 

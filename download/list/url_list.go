@@ -1,4 +1,4 @@
-package download
+package list
 
 import (
 	"bufio"

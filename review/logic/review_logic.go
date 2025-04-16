@@ -1,4 +1,4 @@
-package review
+package logic
 
 import (
 	"fmt"
@@ -9,12 +9,12 @@ import (
 
 	"github.com/open-and-sustainable/alembica/extraction"
 	"github.com/open-and-sustainable/alembica/utils/logger"
-	"github.com/open-and-sustainable/prismaid/config"
-	"github.com/open-and-sustainable/prismaid/convert"
-	"github.com/open-and-sustainable/prismaid/debug"
-	"github.com/open-and-sustainable/prismaid/prompt"
-	"github.com/open-and-sustainable/prismaid/results"
-	"github.com/open-and-sustainable/prismaid/zotero"
+	"github.com/open-and-sustainable/prismaid/convert/file"
+	"github.com/open-and-sustainable/prismaid/download/zotero"
+	"github.com/open-and-sustainable/prismaid/review/config"
+	"github.com/open-and-sustainable/prismaid/review/debug"
+	"github.com/open-and-sustainable/prismaid/review/prompt"
+	"github.com/open-and-sustainable/prismaid/review/results"
 )
 
 const (
@@ -135,7 +135,7 @@ func RunReview(tomlConfiguration string) error {
 			return err
 		}
 		// convert pdfs
-		err = convert.Convert(results.GetDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
+		err = file.Convert(results.GetDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
 		if err != nil {
 			logger.Error("Error:\n%v", err)
 			exit(ExitCodeErrorInReviewLogic)
@@ -143,7 +143,7 @@ func RunReview(tomlConfiguration string) error {
 	} else {
 		// run input conversion if needed and not a Zotero project
 		if config.Project.Configuration.InputConversion != "no" {
-			err := convert.Convert(config.Project.Configuration.InputDirectory, config.Project.Configuration.InputConversion)
+			err := file.Convert(config.Project.Configuration.InputDirectory, config.Project.Configuration.InputConversion)
 			if err != nil {
 				logger.Error("Error:\n%v", err)
 				exit(ExitCodeErrorInReviewLogic)

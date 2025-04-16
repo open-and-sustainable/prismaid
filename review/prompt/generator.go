@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/open-and-sustainable/prismaid/config"
 	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/prismaid/review/config"
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
 )
@@ -43,7 +43,7 @@ JSON object format for response:
 // - config: A pointer to the application's configuration which specifies how prompts should be parsed and organized.
 //
 // Returns:
-// - Two slices of strings: 
+// - Two slices of strings:
 //   - The first slice contains the generated prompts.
 //   - The second slice contains the filenames associated with each prompt.
 func parsePrompts(config *config.Config) ([]string, []string) {
@@ -121,8 +121,8 @@ func parseExpectedResults(config *config.Config) string {
 // Returns:
 // - A slice of strings containing the ordered review keys based on their entry order in the configuration file.
 //
-// This function is particularly useful in scenarios where the order of review items as defined in the 
-// configuration impacts the workflow or results, such as generating reports or processing data in the 
+// This function is particularly useful in scenarios where the order of review items as defined in the
+// configuration impacts the workflow or results, such as generating reports or processing data in the
 // sequence of configuration.
 func GetReviewKeysByEntryOrder(config *config.Config) []string {
 	keys := make([]string, 0, len(config.Review))
@@ -133,9 +133,9 @@ func GetReviewKeysByEntryOrder(config *config.Config) []string {
 	return keys
 }
 
-// SortReviewKeysAlphabetically retrieves and sorts the descriptive keys (not the TOML entry keys) from the 
-// review configuration alphabetically. This sorting approach focuses on the descriptive aspects of the keys 
-// rather than their position in the configuration file, making it useful for user interfaces or outputs where 
+// SortReviewKeysAlphabetically retrieves and sorts the descriptive keys (not the TOML entry keys) from the
+// review configuration alphabetically. This sorting approach focuses on the descriptive aspects of the keys
+// rather than their position in the configuration file, making it useful for user interfaces or outputs where
 // alphabetical ordering facilitates better readability and accessibility.
 //
 // Arguments:
@@ -144,7 +144,7 @@ func GetReviewKeysByEntryOrder(config *config.Config) []string {
 // Returns:
 // - A slice of strings containing the review keys sorted alphabetically by their descriptive labels.
 //
-// This function is ideal for scenarios where the logical grouping or alphabetical presentation of review items 
+// This function is ideal for scenarios where the logical grouping or alphabetical presentation of review items
 // is critical, such as in user interfaces, alphabetical listings in documentation, or any application where
 // the user benefits from sorting by topic names rather than the order of entries.
 func SortReviewKeysAlphabetically(config *config.Config) []string {

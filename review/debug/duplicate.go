@@ -4,15 +4,15 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	
-	"github.com/open-and-sustainable/prismaid/config"
+
 	"github.com/open-and-sustainable/alembica/utils/logger"
+	"github.com/open-and-sustainable/prismaid/review/config"
 )
 
 const duplication_extension = "duplicate"
 
-// DuplicateInput reads all text files from the configured input directory and creates copies of them with a 
-// specified duplication extension. This function is useful for creating backup copies of input data or for 
+// DuplicateInput reads all text files from the configured input directory and creates copies of them with a
+// specified duplication extension. This function is useful for creating backup copies of input data or for
 // testing purposes.
 //
 // Arguments:

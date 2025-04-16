@@ -1,4 +1,4 @@
-package convert
+package file
 
 import (
 	"fmt"
@@ -21,10 +21,11 @@ import (
 //   - An error if any issue occurs during reading, processing, or writing the files.
 //
 // Example:
-//   > err := convert.Convert(config)
-//   > if err != nil {
-//   >     log.Fatalf("Conversion failed: %v", err)
-//   > }
+//
+//	> err := convert.Convert(config)
+//	> if err != nil {
+//	>     log.Fatalf("Conversion failed: %v", err)
+//	> }
 func Convert(inputDir, selectedFormats string) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)
@@ -44,7 +45,7 @@ func Convert(inputDir, selectedFormats string) error {
 				if err == nil {
 					fileNameWithoutExt := strings.TrimSuffix(file.Name(), "."+formats[format])
 					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
-					
+
 					err = writeText(txt_content, txtPath)
 					if err != nil {
 						logger.Error("Error: ", err)
