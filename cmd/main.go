@@ -15,7 +15,7 @@ func main() {
 	// Define flags for the project configuration file, the init option, and the download option
 	projectConfigPath := flag.String("project", "", "Path to the project configuration file")
 	initFlag := flag.Bool("init", false, "Run interactively to initialize a new project configuration file")
-	downloadPath := flag.String("download", "", "Path to a text file containing URLs to download")
+	downloadURLPath := flag.String("download-URL", "", "Path to a text file containing URLs to download")
 
 	// Parse the flags
 	flag.Parse()
@@ -26,16 +26,16 @@ func main() {
 		return
 	}
 
-	// Handle download logic if -download flag is provided
-	if *downloadPath != "" {
+	// Handle download logic if -download-URL flag is provided
+	if *downloadURLPath != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		prismaid.DownloadURLList(*downloadPath)
+		prismaid.DownloadURLList(*downloadURLPath)
 		return
 	}
 
 	// Check if no valid flags are provided
-	if *projectConfigPath == "" && !*initFlag && *downloadPath == "" {
-		fmt.Println("Usage: ./prismAId_OS_CPU[.exe] --project <path-to-your-project-config.toml> or --init or --download <path-to-url-list.txt>")
+	if *projectConfigPath == "" && !*initFlag && *downloadURLPath == "" {
+		fmt.Println("Usage: ./prismAId_OS_CPU[.exe] --project <path-to-your-project-config.toml> or --init or --download-URL <path-to-url-list.txt>")
 		os.Exit(1)
 	}
 
