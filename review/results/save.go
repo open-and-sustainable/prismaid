@@ -11,7 +11,7 @@ import (
 
 	"github.com/open-and-sustainable/alembica/definitions"
 	"github.com/open-and-sustainable/alembica/utils/logger"
-	"github.com/open-and-sustainable/prismaid/config"
+	"github.com/open-and-sustainable/prismaid/review/config"
 )
 
 func Save(config *config.Config, results string, filenames []string, keys []string) error {
