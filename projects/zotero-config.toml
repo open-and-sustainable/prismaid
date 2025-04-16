@@ -1,0 +1,19 @@
+# Zotero Configuration File
+# -------------------------
+# This file contains credentials needed to download PDFs from your Zotero library.
+#
+# Parameters:
+#   user - Your Zotero username
+#   api_key - Your Zotero API key (can be generated in Zotero settings: https://www.zotero.org/settings/keys)
+#   group - The name of the Zotero collection you want to download
+#
+# Usage:
+#   ./prismAId_OS_CPU[.exe] --download-zotero path/to/zotero-config.toml
+#
+# Note: All PDFs will be downloaded to the same directory where this configuration
+# file is located. Make sure you have sufficient disk space available.
+#
+# Example values (replace with your own credentials):
+user = "your_username"
+api_key = "your_api_key"
+group = "your_collection_name"
