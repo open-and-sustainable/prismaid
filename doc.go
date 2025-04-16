@@ -1,4 +1,4 @@
-// Package prismaid defines the core logic for managing and executing workflows within the application.
-// It handles the review processes, error handling, and the orchestration of different modules to achieve 
-// a cohesive execution flow.
+// Package prismaid provides a unified interface to all prismAId tools.
+// It offers a single entry point for functions that can be accessed
+// both programmatically and through binary executables.
 package prismaid
