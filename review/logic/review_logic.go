@@ -108,7 +108,7 @@ var mutex sync.Mutex
 //
 // The RunReview function is the primary entry point for executing the entire review process, based on the user-provided TOML configuration string.
 // It orchestrates the different stages of the review process, including input parsing, prompt generation, model interaction, and output management.
-func RunReview(tomlConfiguration string) error {
+func Review(tomlConfiguration string) error {
 	// load project configuration
 	config, err := config.LoadConfig(tomlConfiguration, config.RealEnvReader{})
 	if err != nil {
@@ -129,7 +129,7 @@ func RunReview(tomlConfiguration string) error {
 	if config.Project.Zotero.User != "" {
 		client := &http.Client{}
 		// downlaod pdfs
-		err := zotero.DownloadPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, results.GetDirectoryPath(config.Project.Configuration.ResultsFileName))
+		err := zotero.DownloadZoteroPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, results.GetDirectoryPath(config.Project.Configuration.ResultsFileName))
 		if err != nil {
 			logger.Error("Error:\n%v", err)
 			return err

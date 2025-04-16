@@ -27,7 +27,7 @@ func handlePanic() *C.char {
 func RunReviewPython(input *C.char) *C.char {
 	defer handlePanic()
 	goInput := C.GoString(input)
-	err := prismaid.RunReview(goInput)
+	err := prismaid.Review(goInput)
 	if err != nil {
 		return C.CString(err.Error())
 	}
@@ -40,7 +40,7 @@ func RunReviewPython(input *C.char) *C.char {
 func RunReviewR(input *C.char) *C.char {
 	defer handlePanic()
 	goInput := C.GoString(input)
-	err := prismaid.RunReview(goInput)
+	err := prismaid.Review(goInput)
 	if err != nil {
 		return C.CString(err.Error())
 	}

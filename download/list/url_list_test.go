@@ -234,7 +234,7 @@ ${htmlServer}
 	}
 
 	// Run the function being tested
-	RunListDownload(urlListPath)
+	DownloadURLList(urlListPath)
 
 	// Verify results
 	files, err := ioutil.ReadDir(tempDir)
@@ -260,7 +260,7 @@ func TestRunListDownloadEdgeCases(t *testing.T) {
 	// Test with non-existent file
 	t.Run("Non-existent file", func(t *testing.T) {
 		// This should not panic
-		RunListDownload("/path/to/nonexistent/file.txt")
+		DownloadURLList("/path/to/nonexistent/file.txt")
 		// If we get here without panicking, the test passes
 	})
 
@@ -278,7 +278,7 @@ func TestRunListDownloadEdgeCases(t *testing.T) {
 		}
 
 		// This should not panic or error
-		RunListDownload(emptyFilePath)
+		DownloadURLList(emptyFilePath)
 		// If we get here without panicking, the test passes
 	})
 
@@ -301,7 +301,7 @@ func TestRunListDownloadEdgeCases(t *testing.T) {
 		}
 
 		// This should not panic or error
-		RunListDownload(commentsFilePath)
+		DownloadURLList(commentsFilePath)
 		// If we get here without panicking, the test passes
 	})
 }
