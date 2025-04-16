@@ -1,4 +1,4 @@
-package prismaid
+package review
 
 import (
 	"fmt"
