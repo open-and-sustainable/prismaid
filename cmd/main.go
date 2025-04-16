@@ -30,7 +30,7 @@ func main() {
 	// Handle download logic if -download flag is provided
 	if *downloadPath != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		list.RunListDownload(*downloadPath)
+		list.DownloadURLList(*downloadPath)
 		return
 	}
 
@@ -49,7 +49,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		err = prismaid.RunReview(string(data))
+		err = prismaid.Review(string(data))
 		if err != nil {
 			fmt.Println("Error running Review logic:", err)
 			os.Exit(1)

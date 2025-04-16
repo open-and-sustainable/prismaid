@@ -14,7 +14,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-func RunListDownload(path string) {
+func DownloadURLList(path string) {
 	// Extract the directory from the input file path
 	dirPath := filepath.Dir(path)
 
