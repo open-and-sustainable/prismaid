@@ -15,7 +15,6 @@ version = "1.0"
 
 [project.configuration]
 input_directory = "%s"
-input_conversion = "no"
 results_file_name = "%s/test_results"
 output_format = "csv"
 log_level = "low"

@@ -1,4 +1,4 @@
-package file
+package doc
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	docx "github.com/fumiama/go-docx"
 )
 
-func readDocx(path string) (string, error) {
+func ReadDocx(path string) (string, error) {
 	// Create a strings.Builder to collect the content
 	var textBuilder strings.Builder
 	readFile, err := os.Open(path)

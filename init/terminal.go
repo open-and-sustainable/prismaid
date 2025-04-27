@@ -10,7 +10,6 @@ import (
 	prompt "github.com/cqroot/prompt"
 	choose "github.com/cqroot/prompt/choose"
 	input "github.com/cqroot/prompt/input"
-	multichoose "github.com/cqroot/prompt/multichoose"
 )
 
 // ReviewItem stores a single review item's key and associated values
@@ -22,18 +21,18 @@ type ReviewItem struct {
 // ModelItem stores a single model configuration
 type ModelItem struct {
 	Provider    string
-	APIKey		string
-	Model 		string
+	APIKey      string
+	Model       string
 	Temperature string
-	TpmLimit	string	
-	RpmLimit	string
+	TpmLimit    string
+	RpmLimit    string
 }
 
-// RunInteractiveConfig launches an interactive terminal session to collect project configuration information 
-// from the user. It utilizes advanced prompt features to provide a user-friendly way of setting key project 
+// RunInteractiveConfig launches an interactive terminal session to collect project configuration information
+// from the user. It utilizes advanced prompt features to provide a user-friendly way of setting key project
 // settings.
 //
-// This function offers different types of prompts such as single and multiple choices, allowing the user 
+// This function offers different types of prompts such as single and multiple choices, allowing the user
 // to customize configurations based on project requirements.
 func RunInteractiveConfigCreation() {
 	fmt.Println("Running interactive project configuration initialization...")
@@ -42,7 +41,7 @@ func RunInteractiveConfigCreation() {
 	filePath, err := prompt.New().Ask("Enter file path to save the configuration:").Input(
 		"./config.toml", input.WithHelp(true), input.WithValidateFunc(validatePath))
 	checkErr(err)
-	
+
 	// Prompt for project name with help text
 	projectName, err := prompt.New().Ask("Enter project name:").Input(
 		"Test project",
@@ -65,64 +64,15 @@ func RunInteractiveConfigCreation() {
 	checkErr(err)
 
 	inputDir := ""
-	inputConversion := ""
-	zoteroUser := ""
-	zoteroAPI := ""
-	zoteroGroup := ""
 
-	// Zotero review
-	zotBool, err := prompt.New().Ask("Do you want to run a review of PDFs in a Zotero collection or group?").
-	AdvancedChoose(
-		[]choose.Choice{
-			{Text: "no", Note: "I want to run a review of set of local files."},
-			{Text: "yes", Note: "Enable the review of a Zotero collection or group."},
-		},
-		choose.WithHelp(true),)
+	// Configuration details with help for each choice
+	inputDir, err = prompt.New().Ask("Enter input directory (must exist):").Input(
+		"./",
+		input.WithHelp(true), input.WithValidateFunc(validateDirectory))
 	checkErr(err)
-	if zotBool == "yes" {
-		// Zotero user
-		zoteroUser, err = prompt.New().Ask("Enter Zotero user number:").Input(
-			"",
-			input.WithHelp(true),
-		)
-		checkErr(err)
-		// Zotero API
-		zoteroAPI, err = prompt.New().Ask("Enter Zotero API private key:").Input(
-			"",
-			input.WithHelp(true),
-		)
-		checkErr(err)
-		// Zotero group
-		zoteroGroup, err = prompt.New().Ask("Enter Zotero collection or group with nested path (e.g., 'parent/collection'):").Input(
-			"",
-			input.WithHelp(true),
-		)
-		checkErr(err)
-	} else {
-		// Configuration details with help for each choice
-		inputDir, err = prompt.New().Ask("Enter input directory (must exist):").Input(
-			"./", 
-			input.WithHelp(true), input.WithValidateFunc(validateDirectory))
-		checkErr(err)
 
-		// inputConversion
-		val2, err := prompt.New().Ask("Do you need input file conversion from these formats to .txt? (leave empty if not needed)").
-			MultiChoose(
-				[]string{"pdf", "docx", "html"},
-				multichoose.WithDefaultIndexes(1, []int{}),
-				multichoose.WithHelp(true),
-			)
-		checkErr(err)
-		
-		if len(val2) == 1 {
-			inputConversion = val2[0]
-		} else if len(val2) > 1 {
-			inputConversion = strings.Join(val2, ",")
-		}
-	}
-	
 	resultsFileName, err := prompt.New().Ask("Enter results directory (must exist):").Input(
-		"./", 
+		"./",
 		input.WithHelp(true), input.WithValidateFunc(validateDirectory))
 	checkErr(err)
 
@@ -133,10 +83,10 @@ func RunInteractiveConfigCreation() {
 				{Text: "csv", Note: "Comma-separated values format for easier readability."},
 				{Text: "json", Note: "JavaScript Object Notation format for structured data."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 
-	// Log level with help 
+	// Log level with help
 	logLevel, err := prompt.New().Ask("Choose log level:").
 		AdvancedChoose(
 			[]choose.Choice{
@@ -144,7 +94,7 @@ func RunInteractiveConfigCreation() {
 				{Text: "medium", Note: "High verbosity: logs displayed on stdout."},
 				{Text: "high", Note: "High verbosity: logs saved to a file for detailed review."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 
 	// Duplication option with help
@@ -154,27 +104,27 @@ func RunInteractiveConfigCreation() {
 				{Text: "no", Note: "Do not duplicate reviews."},
 				{Text: "yes", Note: "Duplicate the manuscripts to review, and the cost, useful for consistency checks."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 
 	// Chain-of-thought justification option
 	cotJustification, err := prompt.New().Ask("Enable chain-of-thought justification (saved on file)?").
-	AdvancedChoose(
-		[]choose.Choice{
-			{Text: "no", Note: "Do not enable chain-of-thought justification."},
-			{Text: "yes", Note: "Enable model justification for the answers in terms of chain of thought."},
-		},
-		choose.WithHelp(true),)
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "no", Note: "Do not enable chain-of-thought justification."},
+				{Text: "yes", Note: "Enable model justification for the answers in terms of chain of thought."},
+			},
+			choose.WithHelp(true))
 	checkErr(err)
 
 	// Manuscript summary
 	summary, err := prompt.New().Ask("Enable document summary (saved on file)?").
-	AdvancedChoose(
-		[]choose.Choice{
-			{Text: "no", Note: "Do not enable document summary."},
-			{Text: "yes", Note: "Enable the preparation fo a short summary for each document reviewed."},
-		},
-		choose.WithHelp(true),)
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "no", Note: "Do not enable document summary."},
+				{Text: "yes", Note: "Enable the preparation fo a short summary for each document reviewed."},
+			},
+			choose.WithHelp(true))
 	checkErr(err)
 
 	// Build models object
@@ -194,7 +144,7 @@ func RunInteractiveConfigCreation() {
 				{Text: "yes", Note: "'You are an experienced scientist working on a systematic review of the literature.'"},
 				{Text: "no", Note: "I will ask you to provide a new text."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 	if choice_persona == "yes" {
 		persona = "You are an experienced scientist working on a systematic review of the literature."
@@ -212,7 +162,7 @@ func RunInteractiveConfigCreation() {
 				{Text: "yes", Note: "'You are asked to map the concepts discussed in a scientific paper attached here.'"},
 				{Text: "no", Note: "I will ask you to provide a new text."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 	if choice_task == "yes" {
 		task = "You are asked to map the concepts discussed in a scientific paper attached here."
@@ -230,7 +180,7 @@ func RunInteractiveConfigCreation() {
 				{Text: "yes", Note: "'You should output a JSON object with the following keys and possible values:'"},
 				{Text: "no", Note: "I will ask you to provide a new text."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 	if choice_exp_result == "yes" {
 		expected_result = "You should output a JSON object with the following keys and possible values:"
@@ -239,7 +189,7 @@ func RunInteractiveConfigCreation() {
 		checkErr(err)
 	}
 	fmt.Printf("You selected: %s\n", expected_result)
-	
+
 	review := ""
 	definitions := ""
 	example := ""
@@ -262,7 +212,7 @@ func RunInteractiveConfigCreation() {
 					{Text: "yes, one by one", Note: "I will ask you to provide an example for each item separately."},
 					{Text: "yes, as a whole", Note: "I will ask you to provide a single text example."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 		checkErr(err)
 		if choice_example == "yes, one by one" {
 			example = collectExamples(review_items)
@@ -275,7 +225,7 @@ func RunInteractiveConfigCreation() {
 	} else {
 		fmt.Println("You will have to fill in review items, definitions and examples in your project configuration file.")
 	}
-	
+
 	// Prompt for failsafe part of prompt
 	failsafe := ""
 	choice_failsafe, err := prompt.New().Ask("Do you confirm the standard 'failsafe' part of the review prompt?").
@@ -284,7 +234,7 @@ func RunInteractiveConfigCreation() {
 				{Text: "yes", Note: "'If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value.'"},
 				{Text: "no", Note: "I will ask you to provide a new text."},
 			},
-			choose.WithHelp(true),)
+			choose.WithHelp(true))
 	checkErr(err)
 	if choice_failsafe == "yes" {
 		failsafe = "If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."
@@ -297,9 +247,8 @@ func RunInteractiveConfigCreation() {
 	// Generate TOML config from user inputs
 	config := generateTomlConfig(
 		projectName, author, version,
-		inputDir, inputConversion, resultsFileName, outputFormat, logLevel,
-		duplication, cotJustification, summary, 
-		zoteroUser, zoteroAPI, zoteroGroup, models, 
+		inputDir, resultsFileName, outputFormat, logLevel,
+		duplication, cotJustification, summary, models,
 		persona, task, expected_result,
 		failsafe, definitions, example, review,
 	)
@@ -321,7 +270,7 @@ func collectModelItems() []ModelItem {
 		// Ask if the user wants to define a review item
 		addItem, err := prompt.New().Ask(fmt.Sprintf("Do you want to add the configuration of generative AI model #%d? (yes/no)", count)).
 			Choose([]string{"yes", "no"},
-			choose.WithHelp(true),)
+				choose.WithHelp(true))
 		checkErr(err)
 
 		// Break the loop if the user doesn't want to add more models
@@ -331,15 +280,15 @@ func collectModelItems() []ModelItem {
 
 		// LLM provider selection with help
 		provider, err := prompt.New().Ask("Choose LLM provider:").
-		AdvancedChoose(
-			[]choose.Choice{
-				{Text: "OpenAI", Note: "OpenAI GPT-3 or GPT-4 models."},
-				{Text: "GoogleAI", Note: "GoogleAI Gemini models."},
-				{Text: "Cohere", Note: "Cohere language models."},
-				{Text: "Anthropic", Note: "Anthropic Claude models."},
-				{Text: "DeepSeek", Note: "DeepSeek models."},
-			},
-			choose.WithHelp(true),)
+			AdvancedChoose(
+				[]choose.Choice{
+					{Text: "OpenAI", Note: "OpenAI GPT-3 or GPT-4 models."},
+					{Text: "GoogleAI", Note: "GoogleAI Gemini models."},
+					{Text: "Cohere", Note: "Cohere language models."},
+					{Text: "Anthropic", Note: "Anthropic Claude models."},
+					{Text: "DeepSeek", Note: "DeepSeek models."},
+				},
+				choose.WithHelp(true))
 		checkErr(err)
 
 		// Prompt for API key with input mask (for security)
@@ -357,7 +306,7 @@ func collectModelItems() []ModelItem {
 					{Text: "gpt-4o", Note: "GPT-4 Omni."},
 					{Text: "gpt-4o-mini", Note: "GPT-4 Omni Mini."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 
 		} else if provider == "GoogleAI" {
 			model, err = prompt.New().Ask("Enter model to be used:").AdvancedChoose(
@@ -367,7 +316,7 @@ func collectModelItems() []ModelItem {
 					{Text: "gemini-1.5-pro", Note: "Gemini 1.5 Pro."},
 					{Text: "gemini-1.5-flash", Note: "Gemini 1.5 Flash."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 		} else if provider == "Cohere" {
 			model, err = prompt.New().Ask("Enter model to be used:").AdvancedChoose(
 				[]choose.Choice{
@@ -378,7 +327,7 @@ func collectModelItems() []ModelItem {
 					{Text: "command-r-plus", Note: "Command R+."},
 					{Text: "command-r7b-12-2024", Note: "Command R7B."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 		} else if provider == "Anthropic" {
 			model, err = prompt.New().Ask("Enter model to be used:").AdvancedChoose(
 				[]choose.Choice{
@@ -389,14 +338,14 @@ func collectModelItems() []ModelItem {
 					{Text: "claude-3-5-haiku", Note: "Claude 3.5 Haiku."},
 					{Text: "claude-3-5-sonnet", Note: "Claude 3.5 Sonnet."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 		} else if provider == "DeepSeek" {
 			model, err = prompt.New().Ask("Enter model to be used:").AdvancedChoose(
 				[]choose.Choice{
 					{Text: "", Note: "Model chosen automatically to minimize costs."},
 					{Text: "deepseek-chat", Note: "DeepSeek Chat - v3."},
 				},
-				choose.WithHelp(true),)
+				choose.WithHelp(true))
 		}
 		checkErr(err)
 
@@ -421,11 +370,11 @@ func collectModelItems() []ModelItem {
 		// Create a new ReviewItem and append it to the list
 		modelItems = append(modelItems, ModelItem{
 			Provider:    provider,
-			APIKey: apiKey,
-			Model: model,
+			APIKey:      apiKey,
+			Model:       model,
 			Temperature: temperature,
-			TpmLimit: tpmLimit,
-			RpmLimit: rpmLimit,
+			TpmLimit:    tpmLimit,
+			RpmLimit:    rpmLimit,
 		})
 
 		count++
@@ -452,8 +401,6 @@ func generateModelToml(modelsItems []ModelItem) string {
 	return tomlModelsSection.String()
 }
 
-
-
 // Function to interactively collect review items and generate the [review] section of the TOML file
 func collectReviewItems() []ReviewItem {
 	var reviewItems []ReviewItem
@@ -463,7 +410,7 @@ func collectReviewItems() []ReviewItem {
 		// Ask if the user wants to define a review item
 		addItem, err := prompt.New().Ask(fmt.Sprintf("Do you want to add review item #%d? (yes/no)", count)).
 			Choose([]string{"yes", "no"},
-			choose.WithHelp(true),)
+				choose.WithHelp(true))
 		checkErr(err)
 
 		// Break the loop if the user doesn't want to add more items
@@ -515,7 +462,7 @@ func generateReviewToml(reviewItems []ReviewItem) string {
 	return tomlReviewSection.String()
 }
 
-// Function to interactively collect definitions based on review items 
+// Function to interactively collect definitions based on review items
 func collectDefinitions(reviewItems []ReviewItem) string {
 	definitions := ""
 	for i, rev := range reviewItems {
@@ -534,13 +481,13 @@ func collectDefinitions(reviewItems []ReviewItem) string {
 		checkErr(err)
 
 		// Add the definition to the definitions string
-		definitions +=  def + " "
+		definitions += def + " "
 	}
 
 	return definitions
 }
 
-// Function to interactively collect examples based on review items 
+// Function to interactively collect examples based on review items
 func collectExamples(reviewItems []ReviewItem) string {
 	examples := ""
 	for i, rev := range reviewItems {
@@ -559,15 +506,15 @@ func collectExamples(reviewItems []ReviewItem) string {
 		checkErr(err)
 
 		// Add the definition to the definitions string
-		examples +=  exa + " "	
+		examples += exa + " "
 	}
 
 	return examples
 }
 
 // Helper function to generate the TOML configuration string
-func generateTomlConfig(projectName, author, version, inputDir, inputConversion, resultsFileName, outputFormat, 
-	logLevel, duplication, cotJustification, summary, zoteroUser, zoteroAPI, zoteroGroup, models, 
+func generateTomlConfig(projectName, author, version, inputDir, resultsFileName, outputFormat,
+	logLevel, duplication, cotJustification, summary, models,
 	persona, task, expected_result, failsafe, definitions, example, review string) string {
 	config := fmt.Sprintf(`
 [project]
@@ -577,18 +524,12 @@ version = "%s"
 
 [project.configuration]
 input_directory = "%s"
-input_conversion = "%s"
 results_file_name = "%s"
 output_format = "%s"
 log_level = "%s"
 duplication = "%s"
 cot_justification = "%s"
 summary = "%s"
-
-[project.zotero]
-user = "%s"
-api_key = "%s"
-group = "%s" 
 
 [project.llm]
 %s
@@ -602,9 +543,9 @@ example = "%s"
 
 [review]
 %s
-`, projectName, author, version, inputDir, inputConversion, resultsFileName, outputFormat, 
-logLevel, duplication, cotJustification, summary, zoteroUser, zoteroAPI, zoteroGroup, models,
-persona, task, expected_result, failsafe, definitions, example, review)
+`, projectName, author, version, inputDir, resultsFileName, outputFormat,
+		logLevel, duplication, cotJustification, summary, models,
+		persona, task, expected_result, failsafe, definitions, example, review)
 	return strings.TrimSpace(config)
 }
 
@@ -648,7 +589,7 @@ func validatePath(path string) error {
 	return nil
 }
 
-//	validateDirectory checks if the given directory is valid.
+// validateDirectory checks if the given directory is valid.
 func validateDirectory(dir string) error {
 	// Check if the directory exists and is a valid directory
 	info, err := os.Stat(dir)
@@ -683,7 +624,7 @@ func validateFileName(fileName string) error {
 
 	// Check .tom;:
 	if !strings.HasSuffix(fileName, ".toml") {
-	     return fmt.Errorf("filename must have a .toml extension")
+		return fmt.Errorf("filename must have a .toml extension")
 	}
 
 	return nil

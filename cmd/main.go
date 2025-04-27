@@ -8,7 +8,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid"
-	"github.com/open-and-sustainable/prismaid/convert/file"
+	"github.com/open-and-sustainable/prismaid/conversion"
 	terminal "github.com/open-and-sustainable/prismaid/init"
 )
 
@@ -91,7 +91,7 @@ func main() {
 }
 
 func handleConversion(inputDir, format string) {
-	err := file.Convert(inputDir, format)
+	err := conversion.Convert(inputDir, format)
 	if err != nil {
 		logger.Error("Error converting files in %s to %s: %v\n", inputDir, format, err)
 		os.Exit(1)

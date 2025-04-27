@@ -1,4 +1,4 @@
-package file
+package conversion
 
 import (
 	"fmt"
@@ -7,6 +7,10 @@ import (
 	"strings"
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
+
+	"github.com/open-and-sustainable/prismaid/conversion/doc"
+	"github.com/open-and-sustainable/prismaid/conversion/html"
+	"github.com/open-and-sustainable/prismaid/conversion/pdf"
 )
 
 // Convert processes files from the input directory specified in the configuration and converts them into plain text files.
@@ -73,11 +77,11 @@ func readText(file string, format string) (string, error) {
 	var modelFunc func(string) (string, error)
 	switch format {
 	case "pdf":
-		modelFunc = readPdf
+		modelFunc = pdf.ReadPdf
 	case "docx":
-		modelFunc = readDocx
+		modelFunc = doc.ReadDocx
 	case "html":
-		modelFunc = readHtml
+		modelFunc = html.ReadHtml
 	default:
 		logger.Error("Unsupported document type: ", format)
 		return "", fmt.Errorf("unsupported document type: %s", format)
