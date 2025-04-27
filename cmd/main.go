@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"path/filepath"
 
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
@@ -111,7 +112,8 @@ func handleZoteroDownload(configPath string) {
 		os.Exit(1)
 	}
 
-	err = prismaid.DownloadZoteroPDFs(config.User, config.APIKey, config.Group, configPath)
+	configDir := filepath.Dir(configPath)
+	err = prismaid.DownloadZoteroPDFs(config.User, config.APIKey, config.Group, configDir)
 	if err != nil {
 		logger.Error("Error downloading Zotero PDFs: %v\n", err)
 		os.Exit(1)
