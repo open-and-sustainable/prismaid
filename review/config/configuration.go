@@ -8,13 +8,13 @@ import (
 
 // EnvReader is an interface for accessing environment variables.
 type EnvReader interface {
-    GetEnv(key string) string
+	GetEnv(key string) string
 }
 
 type RealEnvReader struct{}
 
 func (r RealEnvReader) GetEnv(key string) string {
-    return os.Getenv(key)
+	return os.Getenv(key)
 }
 
 // Config defines the top-level configuration structure, matching the TOML file layout.
@@ -30,37 +30,28 @@ type ProjectConfig struct {
 	Author        string               `toml:"author"`
 	Version       string               `toml:"version"`
 	Configuration ProjectConfiguration `toml:"configuration"`
-	Zotero		  ProjectZotero		   `toml:"zotero"`
 	LLM           map[string]LLMItem   `toml:"llm"`
 }
 
 // ProjectConfiguration defines various settings related to project input and output.
 type ProjectConfiguration struct {
-	InputDirectory  string `toml:"input_directory"`
-	InputConversion string `toml:"input_conversion"`
-	ResultsFileName string `toml:"results_file_name"`
-	OutputFormat    string `toml:"output_format"`
-	LogLevel        string `toml:"log_level"`
-	CotJustification string  `toml:"cot_justification"`
-	Duplication      string  `toml:"duplication"`
-	Summary    string     `toml:"summary"`
-}
-
-// ProjectZotero defines various settings related to the collection or group to be reviewed.
-type ProjectZotero struct {
-	User  string `toml:"user"`
-	API string `toml:"api_key"`
-	Group string `toml:"group"`
+	InputDirectory   string `toml:"input_directory"`
+	ResultsFileName  string `toml:"results_file_name"`
+	OutputFormat     string `toml:"output_format"`
+	LogLevel         string `toml:"log_level"`
+	CotJustification string `toml:"cot_justification"`
+	Duplication      string `toml:"duplication"`
+	Summary          string `toml:"summary"`
 }
 
 // LLMConfig holds the configuration settings specific to the AI model being used.
 type LLMItem struct {
-	Provider       string  `toml:"provider"`
-	ApiKey         string  `toml:"api_key"`
-	Model          string  `toml:"model"`
-	Temperature    float64 `toml:"temperature"`
-	TpmLimit       int64   `toml:"tpm_limit"`
-	RpmLimit       int64   `toml:"rpm_limit"`
+	Provider    string  `toml:"provider"`
+	ApiKey      string  `toml:"api_key"`
+	Model       string  `toml:"model"`
+	Temperature float64 `toml:"temperature"`
+	TpmLimit    int64   `toml:"tpm_limit"`
+	RpmLimit    int64   `toml:"rpm_limit"`
 }
 
 // PromptConfig specifies the configurations related to task prompting.
@@ -79,9 +70,9 @@ type ReviewItem struct {
 	Values []string `toml:"values"`
 }
 
-// LoadConfig parses the given TOML configuration string and populates a Config structure. 
-// It also checks for missing API keys in the configuration and attempts to load them 
-// from environment variables using the provided EnvReader. Additionally, it sets 
+// LoadConfig parses the given TOML configuration string and populates a Config structure.
+// It also checks for missing API keys in the configuration and attempts to load them
+// from environment variables using the provided EnvReader. Additionally, it sets
 // default values for various configuration fields if they are not specified.
 //
 // Parameters:
@@ -93,23 +84,23 @@ type ReviewItem struct {
 //   - An error if the TOML data cannot be decoded or any other processing error occurs.
 //
 // The function handles the following:
-//   1. Decoding the TOML configuration into the Config structure.
-//   2. Checking for missing API keys and attempting to retrieve them from environment variables 
-//      based on the provider (OpenAI, GoogleAI, Cohere, Anthropic).
-//   3. Setting default values for missing or invalid configuration fields, such as 
-//      InputConversion, OutputFormat, LogLevel, CotJustification, Summary, and Duplication.
-//   4. Ensuring that LLM configuration parameters like Temperature, TpmLimit, and RpmLimit are 
-//      non-negative by applying minimum value constraints.
+//  1. Decoding the TOML configuration into the Config structure.
+//  2. Checking for missing API keys and attempting to retrieve them from environment variables
+//     based on the provider (OpenAI, GoogleAI, Cohere, Anthropic).
+//  3. Setting default values for missing or invalid configuration fields, such as
+//     InputConversion, OutputFormat, LogLevel, CotJustification, Summary, and Duplication.
+//  4. Ensuring that LLM configuration parameters like Temperature, TpmLimit, and RpmLimit are
+//     non-negative by applying minimum value constraints.
 func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) {
 	var config Config
 
-    // Decode the TOML data
-    if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
-        return nil, err
-    }
+	// Decode the TOML data
+	if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
+		return nil, err
+	}
 
 	for key, llm := range config.Project.LLM {
-		if llm.ApiKey == "" {  // If API key is empty, look for it in environment variables
+		if llm.ApiKey == "" { // If API key is empty, look for it in environment variables
 			switch llm.Provider {
 			case "OpenAI":
 				llm.ApiKey = envReader.GetEnv("OPENAI_API_KEY")
@@ -131,15 +122,10 @@ func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) 
 			llm.TpmLimit = 0
 		}
 		if llm.RpmLimit < 0 {
-			llm.RpmLimit = 0 
+			llm.RpmLimit = 0
 		}
 		// Update the map directly with the modified llm
 		config.Project.LLM[key] = llm
-	}
-
-	// Default values
-	if config.Project.Configuration.InputConversion == "" {
-		config.Project.Configuration.InputConversion = "no"
 	}
 
 	if config.Project.Configuration.OutputFormat == "" {

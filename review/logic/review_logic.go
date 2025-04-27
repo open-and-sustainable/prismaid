@@ -2,15 +2,12 @@ package logic
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/open-and-sustainable/alembica/extraction"
 	"github.com/open-and-sustainable/alembica/utils/logger"
-	"github.com/open-and-sustainable/prismaid/convert/file"
-	"github.com/open-and-sustainable/prismaid/download/zotero"
 	"github.com/open-and-sustainable/prismaid/review/config"
 	"github.com/open-and-sustainable/prismaid/review/debug"
 	"github.com/open-and-sustainable/prismaid/review/prompt"
@@ -123,32 +120,6 @@ func Review(tomlConfiguration string) error {
 		logger.SetupLogging(logger.Stdout, config.Project.Configuration.ResultsFileName)
 	} else {
 		logger.SetupLogging(logger.Silent, config.Project.Configuration.ResultsFileName) // default value
-	}
-
-	// Zotero review logic
-	if config.Project.Zotero.User != "" {
-		client := &http.Client{}
-		// downlaod pdfs
-		err := zotero.DownloadZoteroPDFs(client, config.Project.Zotero.User, config.Project.Zotero.API, config.Project.Zotero.Group, results.GetDirectoryPath(config.Project.Configuration.ResultsFileName))
-		if err != nil {
-			logger.Error("Error:\n%v", err)
-			return err
-		}
-		// convert pdfs
-		err = file.Convert(results.GetDirectoryPath(config.Project.Configuration.ResultsFileName)+"/zotero", "pdf")
-		if err != nil {
-			logger.Error("Error:\n%v", err)
-			exit(ExitCodeErrorInReviewLogic)
-		}
-	} else {
-		// run input conversion if needed and not a Zotero project
-		if config.Project.Configuration.InputConversion != "no" {
-			err := file.Convert(config.Project.Configuration.InputDirectory, config.Project.Configuration.InputConversion)
-			if err != nil {
-				logger.Error("Error:\n%v", err)
-				exit(ExitCodeErrorInReviewLogic)
-			}
-		}
 	}
 
 	// setup other debugging features

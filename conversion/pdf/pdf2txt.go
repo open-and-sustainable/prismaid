@@ -1,4 +1,4 @@
-package file
+package pdf
 
 import (
 	"os"
@@ -14,7 +14,7 @@ import (
 )
 
 // Primary text extraction function using github.com/ledongthuc/pdf
-func readPdf(path string) (string, error) {
+func ReadPdf(path string) (string, error) {
 	text := ""
 
 	// Open the PDF file

@@ -3,7 +3,7 @@ package prismaid
 import (
 	"net/http"
 
-	"github.com/open-and-sustainable/prismaid/convert/file"
+	"github.com/open-and-sustainable/prismaid/conversion"
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
 	"github.com/open-and-sustainable/prismaid/review/logic"
@@ -24,5 +24,5 @@ func DownloadURLList(path string) {
 }
 
 func Convert(inputDir, selectedFormats string) error {
-	return file.Convert(inputDir, selectedFormats)
+	return conversion.Convert(inputDir, selectedFormats)
 }

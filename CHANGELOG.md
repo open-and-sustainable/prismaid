@@ -9,6 +9,21 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.8.0] - unreleased
+### Removed
+- Removed Zotero integration and input conversion from TOML project configuration & template
+- Removed Zotero integration and input conversion from terminal configuration init
+- Removed Zotero integration and input conversion from review logic
+- Removed Zotero integration and input conversion from TOML loading logic
+### Added
+- Added Zotero integration and input conversion from terminal command flags
+- Added Zotero integration and input conversion from main class programmatic access
+- Added Zotero integration and input conversion from other languages access through the shared library
+### Changed
+- Codebase structure
+### Fixed
+- Documentation incode and website to reflect changes in this release
+
 ## [0.7.1] - 2025-04-15
 ### Added
 - Functionality to download PDFs from text lists of URLs

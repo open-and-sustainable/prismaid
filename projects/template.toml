@@ -1,13 +1,12 @@
-                                            ### The [project] section contains some basic information for internal reference
+### The [project] section contains some basic information for internal reference
 [project]
-name = "Use of LLM for systematic review"   # Project title
-author = "John Doe"                         # Project author
-version = "1.0"                             # Project configuration version
+name = "Use of LLM for systematic review" # Project title
+author = "John Doe"                       # Project author
+version = "1.0"                           # Project configuration version
 
-                                            ### The [project.configuration] section contains the main parameters and of options defining the review project
+### The [project.configuration] section contains the main parameters and of options defining the review project
 [project.configuration]
 input_directory = "/path/to/txt/files"      # The location of the manuscript to be reviewed
-input_conversion = ""                       # Can be NON ACTIVE if set to "" [default], or "pdf", "docx", "html", or any comma separated combination of these formats, as in "pdf,docx"
 results_file_name = "/path/to/save/results" # Location and filename for storing outputs, the path must exists, file extension will be added
 output_format = "json"                      # Can be "csv" [default] or "json"
 log_level = "low"                           # Can be "low" [default], "medium" showing entries on stdout, or "high" saving entries on file, see user manual for details
@@ -15,65 +14,59 @@ duplication = "no"                          # Can be "yes" or "no" [default]. It
 cot_justification = "no"                    # Can be "yes" or "no" [default]. It requests and saves the model justification in terms of chain of thought for the answers provided.
 summary = "no"                              # Can be "yes" or "no" [default].  If positive, manuscript summaries will be generated an saved.
 
-                                            ### The optional [project.zotero] section contains the parameters needed to review a collection or group in Zotero
-[project.zotero]
-user = ""                                   # The user nummber accessible at https://www.zotero.org/settings/security "User ID: Your user ID for use in API calls is XXXXXXX"
-api_key = ""                                # A private key that can be created at https://www.zotero.org/settings/security (select allow library access and read only for all groups in Default Group Permissions)
-group = ""                                  # This is the name of the collection or group containing the document to review, with nesting represented as a path, e.g. "parent/collection"
-
-                                            ### The [project.llm] section, if more than 1 will be an ensemble project
+### The [project.llm] section, if more than 1 will be an ensemble project
 [project.llm]
 [project.llm.1]
-provider = "OpenAI"                         # Can be 'OpenAI', 'GoogleAI', 'Cohere', or 'Anthropic'.
-api_key = ""                                # If left empty, the tool will look for API key in env variables. Adding a key here is useful for tracking costs per prokect through project keys
-model = "gpt-4o-mini"                       # Depending on provider, options are (empty '' string indicate to dynamically choose the model that minimize the reviewing cost):
-                                            # OpenAI: 'gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', or '' [default].
-                                            # GoogleAI: 'gemini-1.5-flash', 'gemini-1.5-pro', or 'gemini-1.0-pro', or '' [default].
-                                            # Cohere: 'command-r7b-12-2024', 'command-r-plus', 'command-r', 'command-light', 'command', or '' [default].
-                                            # Anthropic: 'claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', or '' [default].
-temperature = 0.01                          # Between 0 and 1 for all but between 0 and 2 on GoogleAI. Lower model temperature to decrease randomness and ensure replicability
-tpm_limit = 0                               # The maximum number of Tokens Per Minute before delaying prompts. If 0 [default], no delay in prompts.
-rpm_limit = 0                               # The maximin number of Requests Per Minute before delaying prompts. If 0 [default], no delay in prompts.
+provider = "OpenAI"   # Can be 'OpenAI', 'GoogleAI', 'Cohere', or 'Anthropic'.
+api_key = ""          # If left empty, the tool will look for API key in env variables. Adding a key here is useful for tracking costs per prokect through project keys
+model = "gpt-4o-mini" # Depending on provider, options are (empty '' string indicate to dynamically choose the model that minimize the reviewing cost):
+# OpenAI: 'gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', or '' [default].
+# GoogleAI: 'gemini-1.5-flash', 'gemini-1.5-pro', or 'gemini-1.0-pro', or '' [default].
+# Cohere: 'command-r7b-12-2024', 'command-r-plus', 'command-r', 'command-light', 'command', or '' [default].
+# Anthropic: 'claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', or '' [default].
+temperature = 0.01 # Between 0 and 1 for all but between 0 and 2 on GoogleAI. Lower model temperature to decrease randomness and ensure replicability
+tpm_limit = 0      # The maximum number of Tokens Per Minute before delaying prompts. If 0 [default], no delay in prompts.
+rpm_limit = 0      # The maximin number of Requests Per Minute before delaying prompts. If 0 [default], no delay in prompts.
 ##################                          # If more than 1 'llm' is specified, an ensemble review will be run
 [project.llm.2]
 provider = "GoogleAI"
-api_key = "" 
+api_key = ""
 model = "gemini-1.5-flash"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 [project.llm.3]
 provider = "Cohere"
-api_key = "" 
+api_key = ""
 model = "command-r"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 [project.llm.4]
 provider = "Anthropic"
-api_key = "" 
+api_key = ""
 model = "claude-3-haiku"
-temperature = 0.01 
-tpm_limit = 0 
+temperature = 0.01
+tpm_limit = 0
 rpm_limit = 0
 ##################
 
-                                            ### The [prompt] section defines the main components of the prompt for reviews
+### The [prompt] section defines the main components of the prompt for reviews
 [prompt]
-                                            # The persona section is optional and may contain some text telling the model what role should be played
-persona = "You are an experienced scientist working on a systematic review of the literature." 
-                                            # The task section is compulsory and starts framing the task the model has to execute
+# The persona section is optional and may contain some text telling the model what role should be played
+persona = "You are an experienced scientist working on a systematic review of the literature."
+# The task section is compulsory and starts framing the task the model has to execute
 task = "You are asked to map the concepts discussed in a scientific paper attached here."
-                                            # The expected_result section is compulsory and it introduces the structure of the output in JSON as specified below in the [review] section
-expected_result = "You should output a JSON object with the following keys and possible values: " 
-                                            # The definitions section is a chance to define the concepts we are asking to the model, to avoid misconceptions
+# The expected_result section is compulsory and it introduces the structure of the output in JSON as specified below in the [review] section
+expected_result = "You should output a JSON object with the following keys and possible values: "
+# The definitions section is a chance to define the concepts we are asking to the model, to avoid misconceptions
 definitions = "'Interest rate' is the percentage charged by a lender for borrowing money or earned by an investor on a deposit over a specific period, typically expressed annually."
-                                            # The example section is a chance to provide an example of the concepts we are asking to the model, to avoid misconceptions
+# The example section is a chance to provide an example of the concepts we are asking to the model, to avoid misconceptions
 example = ""
-                                            # The failsafe section is an option to avoid forcing answers in values provided
+# The failsafe section is an option to avoid forcing answers in values provided
 failsafe = "If the concepts neither are clearly discussed in the document nor they can be deduced from the text, respond with an empty '' value."
 
-                                            ### The [review] section defines the JSON object storing the review items, i.e., the knowledge map that needs to be filled in
+### The [review] section defines the JSON object storing the review items, i.e., the knowledge map that needs to be filled in
 [review]
 [review.1]
 key = "interest rate"

@@ -1,4 +1,4 @@
-package file
+package html
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 	html "jaytaylor.com/html2text"
 )
 
-func readHtml(path string) (string, error) {
+func ReadHtml(path string) (string, error) {
 	// Open the HTML file
 	file, err := os.Open(path)
 	if err != nil {
