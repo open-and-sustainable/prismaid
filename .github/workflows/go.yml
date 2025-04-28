@@ -2,44 +2,46 @@ name: Go Module CI
 
 # Trigger the workflow on push to the main branch and on pull requests
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
 
 jobs:
-  build:
+    build:
+        permissions:
+            contents: read
 
-    runs-on: ubuntu-latest
+        runs-on: ubuntu-latest
 
-    steps:
-      # Checkout the repository code
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            # Checkout the repository code
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      # Set up Go environment
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '^1.19'
+            # Set up Go environment
+            - name: Set up Go
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "^1.19"
 
-      # Cache Go modules to speed up the workflow
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+            # Cache Go modules to speed up the workflow
+            - name: Cache Go modules
+              uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cache/go-build
+                      ~/go/pkg/mod
+                  key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+                  restore-keys: |
+                      ${{ runner.os }}-go-
 
-      # Install dependencies
-      - name: Install dependencies
-        run: go mod tidy
+            # Install dependencies
+            - name: Install dependencies
+              run: go mod tidy
 
-      # Run the tests
-      - name: Run tests
-        run: go test ./... -v
+            # Run the tests
+            - name: Run tests
+              run: go test ./... -v

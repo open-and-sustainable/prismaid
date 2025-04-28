@@ -1,49 +1,51 @@
 name: Build and Release Binaries
 
 on:
-  release:
-    types: [created]
+    release:
+        types: [created]
 
 jobs:
-  build:
-    name: Build binaries for multiple platforms
-    runs-on: ubuntu-latest
+    build:
+        name: Build binaries for multiple platforms
+        permissions:
+            contents: write
+        runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        goos: [linux, windows, darwin]
-        goarch: [amd64, arm64]
-        include:
-          - goos: linux
-            extension: ""
-          - goos: windows
-            extension: ".exe"
-          - goos: darwin
-            extension: ""
+        strategy:
+            matrix:
+                goos: [linux, windows, darwin]
+                goarch: [amd64, arm64]
+                include:
+                    - goos: linux
+                      extension: ""
+                    - goos: windows
+                      extension: ".exe"
+                    - goos: darwin
+                      extension: ""
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
 
-      - name: Set up Go environment
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
+            - name: Set up Go environment
+              uses: actions/setup-go@v4
+              with:
+                  go-version: "1.21"
 
-      - name: Build binary
-        run: |
-          mkdir -p bin
-          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }} ./cmd/main.go
+            - name: Build binary
+              run: |
+                  mkdir -p bin
+                  GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }} ./cmd/main.go
 
-      - name: Archive binary
-        run: |
-          zip -j bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}.zip bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}
+            - name: Archive binary
+              run: |
+                  zip -j bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}.zip bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}
 
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh -y
+            - name: Install GitHub CLI
+              run: sudo apt-get install gh -y
 
-      - name: Upload release asset using GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload ${{ github.event.release.tag_name }} bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}.zip --clobber
+            - name: Upload release asset using GitHub CLI
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh release upload ${{ github.event.release.tag_name }} bin/prismAId_${{ matrix.goos }}_${{ matrix.goarch }}${{ matrix.extension }}.zip --clobber
