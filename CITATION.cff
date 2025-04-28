@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.7.1 - PDF download from URL list.
-  Functionality to download PDFs from text lists of URLs.
+  v0.7.2 - Fix reference to wrong architecture in Python package for MacOS arm64.
+  Wrong reference and inclusion of library for supported architecture (arm64) in Darwin, resulting in python package not working in MacOS.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

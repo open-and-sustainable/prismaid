@@ -8,6 +8,7 @@ paths-ignore:
     - "julia/**"
     - "r-package/**"
     - "python/**"
+    - "sharedlib/**"
 
 languages: [go]
 
