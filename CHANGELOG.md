@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+##  [0.7.2] - 2025-04-28
+### Fixed
+- Wrong reference and inclusion of library for supported architecture (arm64) in Darwin, resulting in python package not working in MacOS
+
 ## [0.7.1] - 2025-04-15
 ### Added
 - Functionality to download PDFs from text lists of URLs
