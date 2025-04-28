@@ -45,9 +45,6 @@ packages = ["prismaid"]
 [tool.hatch.build]
 include = [
     "prismaid/libprismaid_linux_amd64.so",
-    "prismaid/libprismaid_linux_arm64.so",
     "prismaid/libprismaid_windows_amd64.dll",
-    "prismaid/libprismaid_darwin_amd64.dylib",
     "prismaid/libprismaid_darwin_arm64.dylib"
 ]
-

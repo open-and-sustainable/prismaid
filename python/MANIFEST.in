@@ -3,5 +3,4 @@ include README.md
 include LICENSE
 include prismaid/libprismaid_linux_amd64.so
 include prismaid/libprismaid_windows_amd64.dll
-include prismaid/libprismaid_darwin_amd64.dylib
-
+include prismaid/libprismaid_darwin_arm64.dylib
