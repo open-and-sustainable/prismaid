@@ -508,14 +508,15 @@ jobs:
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
                   git fetch origin main
+                  original_main_sha=$(git rev-parse origin/main)
                   # Check for changes in the Project.toml file
                   git add julia/PrismAId/Project.toml
                   if git diff --staged --quiet; then
                     echo "No changes detected. Skipping branch creation and pull request."
                     exit 0
                   fi
-                  # Create a new branch only if there are changes
-                  git checkout -b update-julia-version-${GITHUB_RUN_ID}
+                  # Create a new branch FROM origin/main
+                  git checkout -b update-julia-version-${GITHUB_RUN_ID} origin/main
                   git commit -m "Update Julia package version to ${{ env.VERSION }}"
                   git push -u origin update-julia-version-${GITHUB_RUN_ID}
 
