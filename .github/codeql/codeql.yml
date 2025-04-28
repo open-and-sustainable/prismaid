@@ -2,19 +2,20 @@ name: "CodeQL config for Go"
 
 paths:
     - "."
-    - "!docs/**" # Exclude documentation
-    - "!projects/**" # Exclude example configurations
-    - "!julia/**" # Exclude Julia extensions
-    - "!r-package/**" # Exclude R package
-    - "!python/**" # Exclude Python package
+paths-ignore:
+    - "docs/**"
+    - "projects/**"
+    - "julia/**"
+    - "r-package/**"
+    - "python/**"
 
-languages: go
+languages: [go]
 
 query-filters:
     - exclude:
-          id: go/redundant-assignment # Example
+          id: go/redundant-assignment
     - exclude:
-          tags: maintainability # Exclude a category of queries
+          tags: maintainability
     - include:
           precision: [very-high, high] # Only include high precision queries
 
