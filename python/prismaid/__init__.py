@@ -19,8 +19,8 @@ elif system == "Windows":
         raise OSError(f"Unsupported architecture for Windows: {architecture}")
 
 elif system == "Darwin":
-    if architecture == "amd64" or architecture == "x86_64":
-        lib = CDLL(__file__.replace("__init__.py", "libprismaid_darwin_amd64.dylib"))
+    if architecture == "arm64" or architecture == "ARM64":
+        lib = CDLL(__file__.replace("__init__.py", "libprismaid_darwin_arm64.dylib"))
     else:
         raise OSError(f"Unsupported architecture for macOS: {architecture}")
 
