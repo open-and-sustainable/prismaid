@@ -16,7 +16,9 @@ func ReadHtml(path string) (string, error) {
 
 	// Set options with TextOnly flag set to true
 	options := html.Options{
-		TextOnly: true,
+		TextOnly:     true,
+		PrettyTables: false,
+		OmitLinks:    true,
 	}
 
 	// Convert HTML to plain text
