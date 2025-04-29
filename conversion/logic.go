@@ -37,17 +37,19 @@ func Convert(inputDir, selectedFormats string) error {
 		logger.Error("Error: ", err)
 		return fmt.Errorf("error reading input directory: %v", err)
 	}
+
 	// formats
 	formats := strings.Split(selectedFormats, ",")
+
 	// parse files
-	for format := range formats {
+	for _, format := range formats { // FIXED: use value, not index
 		for _, file := range files {
 			fullPath := filepath.Join(inputDir, file.Name())
 
-			if filepath.Ext(file.Name()) == "."+formats[format] {
-				txt_content, err := readText(fullPath, formats[format])
+			if filepath.Ext(file.Name()) == "."+format {
+				txt_content, err := readText(fullPath, format)
 				if err == nil {
-					fileNameWithoutExt := strings.TrimSuffix(file.Name(), "."+formats[format])
+					fileNameWithoutExt := strings.TrimSuffix(file.Name(), "."+format)
 					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
 
 					err = writeText(txt_content, txtPath)
@@ -56,7 +58,7 @@ func Convert(inputDir, selectedFormats string) error {
 						return fmt.Errorf("error writing to file: %v", err)
 					}
 				}
-			} else if filepath.Ext(file.Name()) == ".htm" { // this is to treat the special case of html files svaed with .htm extension
+			} else if filepath.Ext(file.Name()) == ".htm" && format == "html" { // FIXED: only process .htm when html is selected
 				txt_content, err := readText(fullPath, "html")
 				if err == nil {
 					fileNameWithoutExt := strings.TrimSuffix(file.Name(), ".htm")
