@@ -13,23 +13,6 @@ import (
 	"github.com/open-and-sustainable/prismaid/conversion/pdf"
 )
 
-// Convert processes files from the input directory specified in the configuration and converts them into plain text files.
-//
-// It reads the configuration settings to identify supported formats and input directory paths. The function attempts to
-// convert each file into a .txt file based on its format.
-//
-// Parameters:
-//   - config: A pointer to a config.Config instance containing configuration details.
-//
-// Returns:
-//   - An error if any issue occurs during reading, processing, or writing the files.
-//
-// Example:
-//
-//	> err := convert.Convert(config)
-//	> if err != nil {
-//	>     log.Fatalf("Conversion failed: %v", err)
-//	> }
 func Convert(inputDir, selectedFormats string) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)

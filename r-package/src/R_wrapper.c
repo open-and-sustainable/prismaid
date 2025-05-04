@@ -19,3 +19,44 @@ SEXP RunReviewR_wrap(SEXP input) {
     UNPROTECT(1);
     return result;
 }
+
+SEXP DownloadZoteroPDFsR_wrap(SEXP username, SEXP apiKey, SEXP collectionName, SEXP parentDir) {
+    const char *c_username = (const char*)username;
+    const char *c_apiKey = (const char*)apiKey;
+    const char *c_collectionName = (const char*)collectionName;
+    const char *c_parentDir = (const char*)parentDir;
+
+    const char *c_result = DownloadZoteroPDFsR(
+        (char *)c_username,
+        (char *)c_apiKey,
+        (char *)c_collectionName,
+        (char *)c_parentDir
+    );
+
+    SEXP result = Rf_mkString(c_result);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP DownloadURLListR_wrap(SEXP path) {
+    const char *c_path = (const char*)path;
+    const char *c_result = DownloadURLListR((char *)c_path);
+
+    SEXP result = Rf_mkString(c_result);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats) {
+    const char *c_inputDir = (const char*)inputDir;
+    const char *c_selectedFormats = (const char*)selectedFormats;
+
+    const char *c_result = ConvertR((char *)c_inputDir, (char *)c_selectedFormats);
+
+    SEXP result = Rf_mkString(c_result);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
