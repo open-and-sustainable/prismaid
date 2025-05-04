@@ -14,6 +14,24 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// DownloadURLList processes a text file containing URLs and attempts to download
+// PDFs from each of those URLs.
+//
+// This function reads a file line by line, treating each non-empty, non-comment line
+// as a URL. It then analyzes each URL to locate PDF documents using various detection
+// strategies (direct PDFs, embedded links, etc.). When a PDF is found, it downloads
+// the file to the same directory as the input file.
+//
+// The function supports:
+// - Reading URLs from a plain text file (one URL per line)
+// - Ignoring empty lines and lines starting with '#' (comments)
+// - Automatically determining appropriate filenames for downloaded PDFs
+// - Saving PDFs to the same directory as the input file
+//
+// Parameters:
+//   - path: The path to a text file containing a list of URLs to process
+//
+// The function logs errors and successes but does not return any values.
 func DownloadURLList(path string) {
 	// Extract the directory from the input file path
 	dirPath := filepath.Dir(path)
@@ -68,7 +86,34 @@ func DownloadURLList(path string) {
 	}
 }
 
-// findPDFLink searches a webpage for a link to a PDF file using multiple detection strategies
+// findPDFLink searches a webpage for a link to a PDF file using multiple detection strategies.
+//
+// This function employs a hierarchical approach with 5 different strategies to locate PDF links on
+// academic publisher websites. The strategies are tried in order of reliability:
+//
+//  1. Metadata examination: Searches for citation_pdf_url or fulltext_pdf_url in meta tags, which is
+//     the most reliable method for academic papers.
+//
+// 2. Publisher-specific patterns: Applies specialized selectors for common academic publishers:
+//   - MDPI (doi.org/10.3390)
+//   - ScienceDirect (doi.org/10.1016)
+//   - Springer (doi.org/10.1007)
+//   - IEEE (doi.org/10.1109)
+//   - Wiley (doi.org/10.1002)
+//
+// 3. File extension detection: Looks for links that end with ".pdf"
+//
+//  4. Text content analysis: Identifies links containing PDF-related text while filtering out
+//     false positives like "cover" or "sample"
+//
+// 5. CSS attributes examination: Searches for elements with download attributes or PDF-related classes
+//
+// Parameters:
+//   - doc: A goquery Document containing the parsed HTML of the page
+//   - pageURL: The URL of the webpage being analyzed, used for publisher detection
+//
+// Returns:
+//   - A string containing the URL to the PDF if found, or an empty string if no PDF link is detected
 func findPDFLink(doc *goquery.Document, pageURL string) string {
 	var pdfURL string
 
@@ -217,6 +262,21 @@ func findPDFLink(doc *goquery.Document, pageURL string) string {
 	return pdfURL
 }
 
+// extractPDF attempts to find a PDF link on a webpage and determine an appropriate filename.
+//
+// Given a URL to a webpage, this function:
+// 1. Checks if the URL itself is a direct PDF
+// 2. If not, parses the HTML and searches for PDF links using various strategies
+// 3. Generates a filename based on either the page title or URL
+// 4. Converts relative PDF URLs to absolute URLs
+//
+// Parameters:
+//   - pageURL: The URL of the webpage to check for PDF links
+//
+// Returns:
+//   - pdfURL: The URL of the found PDF, or an empty string if none was found
+//   - filename: A sanitized filename to use when saving the PDF
+//   - err: An error if the HTTP request or HTML parsing fails, nil otherwise
 func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 	// Fetch the page
 	resp, err := http.Get(pageURL)
@@ -290,7 +350,15 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 	return pdfURL, filename, nil
 }
 
-// Add this helper function to sanitize filenames
+// sanitizeFilename converts a string into a valid filename by replacing invalid
+// characters with underscores. This includes replacing path separators, special
+// characters, and whitespace that might cause issues in various filesystems.
+//
+// Parameters:
+//   - name: The original string to be sanitized
+//
+// Returns:
+//   - A sanitized string that can be safely used as a filename
 func sanitizeFilename(name string) string {
 	// Replace all invalid filename characters
 	invalidChars := []string{"\\", "/", ":", "*", "?", "\"", "<", ">", "|", "#", "%", "&", "{", "}", "$", "!", "@", "+", "=", "`", "~"}
@@ -309,7 +377,15 @@ func sanitizeFilename(name string) string {
 	return result
 }
 
-// Modified to accept the full path instead of just filename
+// downloadPDF downloads a PDF file from the given URL and saves it to the specified path.
+// It handles the HTTP request, creates the output file, and copies the content.
+//
+// Parameters:
+//   - pdfURL: The URL of the PDF file to download
+//   - fullPath: The full filesystem path where the PDF should be saved
+//
+// Returns:
+//   - error: nil if successful, otherwise an error describing what went wrong
 func downloadPDF(pdfURL, fullPath string) error {
 	resp, err := http.Get(pdfURL)
 	if err != nil {

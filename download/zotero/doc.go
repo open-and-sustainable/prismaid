@@ -10,8 +10,7 @@
 // - Retrieving collection keys based on collection names, supporting nested structures.
 // - Downloading all PDFs from specified Zotero collections or shared groups, including nested collections.
 // - Automatically managing API request headers and response status codes.
-// - Converting downloaded PDFs into text files automatically.
-// - Reviewing converted text files through API calls to AI models.
+// - Processing downloaded documents for integration with other tools and workflows.
 //
 // **Nested Structures and Shared Groups**
 //
@@ -23,46 +22,37 @@
 // can be specified in the same way, with the group name followed by any nested
 // collections.
 //
-// **PDF Conversion and AI Review**
-//
-// After downloading PDFs from Zotero, the package automatically converts them into
-// text files. These text files can then be processed and reviewed via API calls to
-// AI models, facilitating tasks such as text analysis, summarization, or other
-// AI-driven functionalities.
-//
 // **Usage**
 //
-// To use this package, create a client instance and use it to call methods
-// provided by the package. For example, to download PDFs from a specific
-// collection or group:
+// The package exports the DownloadZoteroPDFs function that can be used directly
+// without creating a client instance:
 //
-//     client := zotero.NewClient(apiKey, userID)
-//     err := client.DownloadPDFs("collectionName", "parentDir")
-//     if err != nil {
-//         log.Fatal(err)
-//     }
+//	err := zotero.DownloadZoteroPDFs(client, username, apiKey, collectionName, parentDir)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 //
 // **Parameters:**
 //
-// - `collectionName`: The name or path of the collection or group. It can be a simple collection name, a nested
-//   collection path (e.g., `"Collection/SubCollection"`), or a group name with optional nested collections
-//   (e.g., `"GroupName/Collection"`). The package will attempt to find the collection in the user's library first;
-//   if not found, it will search in the user's groups.
-// - `parentDir`: The directory where the downloaded PDF files will be stored. After downloading, the PDFs in this
-//   directory will be automatically converted into text files for further processing. These text files can then be
-//   reviewed and analyzed using API calls to AI models or other processing tools.
+//   - `client`: An HTTP client instance for making API requests.
+//   - `username`: The Zotero username or user ID.
+//   - `apiKey`: Your Zotero API key for authentication.
+//   - `collectionName`: The name or path of the collection or group. It can be a simple collection name, a nested
+//     collection path (e.g., `"Collection/SubCollection"`), or a group name with optional nested collections
+//     (e.g., `"GroupName/Collection"`). The package will attempt to find the collection in the user's library first;
+//     if not found, it will search in the user's groups.
+//   - `parentDir`: The directory where the downloaded PDF files will be stored.
 //
 // **Example with Nested Collection and Group**
 //
-//     client := zotero.NewClient(apiKey, userID)
-//     err := client.DownloadPDFs("GroupName/Collection/SubCollection", "/path/to/download/directory")
-//     if err != nil {
-//         log.Fatal(err)
-//     }
+//	client := &http.Client{}
+//	err := zotero.DownloadZoteroPDFs(client, "user123", "apiKey456", "GroupName/Collection/SubCollection", "/path/to/download/directory")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 //
 // In this example, PDFs from the specified sub-collection within the group `"GroupName"`
-// are downloaded to the directory `"/path/to/download/directory"`, converted into text files,
-// and prepared for review or analysis.
+// are downloaded to the directory `"/path/to/download/directory"`.
 //
 // **Note on API Limits**
 //

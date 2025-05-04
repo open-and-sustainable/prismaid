@@ -13,6 +13,25 @@ import (
 	"github.com/open-and-sustainable/prismaid/conversion/pdf"
 )
 
+// Convert processes files from the specified input directory and converts them to text format.
+//
+// It scans the input directory for files with extensions matching the provided formats
+// (comma-separated) and converts them to .txt files. Special handling is provided for
+// .htm files when the html format is specified.
+//
+// Parameters:
+//   - inputDir: Path to the directory containing files to convert.
+//   - selectedFormats: Comma-separated list of formats to process (e.g., "pdf,docx,html").
+//
+// Returns:
+//   - error: An error if directory reading, file conversion, or writing fails; nil otherwise.
+//
+// Example:
+//
+//	err := Convert("/path/to/documents", "pdf,docx,html")
+//	if err != nil {
+//	    log.Fatalf("Conversion failed: %v", err)
+//	}
 func Convert(inputDir, selectedFormats string) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)
@@ -58,6 +77,19 @@ func Convert(inputDir, selectedFormats string) error {
 	return nil
 }
 
+// readText extracts text content from a file based on its format.
+//
+// It determines the appropriate reading function based on the specified format
+// and uses it to extract text from the given file. Supported formats include
+// "pdf", "docx", and "html".
+//
+// Parameters:
+//   - file: The path to the file to read.
+//   - format: The format of the file ("pdf", "docx", or "html").
+//
+// Returns:
+//   - string: The extracted text content from the file.
+//   - error: An error if the format is unsupported or if reading fails.
 func readText(file string, format string) (string, error) {
 	var modelFunc func(string) (string, error)
 	switch format {
@@ -74,6 +106,17 @@ func readText(file string, format string) (string, error) {
 	return modelFunc(file)
 }
 
+// writeText writes the provided text content to a file at the specified path.
+//
+// It creates a new file if it doesn't exist, or truncates an existing file,
+// then writes the given text to that file. The file permissions are set to 0644.
+//
+// Parameters:
+//   - text: The string content to write to the file.
+//   - txtPath: The file path where the text should be written.
+//
+// Returns:
+//   - error: An error if file creation, opening, or writing fails; nil otherwise.
 func writeText(text string, txtPath string) error {
 	// Open the file for writing. If the file doesn't exist, it will be created.
 	// The os.O_WRONLY flag opens the file for writing, and os.O_CREATE creates the file if it doesn't exist.

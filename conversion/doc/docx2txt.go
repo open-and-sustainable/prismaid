@@ -7,6 +7,18 @@ import (
 	docx "github.com/fumiama/go-docx"
 )
 
+// ReadDocx extracts text content from a Microsoft Word .docx file.
+//
+// It opens the specified file, parses its structure using the go-docx library,
+// and extracts text from paragraphs and tables. Each extracted element is
+// separated by a newline in the output.
+//
+// Parameters:
+//   - path: File path to the .docx document to read.
+//
+// Returns:
+//   - A string containing the extracted text content.
+//   - An error if the file cannot be opened, read, or parsed.
 func ReadDocx(path string) (string, error) {
 	// Create a strings.Builder to collect the content
 	var textBuilder strings.Builder

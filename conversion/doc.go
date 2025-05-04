@@ -11,11 +11,12 @@
 //
 // # Exported Functions
 //
-// Convert: Converts all supported document files from the input directory to plain text files based on the configuration settings.
+// Convert: Processes files from the input directory and converts them into plain text format.
+// The function accepts an input directory path and a comma-separated list of formats to convert.
 //
 // Example:
 //
-//	> err := convert.Convert(config)
+//	> err := conversion.Convert("/path/to/files", "pdf,docx,html")
 //	> if err != nil {
 //	>     log.Fatalf("Conversion failed: %v", err)
 //	> }
