@@ -5,6 +5,8 @@ layout: default
 
 # Help & Development
 
+ ---
+
 <details>
 <summary><strong>Page Contents</strong></summary>
 <ul>
@@ -15,6 +17,8 @@ layout: default
   <li><a href="#open-science-support"><strong>Open Science Support</strong></a>: how prismAId supports open science principles</li>
 </ul>
 </details>
+
+ ---
 
 ## Getting Help
 
