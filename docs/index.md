@@ -49,10 +49,12 @@ Our tools support a comprehensive review workflow:
 ## Table of Contents
 Explore this website for comprehensive guidance on using the prismAId toolkit:
 1. [Installation & Setup](installation-setup): Learn how to install prismAId tools and configure them for different environments.
-2. [Using prismAId](using-prismaid): Discover how to effectively utilize the prismAId toolkit, including its advanced features.
-3. [Review Support](review-support): Learn about the many tools prismAId offers to support the systematic review process.
-4. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
-5. [Help & Development](help-development): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
+2. [Download Tool](download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
+3. [Convert Tool](convert-tool): Learn to transform documents from various formats into plain text for analysis.
+4. [Review Tool](review-tool): Master the core systematic review functionality for extracting structured information.
+5. [Review Support](review-support): Learn about methodologies and best practices for systematic reviews with prismAId.
+6. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
+7. [Help & Development](help-development): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
 
 ## New Releases and Updates
 Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
