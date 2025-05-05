@@ -1,11 +1,9 @@
 # ![logo](https://raw.githubusercontent.com/ricboer0/prismAId/main/figures/prismAId_logo.png) prismAId
 # Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
-prismAId uses generative AI models to extract data from scientific literature. 
+prismAId offers a suite of tools using generative AI models to streamline systematic reviews of scientific literature.
 
-It offers simple-to-use, efficient, and replicable methods for analyzing literature when conducting systematic reviews. 
-
-No coding skills are required to use prismAId.
+It provides simple-to-use, efficient, and replicable methods for analyzing research papers with no coding skills required.
 
 ---
 
@@ -21,23 +19,51 @@ No coding skills are required to use prismAId.
 
 ---
 
+## Tools Overview
+prismAId has been restructured to offer a comprehensive set of tools for systematic literature reviews:
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 40%;">
+</div>
+
+### Core Tools
+1. **Review** - Process systematic literature reviews based on TOML configurations
+2. **Download** - Download papers from Zotero collections or from URL lists
+3. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
+
+### Access Methods
+- **Command Line Interface** - For users who prefer terminal-based workflows
+- **Web Initializer** - A browser-based setup tool for configuring reviews
+- **Programming Libraries** - API access through multiple languages:
+  - Go (native implementation)
+  - Python package
+  - R package
+  - Julia package
+
+---
+
 ## Specifications
-- **Review protocol**: Designed to support any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
-- **Distribution**: Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid), Python [package](https://pypi.org/project/prismaid/), R [package](https://open-and-sustainable.r-universe.dev/prismaid), Julia [package](https://github.com/JuliaRegistries/General/tree/master/P/PrismAId), and 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) compatible with Windows, MacOS, and Linux operating systems on AMD64 and ARM64 platforms.
-- **Supported LLMs**: 
-    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini.
-    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash.
-    3. **Cohere**: Command, Command Light, Command R, Command R+, and Command R7B.
-    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet.
-    5. **DeepSeek**: DeepSeek Chat v3.
-- **Output format**: Outputs data in CSV or JSON formats.
-- **Performance**: Designed to process extensive datasets efficiently with minimal user setup and **no coding** required.
-- **Programming Language**: Developed in Go.
+- **Review protocol**: Supports any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
+- **Distribution**: Available as:
+  - Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
+  - Python [package](https://pypi.org/project/prismaid/)
+  - R [package](https://open-and-sustainable.r-universe.dev/prismaid)
+  - Julia [package](https://github.com/JuliaRegistries/General/tree/master/P/PrismAId)
+  - 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) for Windows, MacOS, and Linux (AMD64/ARM64)
+- **Supported LLMs**:
+    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini
+    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash
+    3. **Cohere**: Command, Command Light, Command R, Command R+, and Command R7B
+    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet
+    5. **DeepSeek**: DeepSeek Chat v3
+- **Output format**: Data in CSV or JSON formats
+- **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required
+- **Programming Language**: Core implementation in Go with bindings for Python, R, and Julia
 
 ---
 
 ## Documentation
-All the information to install, use, and improve prismAId can be found at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/).
+All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/).
 
 ---
 
@@ -55,7 +81,6 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 
 [![license](https://www.gnu.org/graphics/agplv3-155x51.png)](https://www.gnu.org/licenses/agpl-3.0.en.html#license-text)
 
-
 ---
 
 ## Contributing
@@ -65,4 +90,3 @@ Contributions are welcome! Please follow guidelines at [open-and-sustainable.git
 
 ## Citation
 Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. [DOI: 10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796)
-

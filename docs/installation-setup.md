@@ -6,11 +6,16 @@ layout: default
 # Installation & Setup
 
  ---
-*Page Contents:*
+
+<details>
+<summary><strong>Page Contents</strong></summary>
+
 - [**Supported Systems**](#supported-systems): platforms and languages supported by prismAId
-- [**Workflow Overview**](#workflow-overview): the recommended process for utilizing prismAId features
+- [**Toolkit Overview**](#toolkit-overview): the separate tools and access methods offered by prismAId
 - [**Step-by-Step Installation**](#step-by-step-installations): instructions for installation on any platform
 - [**Additional Setup Information**](#additional-setup-information): supplementary guidance to help you get started
+
+</details>
 
  ---
 
@@ -27,17 +32,35 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 5. **Julia Package** from the Github repo: For integration in Julia workflows and Jupyter notebooks.
 
-## Workflow Overview
-1. **AI Model Provider Account and API Key**:
-    - Register for an account with [OpenAI](https://www.openai.com/), [GoogleAI](https://aistudio.google.com), [Cohere](https://cohere.com/), or [Anthropic](https://www.anthropic.com/) and obtain an API key from your provider’s dashboard.
-    - Generate an API key from the the provider dashboard.
-2. **Install prismAId**:
-    - Follow the installation instructions below based on your preferred system from the Supported Systems section.
-3. **Prepare Papers for Review:**
-    - Ensure papers are in .txt format, or use prismAId `input_conversion` flag in `[project.configuration]` to convert PDF, DOCX, and HTML files to plain text.
-4. **Define the Review Project:**
-    - Set up a configuration file (.toml) specifying project parameters, including the AI model, input data, and output preferences. This configuration defines the scope and details of your systematic review.
+## Toolkit Overview
 
+prismAId offers several specialized tools to support systematic reviews:
+
+1. **Review Tool**: Process systematic literature reviews based on TOML configurations
+   - Configure review criteria, AI model settings, and output formats
+   - Extract structured information from scientific papers
+   - Generate comprehensive review summaries
+
+2. **Download Tool**: Acquire papers for your review
+   - Download PDFs directly from Zotero collections
+   - Download files from URL lists
+
+3. **Convert Tool**: Transform documents into analyzable text
+   - Convert PDFs, DOCX, and HTML files to plain text
+   - Prepare documents for AI processing
+
+### Workflow Overview
+1. **AI Model Provider Account and API Key**:
+    - Register for an account with [OpenAI](https://www.openai.com/), [GoogleAI](https://aistudio.google.com), [Cohere](https://cohere.com/), or [Anthropic](https://www.anthropic.com/) and obtain an API key.
+    - Generate an API key from the provider's dashboard.
+2. **Install prismAId**:
+    - Follow the installation instructions below based on your preferred system.
+3. **Prepare Papers for Review:**
+    - Download papers using the Download tool
+    - Convert papers to text format using the Convert tool
+4. **Define and Run the Review Project:**
+    - Set up a configuration file (.toml) for your review project
+    - Use the Review tool to process your papers and extract information
 
 ## Step-by-Step Installation
 
@@ -51,9 +74,18 @@ To add the `prismaid` Go package to your project:
 go get "github.com/open-and-sustainable/prismaid"
 ```
 
-2. Import when needed:
+2. Import and use the toolkit in your code:
 ```go
 import "github.com/open-and-sustainable/prismaid"
+
+// Run a systematic review
+err := prismaid.Review(tomlConfigString)
+
+// Download papers from Zotero
+err := prismaid.DownloadZoteroPDFs(username, apiKey, collectionName, parentDir)
+
+// Convert files to text
+err := prismaid.Convert(inputDir, "pdf,docx,html")
 ```
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
@@ -64,10 +96,29 @@ Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-a
 
 Download the appropriate executable for your OS from our [GitHub Releases](https://github.com/open-and-sustainable/prismaid/releases). No coding is required.
 
-prismAId uses a human-readable `.toml` project configuration file for setup. You can find a template and example in the [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Once your `.toml` file is ready, execute the project with:
+Use the command line interface to access all tools:
+
 ```bash
-# For Windows
-./prismAId_windows_amd64.exe --project your_project.toml
+# Run a systematic review
+./prismaid -project your_project.toml
+
+# Download papers from Zotero (requires a TOML config file)
+# First create a file zotero_config.toml with:
+#   user = "your_username"
+#   api_key = "your_api_key"
+#   group = "Your Collection"
+./prismaid -download-zotero zotero_config.toml
+
+# Download papers from a URL list
+./prismaid -download-URL paper_urls.txt
+
+# Convert files to text (separate commands for each format)
+./prismaid -convert-pdf ./papers
+./prismaid -convert-docx ./papers
+./prismaid -convert-html ./papers
+
+# Initialize a new project configuration interactively
+./prismaid -init
 ```
 
 ### Option 3. Python Package
@@ -78,23 +129,25 @@ Install the `prismaid` package from [PYPI](https://pypi.org/project/prismaid/) w
 ```bash
 pip install prismaid
 ```
-This Python package provides an interface that wraps a C shared library, allowing configuration and review processing within Python scripts or Jupyter notebooks. Once installed, import prismAId and use it to load and execute review projects, as shown in the example below:
+
+This Python package provides access to all prismAId tools:
 ```python
 import prismaid
 
-# Example usage: load and run a review project configuration
-with open("proj_test.toml", "r") as file:
-    input_str = file.read()
-error_ptr = prismaid.RunReviewPython(input_str.encode('utf-8'))
+# Run a systematic review
+with open("project.toml", "r") as file:
+    toml_config = file.read()
+prismaid.review(toml_config)
 
-# Handle errors if they occur
-if error_ptr:
-    print("Error:", error_ptr.decode('utf-8'))
-else:
-    print("RunReview completed successfully")
+# Download papers from Zotero
+prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
+
+# Download from URL list
+prismaid.download_url_list("urls.txt")
+
+# Convert files to text
+prismaid.convert("./papers", "pdf,docx,html")
 ```
-
-**NOTE**: when using prismAId legacy versions <= 0.6.6 in Jupyter notebooks follow instructions [presented below](https://open-and-sustainable.github.io/prismaid/installation-setup.html#use-in-jupyter-notebooks) to run single model reviews.
 
 ### Option 4. R Package
 
@@ -105,52 +158,68 @@ Install the `prismaid` R package from [R-universe](https://open-and-sustainable.
 install.packages("prismaid", repos = c("https://open-and-sustainable.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
-All inputs and outputs are file-based. For example, to load and run a review configuration:
+Access all prismAId tools from R:
 ```r
 library(prismaid)
-toml_content <- paste(readLines("proj_test.toml"), collapse = "\n")
-RunReview(toml_content)
+
+# Run a systematic review
+toml_content <- paste(readLines("project.toml"), collapse = "\n")
+RunReview(toml_content)  # Note the capitalization
+
+# Download papers from Zotero
+DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")  # Full name
+
+# Download from URL list
+DownloadURLList("urls.txt")
+
+# Convert files to text
+Convert("./papers", "pdf,docx,html")  # Note the capitalization
 ```
 
 ### Option 5. Julia Package
 
 **(Supported: Linux and Windows AMD64, macOS Arm64)**
 
-Install the `PrismAId` package using Julia's package manager and running the following commands in your Julia REPL. This will add the `PrismAId` package directly from the Julia General registry:
+Install the `PrismAId` package using Julia's package manager:
 ```julia
 using Pkg
 Pkg.add("PrismAId")
 ```
 
-This Julia package provides an interface that wraps a C shared library, allowing configuration and review processing within Julia workflows and Jupyter notebooks. Once installed, import `PrismAId` and use it to load and execute review projects, as shown in the example below:
+Access all prismAId tools from Julia:
 ```julia
-# Load the package
 using PrismAId
-# Input a review project configuration
-toml_test = """
-       [project]
-       name = "Test of prismAId"
-       ...
-       """
-# Run the review
-PrismAId.run_review(toml_test)
+
+# Run a systematic review
+toml_config = read("project.toml", String)
+PrismAId.run_review(toml_config)  # Correct function name
+
+# Download papers from Zotero
+PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
+
+# Download from URL list
+PrismAId.download_url_list("urls.txt")
+
+# Convert files to text
+PrismAId.convert("./papers", "pdf,docx,html")
 ```
 
 ## Additional Setup Information
 
 ### Initialize the Configuration File
-prismAId binaries and Go module offer an interactive terminal application to help create draft configuration files. Use the -init flag to start the setup:
+prismAId offers multiple ways to create review configuration files:
+
+1. **Web Initializer**: Use the browser-based tool on the [Review Configurator](review-configurator) page to create TOML configuration files through a user-friendly interface.
+
+2. **Command Line Initializer**: Use the binary with the -init flag to create a configuration file through an interactive terminal:
 ```bash
-# For Linux on Intel
-./prismAId_linux_amd64 -init
+./prismaid -init
 ```
 
 ![Terminal app for drafting project configuration file](https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/terminal.gif)
 
-A web-based initializer is also availeble on the [Review Configurator](review-configurator) page.
-
 ### Use in Jupyter Notebooks
-When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmatiom to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).
+When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmation to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).
 
 To overcome this problem, it is possible to intercept the IO on the terminal as it follows:
 ```python
