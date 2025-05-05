@@ -1,23 +1,24 @@
 name: Post GitHub Release to Matrix
 
 on:
-  release:
-    types: [published]
+    release:
+        types: [published]
 
 jobs:
-  post-to-matrix:
-    runs-on: ubuntu-latest
+    post-to-matrix:
+        permissions: {}
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Post release to Matrix room
-        env:
-          MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
-          MATRIX_ROOM: "!uVJbPlFRdXNIJTOVWu:matrix.org"
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RELEASE_TAG: ${{ github.event.release.tag_name }}
-          GITHUB_RELEASE_URL: ${{ github.event.release.html_url }}
-          GITHUB_RELEASE_NAME: ${{ github.event.release.name }}
-        run: |
-          curl -X POST "https://matrix.org/_matrix/client/v3/rooms/${MATRIX_ROOM}/send/m.room.message?access_token=${MATRIX_ACCESS_TOKEN}" \
-          -H "Content-Type: application/json" \
-          -d "{\"msgtype\": \"m.text\", \"body\": \"New release in ${GITHUB_REPOSITORY}: ${GITHUB_RELEASE_NAME} (${GITHUB_RELEASE_TAG})\n${GITHUB_RELEASE_URL}\"}"
+        steps:
+            - name: Post release to Matrix room
+              env:
+                  MATRIX_ACCESS_TOKEN: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+                  MATRIX_ROOM: "!uVJbPlFRdXNIJTOVWu:matrix.org"
+                  GITHUB_REPOSITORY: ${{ github.repository }}
+                  GITHUB_RELEASE_TAG: ${{ github.event.release.tag_name }}
+                  GITHUB_RELEASE_URL: ${{ github.event.release.html_url }}
+                  GITHUB_RELEASE_NAME: ${{ github.event.release.name }}
+              run: |
+                  curl -X POST "https://matrix.org/_matrix/client/v3/rooms/${MATRIX_ROOM}/send/m.room.message?access_token=${MATRIX_ACCESS_TOKEN}" \
+                  -H "Content-Type: application/json" \
+                  -d "{\"msgtype\": \"m.text\", \"body\": \"New release in ${GITHUB_REPOSITORY}: ${GITHUB_RELEASE_NAME} (${GITHUB_RELEASE_TAG})\n${GITHUB_RELEASE_URL}\"}"

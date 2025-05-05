@@ -1,5 +1,11 @@
 # Export any R functions you want to be available to end-users.
 export(RunReview)
+export(DownloadZoteroPDFs)
+export(DownloadURLList)
+export(Convert)
 
-# Register the C function from the shared object
+# Register the C functions from the shared object
 useDynLib(prismaid, RunReviewR_wrap)
+useDynLib(prismaid, DownloadZoteroPDFsR_wrap)
+useDynLib(prismaid, DownloadURLListR_wrap)
+useDynLib(prismaid, ConvertR_wrap)

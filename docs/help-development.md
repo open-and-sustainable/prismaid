@@ -5,24 +5,52 @@ layout: default
 
 # Help & Development
 
-If you need assistance, you can:
+<details>
+<summary><strong>Page Contents</strong></summary>
+
+- [**Getting Help**](#getting-help): where to find assistance
+- [**Common Issues**](#common-issues): solutions to frequent problems
+- [**Contributing**](#contributing): how to improve prismAId
+- [**Software Stack**](#software-stack): technical architecture
+- [**Open Science Support**](#open-science-support): how prismAId supports open science principles
+
+</details>
+
+## Getting Help
+
+If you need assistance with any prismAId tool, you can:
 - **Open an Issue** on our [GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
 - **Discuss in the Matrix Support Room**: [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) ![Matrix](https://img.shields.io/matrix/prismAId-support%3Amatrix.org?server_fqdn=matrix.org&logo=appveyor).
 - **Stay Updated with New Releases**: Follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
 
 ## Common Issues
-- **Package Crashes**: Most of the time it is because of path problems, like typos or non existent paths for inputs or outputs.
-- **Debugging Information**: The level of debugging information and its permanent storage can be easily activated within the project configuration.
-- **API Keys**: These may be loaded either through system variables or the project configuration. If multiple keys are provided, the latter will have priority.
-- **Partial Results**: Results presenting only the first few entries of a review containing many more manuscripts suggest an incorrect adherence to the Token Per Minute limits set in the project configuration.
+
+### General Issues
+- **Path Problems**: Most crashes occur due to incorrect paths in configurations, such as typos or non-existent directories.
+- **API Keys**: These may be loaded either through system variables or directly in configurations. When both are provided, the configuration values take priority.
 - **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
 - **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
+### Download Tool Issues
+- **Zotero Authentication Errors**: Verify your user ID and API key, ensuring the API key has appropriate permissions.
+- **Collection Not Found**: Check that the collection/group path uses the correct format and exists in your Zotero library.
+- **Download Failures**: If some PDFs fail to download, check if they are actually available/accessible in your Zotero library.
+
+### Convert Tool Issues
+- **Conversion Quality**: PDF conversion may result in imperfect text extraction due to limitations of the PDF format. Always check converted files.
+- **Unsupported Formats**: Ensure you're using supported file formats (PDF, DOCX, HTML).
+- **Character Encoding**: Some converted texts may display encoding issues with special characters.
+
+### Review Tool Issues
+- **Debugging Information**: Control the level of debugging information via the `log_level` parameter in the project configuration.
+- **Partial Results**: If only the first few entries of a review are processed, check the Token Per Minute (TPM) limits in your configuration.
+- **Response Format Errors**: Ensure your prompt and review sections are well-structured to guide the AI to produce correctly formatted outputs.
+- **Token Limits**: Very large documents may exceed model token limits; consider splitting or summarizing them.
 
 ## Contributing
 
 ### How to Contribute
-We welcome contributions to improve prismAId, whether you're fixing bugs, adding features, or enhancing documentation:
+We welcome contributions to improve any aspect of the prismAId toolkit, whether you're fixing bugs, adding features, or enhancing documentation:
 - **Branching Strategy**: Create a new branch for each set of related changes and submit a pull request via GitHub.
 - **Code Reviews**: All submissions undergo thorough review to maintain code quality.
 - **Community Engagement**: Connect with us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions) for feature requests, suggestions, or questions. - Discuss in the Matrix [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) or follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
@@ -37,14 +65,19 @@ prismAId is developed in Go, selected for its simplicity and efficiency with con
 ### Technical Foundation
 prismAId leverages the [`alembica`](https://github.com/open-and-sustainable/alembica) pure Go package to manage interactions with Large Language Models. This foundation allows us to concentrate on developing robust protocol-based information extraction tools while `alembica` handles the standardized communication with various LLMs through consistent JSON data schemas, ensuring reliability and interoperability across different AI services.
 
-### Architecture
-- **Go Module**: Core logic and API access are implemented in Go.
-- **Python Package**: Python wrapper around a C shared library compiled from the Go code.
-- **R Package**: Contains a C shared library with an intermediate C wrapper, enabling R interaction with the shared library.
+### Toolkit Architecture
+The prismAId toolkit is structured as a set of modular tools (Download, Convert, Review) that can be used together or independently:
+
+- **Go Module**: Core logic and API access for all tools are implemented in Go.
+- **Cross-Language Support**: Each tool is accessible through:
+  - **Python Package**: Python wrapper around a C shared library compiled from the Go code.
+  - **R Package**: Contains a C shared library with an intermediate C wrapper, enabling R interaction.
+  - **Julia Package**: Contains a C shared library with Julia bindings for direct integration.
 - **Self-Contained Binaries**: Simplifies setup by packaging all dependencies within the binaries.
 - **Cross-Platform Compatibility**: Fully operational across Windows, macOS, and Linux.
 
 ### Development Philosophy
+- **Modularity**: Tools that work together but can be used independently.
 - **Open Source**: We value community contributions and transparency.
 - **CI/CD Pipelines**: Automated testing and deployment maintain quality and reliability.
 
@@ -61,9 +94,11 @@ prismAId actively supports Open Science principles through:
 
 3. **Efficiency and Scalability**
    - Efficient data handling enables timely, comprehensive reviews.
+   - Modular tools allow flexible workflows adapted to different research needs.
 
 4. **Quality and Accuracy**
    - Explicit prompts define information clearly, ensuring consistent, reliable reviews.
+   - Separate tools for each workflow step improve focus and quality.
 
 5. **Ethics and Bias Reduction**
    - Transparent design minimizes biases, with community oversight supporting ethical standards.

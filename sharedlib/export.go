@@ -21,30 +21,100 @@ func handlePanic() *C.char {
 	return nil
 }
 
+// common logic as an helper function
+func runReview(input *C.char) error {
+	goInput := C.GoString(input)
+	return prismaid.Review(goInput)
+}
+
+func runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir *C.char) error {
+	goUsername := C.GoString(username)
+	goApiKey := C.GoString(apiKey)
+	goCollectionName := C.GoString(collectionName)
+	goParentDir := C.GoString(parentDir)
+	return prismaid.DownloadZoteroPDFs(goUsername, goApiKey, goCollectionName, goParentDir)
+}
+
+func runDownloadURLList(path *C.char) {
+	goPath := C.GoString(path)
+	prismaid.DownloadURLList(goPath)
+}
+
+func runConvert(inputDir, selectedFormats *C.char) error {
+	goInputDir := C.GoString(inputDir)
+	goSelectedFormats := C.GoString(selectedFormats)
+	return prismaid.Convert(goInputDir, goSelectedFormats)
+}
+
 // Python-specific function
 //
 //export RunReviewPython
 func RunReviewPython(input *C.char) *C.char {
 	defer handlePanic()
-	goInput := C.GoString(input)
-	err := prismaid.RunReview(goInput)
-	if err != nil {
+	if err := runReview(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
 }
 
-// R-specific function
+//export DownloadZoteroPDFsPython
+func DownloadZoteroPDFsPython(username, apiKey, collectionName, parentDir *C.char) *C.char {
+	defer handlePanic()
+	if err := runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
+}
+
+//export DownloadURLListPython
+func DownloadURLListPython(path *C.char) {
+	defer handlePanic()
+	runDownloadURLList(path)
+}
+
+//export ConvertPython
+func ConvertPython(inputDir, selectedFormats *C.char) *C.char {
+	defer handlePanic()
+	if err := runConvert(inputDir, selectedFormats); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
+}
+
+// R-specific exports
 //
 //export RunReviewR
 func RunReviewR(input *C.char) *C.char {
 	defer handlePanic()
-	goInput := C.GoString(input)
-	err := prismaid.RunReview(goInput)
-	if err != nil {
+	if err := runReview(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("Review completed successfully")
+}
+
+//export DownloadZoteroPDFsR
+func DownloadZoteroPDFsR(username, apiKey, collectionName, parentDir *C.char) *C.char {
+	defer handlePanic()
+	if err := runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("Download completed successfully")
+}
+
+//export DownloadURLListR
+func DownloadURLListR(path *C.char) *C.char {
+	defer handlePanic()
+	runDownloadURLList(path)
+	return C.CString("URL list download completed")
+}
+
+//export ConvertR
+func ConvertR(inputDir, selectedFormats *C.char) *C.char {
+	defer handlePanic()
+	if err := runConvert(inputDir, selectedFormats); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("Conversion completed successfully")
 }
 
 // Free memory function used by both interfaces

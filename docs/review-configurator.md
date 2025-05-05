@@ -7,6 +7,8 @@ layout: default
 
 # Generate Your Review Configuration File
 
+This configurator helps you create a TOML configuration file for the prismAId Review tool, which processes systematic literature reviews using AI models. For other tools in the prismAId toolkit (Download, Convert), please refer to their respective documentation.
+
 <form id="configForm">
     <h2 id="project-information">Project Information</h2>
 
@@ -15,7 +17,7 @@ layout: default
         <label for="name" class="form-label">Project Name:</label>
         <input type="text" id="name" name="name" value="Review Project Title" class="form-input"><br>
     </div>
- 
+
     <div class="form-group">
         <p class="description" style="font-style: italic;">Enter the author of the project.</p>
         <label for="author" class="form-label">Project Author:</label>
@@ -30,24 +32,9 @@ layout: default
 
     <h2 id="project-configuration">Project Configuration</h2>
     <div class="form-group">
-        <p class="description" style="font-style: italic;">Specify the directory where the input text files are located (if not a Zotero based review project).</p>
+        <p class="description" style="font-style: italic;">Specify the directory where the input text files are located for review.</p>
         <label for="input_directory" class="form-label">Input Directory:</label>
         <input type="text" id="input_directory" name="input_directory" value="/path/to/txt/files" class="form-input"><br>
-    </div>
-
-    <div class="form-group">
-        <p class="description" style="font-style: italic;">Choose the input conversion format(s), if necessary (and not a Zotero based review project). You can select multiple formats for conversion.</p>
-        <label for="input_conversion" class="form-label">Input Conversion:</label>
-        <select id="input_conversion" name="input_conversion" class="form-input">
-            <option value="" selected>None</option>
-            <option value="pdf">PDF</option>
-            <option value="docx">DOCX</option>
-            <option value="html">HTML</option>
-            <option value="pdf,docx">PDF+DOCX</option>
-            <option value="pdf,html">PDF+HTML</option>
-            <option value="docx,html">DOCX+HTML</option>
-            <option value="pdf,docx,html">PDF+DOCX+HTML</option>
-        </select><br>
     </div>
 
     <div class="form-group">
@@ -96,29 +83,10 @@ layout: default
     <div class="form-group">
         <p class="description" style="font-style: italic;">Choose whether to generate and save summaries of the manuscript.</p>
         <label for="summary" class="form-label">Summary:</label>
-        <select id="summary" name="summarthe name of the collection or group containing the document to reviewy" class="form-input">
+        <select id="summary" name="summary" class="form-input">
             <option value="no" selected>No</option>
             <option value="yes">Yes</option>
         </select><br>
-    </div>
-
-    <h2 id="zotero-integration">Zotero Integration</h2>
-    <div class="form-group">
-        <p class="description" style="font-style: italic;">Specify the user ID accessible at https://www.zotero.org/settings/security.</p>
-        <label for="user" class="form-label">User ID:</label>
-        <input type="text" id="user" name="user" value="" class="form-input"><br>
-    </div>
-
-    <div class="form-group">
-        <p class="description" style="font-style: italic;">Specify the private key created at https://www.zotero.org/settings/security.</p>
-        <label for="api_key" class="form-label">API key:</label>
-        <input type="text" id="api_key" name="api_key" value="" class="form-input"><br>
-    </div>
-
-    <div class="form-group">
-        <p class="description" style="font-style: italic;">Specify the name of the collection or group containing the document to review.</p>
-        <label for="group" class="form-label">Group:</label>
-        <input type="text" id="group" name="group" value="" class="form-input"><br>
     </div>
 
     <h2 id="llm-configuration">LLM Configuration</h2>
@@ -188,4 +156,3 @@ layout: default
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
-

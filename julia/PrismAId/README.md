@@ -11,38 +11,71 @@ Pkg.add("PrismAId")
 
 ## Usage
 
-To utilize `PrismAId` in your Julia environment, you need to load the package and execute the `run_review` function, which requires a TOML-formatted review project configuration.
+`PrismAId` provides four main functions to interact with the underlying shared library:
 
-### Quick Start Example
+1. `run_review`: Execute a systematic review based on a TOML configuration
+2. `download_zotero_pdfs`: Download PDFs from a Zotero collection
+3. `download_url_list`: Download files from a list of URLs
+4. `convert`: Convert files to text format
+
+### Quick Start Example: Running a Review
 
 1. Start by loading the `PrismAId` package:
    ```julia
    using PrismAId
    ```
-   
-2. Prepare your review project configuration in TOML format. You can use the template provided in the `proj_test.toml` file located in the `projects` folder of our [GitHub repository](https://github.com/open-and-sustainable/prismaid/tree/main/projects). Here’s a simplified example of what the TOML content might look like:
-```julia
-toml_test = """
+
+2. Prepare your review project configuration in TOML format:
+   ```julia
+   toml_test = """
        [project]
        name = "Test of prismAId"
        ...
        """
-```
-3. Run the review process by passing the TOML configuration string to the `run_review` function:
+   ```
+
+3. Run the review process:
    ```julia
    PrismAId.run_review(toml_test)
    ```
 
-### Expected Output
-When you run the review project, the following output will be displayed in the terminal:
-```bash
-Processing file 1/1 lit_test with model gpt-4o-mini
-The total cost (USD - $) to run this review is at least: 0.00107895
-This value is an estimate of the total cost of input tokens only.
-Eventual requests for CoT justifications and summaries increase the cost and are not included here.
-Do you want to continue? (y/n):
+When you run the review project, you'll be prompted with cost information and asked to confirm before proceeding.
+
+### Downloading PDFs from Zotero
+
+To download PDFs from a Zotero collection:
+
+```julia
+# Parameters: username, API key, collection name, destination directory
+PrismAId.download_zotero_pdfs(
+    "your_username",
+    "your_api_key",
+    "Collection/Subcollection",
+    "/path/to/output/directory"
+)
 ```
-At this prompt, you can decide whether to continue processing the review project. If you proceed, the results of the review process will be saved in the output folder specified in your project configuration.
+
+### Downloading Files from a URL List
+
+To download files from a list of URLs (one URL per line):
+
+```julia
+# Parameter: path to file containing URLs
+PrismAId.download_url_list("/path/to/url_list.txt")
+```
+
+### Converting Files to Text Format
+
+To convert files from various formats (PDF, DOCX, HTML) to text:
+
+```julia
+# Parameters: directory containing files, comma-separated list of formats
+PrismAId.convert("/path/to/files", "pdf,docx,html")
+```
+
+This will process all files with the specified extensions in the directory and create corresponding .txt files.
+
+## Important Notes
 
 **ATTENTION**: Interaction with `PrismAId` functionalities is mediated through a C shared library, which can make debugging challenging. It is recommended to set the `log_level` to `high` in your project configuration to ensure comprehensive logging of any issues encountered during the review process, with logs stored in the specified output directory.
 
