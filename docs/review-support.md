@@ -9,14 +9,14 @@ layout: default
 
 <details>
 <summary><strong>Page Contents</strong></summary>
-
-- [**Reasons to Use**](#reasons-to-use): benefits of adopting prismAId for systematic reviews
-- [**Review Process Overview**](#review-process-overview): a comprehensive workflow for conducting systematic reviews
-- [**Using prismAId Tools**](#using-prismaid-tools): guidelines for utilizing each prismAId tool in your review
-- [**Information Extraction Mechanism**](#information-extraction-mechanism): understanding the technical framework powering prismAId
-- [**Best Practices**](#best-practices): recommended methodologies for effective systematic reviews
-- [**Technical FAQs**](#technical-faqs): detailed answers to advanced questions about prismAId capabilities and limitations
-
+<ul>
+  <li><a href="#reasons-to-use"><strong>Reasons to Use</strong></a>: benefits of adopting prismAId for systematic reviews</li>
+  <li><a href="#review-process-overview"><strong>Review Process Overview</strong></a>: a comprehensive workflow for conducting systematic reviews</li>
+  <li><a href="#using-prismaid-tools"><strong>Using prismAId Tools</strong></a>: guidelines for utilizing each prismAId tool in your review</li>
+  <li><a href="#information-extraction-mechanism"><strong>Information Extraction Mechanism</strong></a>: understanding the technical framework powering prismAId</li>
+  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommended methodologies for effective systematic reviews</li>
+  <li><a href="#technical-faqs"><strong>Technical FAQs</strong></a>: detailed answers to advanced questions about prismAId capabilities and limitations</li>
+</ul>
 </details>
 
 ---

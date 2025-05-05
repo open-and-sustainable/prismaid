@@ -12,7 +12,7 @@ layout: default
 <ul>
   <li><a href="#supported-systems"><strong>Supported Systems</strong></a>: platforms and languages supported by prismAId</li>
   <li><a href="#toolkit-overview"><strong>Toolkit Overview</strong></a>: the separate tools and access methods offered by prismAId</li>
-  <li><a href="#step-by-step-installations"><strong>Step-by-Step Installation</strong></a>: instructions for installation on any platform</li>
+  <li><a href="#step-by-step-installation"><strong>Step-by-Step Installation</strong></a>: instructions for installation on any platform</li>
   <li><a href="#additional-setup-information"><strong>Additional Setup Information</strong></a>: supplementary guidance to help you get started</li>
 </ul>
 </details>

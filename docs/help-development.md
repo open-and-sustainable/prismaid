@@ -7,13 +7,13 @@ layout: default
 
 <details>
 <summary><strong>Page Contents</strong></summary>
-
-- [**Getting Help**](#getting-help): where to find assistance
-- [**Common Issues**](#common-issues): solutions to frequent problems
-- [**Contributing**](#contributing): how to improve prismAId
-- [**Software Stack**](#software-stack): technical architecture
-- [**Open Science Support**](#open-science-support): how prismAId supports open science principles
-
+<ul>
+  <li><a href="#getting-help"><strong>Getting Help</strong></a>: where to find assistance</li>
+  <li><a href="#common-issues"><strong>Common Issues</strong></a>: solutions to frequent problems</li>
+  <li><a href="#contributing"><strong>Contributing</strong></a>: how to improve prismAId</li>
+  <li><a href="#software-stack"><strong>Software Stack</strong></a>: technical architecture</li>
+  <li><a href="#open-science-support"><strong>Open Science Support</strong></a>: how prismAId supports open science principles</li>
+</ul>
 </details>
 
 ## Getting Help

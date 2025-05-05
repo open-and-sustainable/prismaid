@@ -9,13 +9,13 @@ layout: default
 
 <details>
 <summary><strong>Page Contents</strong></summary>
-
-- [**Overview of the prismAId Toolkit**](#overview-of-the-prismaid-toolkit): introduction to the different tools available
-- [**Section 1: 'Project' Details**](#section-1-project-details): reference guide to all entries in the first section of the review project configuration
-- [**Section 2: 'Prompt' Details**](#section-2-prompt-details): instructions on configuring prompts for information extraction
-- [**Section 3: 'Review' Details**](#section-3-review-details): information content to be extracted and reviewed
-- [**Advanced Features**](#advanced-features): how to leverage debugging, validation, and other advanced capabilities
-
+<ul>
+  <li><a href="#overview-of-the-prismaid-toolkit"><strong>Overview of the prismAId Toolkit</strong></a>: introduction to the different tools available</li>
+  <li><a href="#section-1-project-details"><strong>Section 1: 'Project' Details</strong></a>: reference guide to all entries in the first section of the review project configuration</li>
+  <li><a href="#section-2-prompt-details"><strong>Section 2: 'Prompt' Details</strong></a>: instructions on configuring prompts for information extraction</li>
+  <li><a href="#section-3-review-details"><strong>Section 3: 'Review' Details</strong></a>: information content to be extracted and reviewed</li>
+  <li><a href="#advanced-features"><strong>Advanced Features</strong></a>: how to leverage debugging, validation, and other advanced capabilities</li>
+</ul>
 </details>
 
 ---
