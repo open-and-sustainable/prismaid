@@ -11,8 +11,11 @@ layout: default
 <summary><strong>Page Contents</strong></summary>
 
 - [**Supported Systems**](#supported-systems): platforms and languages supported by prismAId
+
 - [**Toolkit Overview**](#toolkit-overview): the separate tools and access methods offered by prismAId
+
 - [**Step-by-Step Installation**](#step-by-step-installations): instructions for installation on any platform
+
 - [**Additional Setup Information**](#additional-setup-information): supplementary guidance to help you get started
 
 </details>
