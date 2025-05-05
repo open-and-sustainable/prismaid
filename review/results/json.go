@@ -8,7 +8,7 @@ import (
 	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
-// StartJSONArray begins a new JSON array in the specified output file. 
+// startJSONArray begins a new JSON array in the specified output file.
 // This function writes the opening bracket for an array to indicate the start of a JSON list.
 //
 // Arguments:
@@ -25,15 +25,16 @@ func startJSONArray(outputFile *os.File) error {
 	return nil
 }
 
-// WriteJSONData writes the given JSON response string to the specified output file.
-// This function cleans up the response by removing any unnecessary code fences, 
-// ensuring that the data is in a proper JSON format.
+// writeJSONData writes the given JSON response string to the specified output file.
+// This function cleans up the response by removing any unnecessary code fences,
+// enhances the JSON data by adding the filename field, and formats it with indentation.
 //
 // Arguments:
 // - response: A string containing the JSON data to be written.
-// - filename: The name of the file being processed (used for logging or debugging purposes).
+// - filename: The name of the file being processed. This is added to the JSON data as a "filename" field.
 // - outputFile: A pointer to an os.File where the JSON content will be written.
 //
+// The function logs any errors encountered but does not return them.
 // This function does not automatically close or flush the file; these operations should be handled separately.
 func writeJSONData(response string, filename string, outputFile *os.File) {
 	// Strip out markdown code fences (```json ... ```) if present
@@ -64,7 +65,7 @@ func writeJSONData(response string, filename string, outputFile *os.File) {
 	}
 }
 
-// WriteCommaInJSONArray writes a comma to the JSON file to separate individual elements in a JSON array.
+// writeCommaInJSONArray writes a comma to the JSON file to separate individual elements in a JSON array.
 // This function should be called between writing separate JSON objects to maintain valid JSON syntax.
 //
 // Arguments:
@@ -81,8 +82,9 @@ func writeCommaInJSONArray(outputFile *os.File) error {
 	return nil
 }
 
-// CloseJSONArray writes the closing bracket for a JSON array, indicating the end of the list.
+// closeJSONArray writes the closing bracket for a JSON array, indicating the end of the list.
 // This function should be called after all elements in the JSON array have been written.
+// It adds a newline before the closing bracket for proper formatting.
 //
 // Arguments:
 // - outputFile: A pointer to an os.File where the closing bracket will be written.
@@ -100,7 +102,15 @@ func closeJSONArray(outputFile *os.File) error {
 	return nil
 }
 
-// cleanJSON strips out the markdown code fences from the response if present.
+// cleanJSON strips out markdown code fences from a string containing JSON data.
+// This function processes strings that might be wrapped in markdown-style code
+// blocks (e.g., ```json ... ```) and removes these markers to extract the pure JSON content.
+//
+// Arguments:
+// - response: A string potentially containing JSON data wrapped in markdown code fences.
+//
+// Returns:
+// - A cleaned string containing only the JSON data with surrounding whitespace removed.
 func cleanJSON(response string) string {
 	// Remove triple backticks and the "json" part (if present)
 	response = strings.TrimPrefix(response, "```json")

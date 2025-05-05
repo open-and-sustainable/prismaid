@@ -86,9 +86,9 @@ type ReviewItem struct {
 // The function handles the following:
 //  1. Decoding the TOML configuration into the Config structure.
 //  2. Checking for missing API keys and attempting to retrieve them from environment variables
-//     based on the provider (OpenAI, GoogleAI, Cohere, Anthropic).
+//     based on the provider (OpenAI, GoogleAI, Cohere, Anthropic, DeepSeek).
 //  3. Setting default values for missing or invalid configuration fields, such as
-//     InputConversion, OutputFormat, LogLevel, CotJustification, Summary, and Duplication.
+//     OutputFormat, LogLevel, CotJustification, Summary, and Duplication.
 //  4. Ensuring that LLM configuration parameters like Temperature, TpmLimit, and RpmLimit are
 //     non-negative by applying minimum value constraints.
 func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) {

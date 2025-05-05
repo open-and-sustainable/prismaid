@@ -11,12 +11,12 @@ import (
 
 const duplication_extension = "duplicate"
 
-// DuplicateInput reads all text files from the configured input directory and creates copies of them with a
-// specified duplication extension. This function is useful for creating backup copies of input data or for
-// testing purposes.
+// DuplicateInput reads all .txt files from the configured input directory and creates copies of them with a
+// specified duplication extension. Each duplicated file is named with the pattern "original_name_duplicate.txt".
+// This function is useful for creating backup copies of input data or for testing purposes.
 //
 // Arguments:
-// - config: A pointer to the application’s configuration which holds the input directory details.
+// - config: A pointer to the application's configuration which holds the input directory details.
 //
 // Returns:
 // - An error if the directory cannot be read or if a file operation fails, otherwise returns nil.
@@ -61,6 +61,15 @@ func DuplicateInput(config *config.Config) error {
 	return nil
 }
 
+// RemoveDuplicateInput deletes all text files from the configured input directory that were previously
+// created with the duplication extension. This function is useful for cleaning up backup copies of input
+// data or for resetting after testing.
+//
+// Arguments:
+// - config: A pointer to the application's configuration which holds the input directory details.
+//
+// Returns:
+// - An error if the directory cannot be read or if a file operation fails, otherwise returns nil.
 func RemoveDuplicateInput(config *config.Config) error {
 	// Load files from the input directory
 	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)

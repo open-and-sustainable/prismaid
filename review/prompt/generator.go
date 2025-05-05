@@ -36,8 +36,12 @@ JSON object format for response:
   "summary": "Your concise summary here."
 }`
 
-// ParsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
-// The function combines different parts of the prompts to create a structured list of inputs.
+// parsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
+// The function combines different parts of the prompts (persona, task, expected results, failsafe,
+// definitions, and example) with the content of text files to create a structured list of inputs.
+//
+// It processes all .txt files in the input directory specified in the configuration and generates
+// a prompt for each file by combining the common components with the file's content.
 //
 // Arguments:
 // - config: A pointer to the application's configuration which specifies how prompts should be parsed and organized.
@@ -45,7 +49,8 @@ JSON object format for response:
 // Returns:
 // - Two slices of strings:
 //   - The first slice contains the generated prompts.
-//   - The second slice contains the filenames associated with each prompt.
+//   - The second slice contains the filenames (without extensions) associated with each prompt.
+//   - If there's an error reading a file, both return values may be nil.
 func parsePrompts(config *config.Config) ([]string, []string) {
 	// This slice will store all combined prompts
 	var prompts []string
@@ -88,6 +93,20 @@ func parsePrompts(config *config.Config) ([]string, []string) {
 	return prompts, filenames
 }
 
+// parseExpectedResults generates the expected result format to be included in prompts.
+// It retrieves review keys in their entry order, builds a JSON structure from the review
+// configuration, and combines it with the expected result format string from the config.
+//
+// Arguments:
+//   - config: A pointer to the application's configuration which contains the review structure
+//     and expected result format.
+//
+// Returns:
+//   - A string that combines the expected result format with a JSON representation of the
+//     review items, structured according to their descriptive keys.
+//
+// This function ensures that the prompt sent to the LLM includes a clear specification
+// of the expected response format, facilitating structured parsing of the responses.
 func parseExpectedResults(config *config.Config) string {
 	expectedResult := config.Prompt.ExpectedResult
 	keys := GetReviewKeysByEntryOrder(config)
@@ -110,20 +129,21 @@ func parseExpectedResults(config *config.Config) string {
 	return fullSummary
 }
 
-// GetReviewKeysByEntryOrder retrieves the keys from the review configuration in the order they appear
-// in the configuration file. This function ensures that the keys are returned in a consistent order based
-// on their entry sequence, which is useful for processing that relies on the sequence of entries such as
-// when maintaining the original configuration order is necessary.
+// GetReviewKeysByEntryOrder retrieves the keys from the review configuration and sorts them alphabetically.
+// This function ensures that the keys are returned in a consistent alphabetical order, which is useful for
+// processing that relies on a deterministic sequence of entries rather than the potentially variable order
+// in which they might appear in a map or configuration.
 //
 // Arguments:
 // - config: A pointer to the application's configuration, which specifies the review keys to be retrieved.
 //
 // Returns:
-// - A slice of strings containing the ordered review keys based on their entry order in the configuration file.
+// - A slice of strings containing the review keys sorted alphabetically.
 //
-// This function is particularly useful in scenarios where the order of review items as defined in the
-// configuration impacts the workflow or results, such as generating reports or processing data in the
-// sequence of configuration.
+// This function is particularly useful in scenarios where a consistent ordering of review items is needed
+// for predictable output, regardless of how the keys are stored or defined in the underlying configuration.
+// Note that this does not preserve the original entry order from the configuration file, but rather provides
+// a standardized alphabetical ordering.
 func GetReviewKeysByEntryOrder(config *config.Config) []string {
 	keys := make([]string, 0, len(config.Review))
 	for key := range config.Review {
@@ -156,7 +176,20 @@ func SortReviewKeysAlphabetically(config *config.Config) []string {
 	return keys
 }
 
-// Obtain input object from TOML config
+// PrepareInput generates a structured JSON input object based on the provided configuration.
+// It processes prompts, adds metadata, configures models, and includes optional justification
+// and summary queries as specified in the configuration. The function ensures all components
+// are properly sequenced and organized for further processing.
+//
+// Arguments:
+//   - config: A pointer to the application's configuration which contains all necessary settings
+//     for generating the input structure, including prompt templates, LLM configurations, and
+//     processing options.
+//
+// Returns:
+// - A string containing the JSON-formatted input structure ready for processing.
+// - A slice of strings containing the filenames associated with each prompt for result correlation.
+// - An error if any issues occur during the JSON preparation process.
 func PrepareInput(config *config.Config) (string, []string, error) {
 	prompts, filenames := parsePrompts(config)
 

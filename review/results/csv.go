@@ -9,7 +9,7 @@ import (
 	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
-// CreateCSVWriter initializes and returns a CSV writer for the specified output file.
+// createCSVWriter initializes and returns a CSV writer for the specified output file.
 // The writer generates a header row including provider, model, file name, and provided keys.
 //
 // Arguments:
@@ -31,18 +31,18 @@ func createCSVWriter(outputFile *os.File, keys []string) *csv.Writer {
 // WriteCSVData writes a row of data to the provided CSV writer, ensuring provider, model, and file name are included.
 //
 // Arguments:
-// - writer: A pointer to a csv.Writer to which the data will be written.
+// - response: JSON string containing key-value pairs corresponding to the CSV header.
 // - filename: The name of the file being processed (written as the third column).
 // - provider: The name of the LLM provider (first column).
 // - model: The model name used (second column).
-// - response: JSON string containing key-value pairs corresponding to the CSV header.
+// - writer: A pointer to a csv.Writer to which the data will be written.
 // - keys: A slice of strings representing the column headers.
 func writeCSVData(response string, filename string, provider string, model string, writer *csv.Writer, keys []string) {
 	// Clean the response
 	response = cleanJSON(response)
 
 	// Unmarshal JSON
-	var data map[string]interface{}
+	var data map[string]any
 	err := json.Unmarshal([]byte(response), &data)
 	if err != nil {
 		logger.Error("Error parsing JSON:", err)

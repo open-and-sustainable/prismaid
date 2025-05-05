@@ -14,6 +14,19 @@ import (
 	"github.com/open-and-sustainable/prismaid/review/config"
 )
 
+// Save writes processed model response data to a file in the configured format.
+// It determines the appropriate output format based on the configuration (JSON or CSV)
+// and dispatches to the corresponding save function. When CSV format is selected,
+// it also extracts and saves justifications and summaries to separate text files.
+//
+// Parameters:
+//   - config: Application configuration containing output settings
+//   - results: JSON string containing all model responses
+//   - filenames: List of input filenames that were processed
+//   - keys: List of column headers to include in CSV output
+//
+// Returns:
+//   - error: nil if successful, otherwise an error describing what failed
 func Save(config *config.Config, results string, filenames []string, keys []string) error {
 	resultsFileName := config.Project.Configuration.ResultsFileName
 	outputFormat := config.Project.Configuration.OutputFormat
@@ -33,6 +46,18 @@ func Save(config *config.Config, results string, filenames []string, keys []stri
 	}
 }
 
+// saveJSON creates and populates a JSON file with processed model responses.
+// It formats the responses as an array of objects, each containing provider, model, and filename metadata
+// along with the model's response content. The function preserves the original structure of each model response
+// while adding consistent metadata fields.
+//
+// Parameters:
+//   - filePath: The output file path for the JSON
+//   - resultsString: JSON string containing all model responses
+//   - filenames: List of input filenames that were processed
+//
+// Returns:
+//   - error: nil if successful, otherwise an error describing what failed
 func saveJSON(filePath string, resultsString string, filenames []string) error {
 	outputFile, err := os.Create(filePath)
 	if err != nil {
@@ -105,6 +130,18 @@ func saveJSON(filePath string, resultsString string, filenames []string) error {
 	return nil
 }
 
+// saveCSV creates and populates a CSV file with processed model responses.
+// It converts the JSON model responses into a tabular format with columns specified by keys.
+// Only primary responses (SequenceNumber = 1) are included in the CSV; justifications and summaries are skipped.
+//
+// Parameters:
+//   - filePath: The output file path for the CSV
+//   - resultsString: JSON string containing all model responses
+//   - filenames: List of input filenames that were processed
+//   - keys: List of column headers to include in the CSV
+//
+// Returns:
+//   - error: nil if successful, otherwise an error describing what failed
 func saveCSV(filePath string, resultsString string, filenames []string, keys []string) error {
 	outputFile, err := os.Create(filePath)
 	if err != nil {
@@ -144,6 +181,14 @@ func saveCSV(filePath string, resultsString string, filenames []string, keys []s
 	return nil
 }
 
+// GetDirectoryPath extracts the directory component from a file path.
+// It returns an empty string if the directory is the current directory (".").
+//
+// Parameters:
+//   - resultsFileName: The file path to extract the directory from
+//
+// Returns:
+//   - string: The directory path, or empty string if the directory is "."
 func GetDirectoryPath(resultsFileName string) string {
 	dir := filepath.Dir(resultsFileName)
 
@@ -154,6 +199,17 @@ func GetDirectoryPath(resultsFileName string) string {
 	return dir
 }
 
+// saveJustificationsAndSummaries extracts and saves justification and summary content from model responses
+// to separate text files. It only processes these files if the respective configuration options are enabled.
+//
+// Parameters:
+//   - config: The application configuration containing justification and summary settings
+//   - resultsFileName: Base name for result files (without extension)
+//   - resultsString: JSON string containing all model responses
+//   - filenames: List of input filenames that were processed
+//
+// Returns:
+//   - error: nil if successful, otherwise an error describing what failed
 func saveJustificationsAndSummaries(config *config.Config, resultsFileName string, resultsString string, filenames []string) error {
 	justificationEnabled := config.Project.Configuration.CotJustification == "yes"
 	summaryEnabled := config.Project.Configuration.Summary == "yes"

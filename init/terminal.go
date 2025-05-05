@@ -28,12 +28,24 @@ type ModelItem struct {
 	RpmLimit    string
 }
 
-// RunInteractiveConfig launches an interactive terminal session to collect project configuration information
-// from the user. It utilizes advanced prompt features to provide a user-friendly way of setting key project
-// settings.
+// RunInteractiveConfigCreation launches an interactive terminal session to collect project configuration
+// information from the user. It guides the user through a comprehensive setup process using a variety
+// of prompt styles to create a complete TOML configuration file.
 //
-// This function offers different types of prompts such as single and multiple choices, allowing the user
-// to customize configurations based on project requirements.
+// The function collects multiple types of configuration data:
+// 1. Project metadata (name, author, version)
+// 2. File system settings (input/output directories and formats)
+// 3. Processing options (logging level, duplication, summaries)
+// 4. LLM model configurations (providers, API keys, model selections)
+// 5. Prompt components (persona, task descriptions, expected results)
+// 6. Review criteria (items to review, definitions, examples)
+//
+// All collected information is structured into a TOML configuration file and saved to the
+// user-specified location. If the user opts to skip certain sections, appropriate notices
+// are displayed about manual configuration requirements.
+//
+// The function uses error checking throughout to ensure valid input, particularly for
+// file paths and numeric values.
 func RunInteractiveConfigCreation() {
 	fmt.Println("Running interactive project configuration initialization...")
 
@@ -262,6 +274,24 @@ func RunInteractiveConfigCreation() {
 	}
 }
 
+// collectModelItems interactively prompts the user to define LLM model configurations
+// for the project. It repeatedly asks the user if they want to add model configurations,
+// collecting details such as provider, API key, model name, temperature, and rate limits.
+//
+// The function uses an interactive command-line interface to:
+// 1. Ask if the user wants to add a model configuration
+// 2. If yes, prompt for a provider selection (OpenAI, GoogleAI, Cohere, etc.)
+// 3. Collect an API key (with password masking for security)
+// 4. Present provider-specific model choices
+// 5. Collect temperature and rate limit settings (tpm/rpm)
+// 6. Continue until the user chooses not to add more models
+//
+// Returns:
+//   - A slice of ModelItem structures, each containing provider, API key,
+//     model name, temperature, and rate limit configurations
+//
+// Each ModelItem will later be converted into a section in the TOML configuration
+// file under the [project.llm] section.
 func collectModelItems() []ModelItem {
 	var modelItems []ModelItem
 	count := 1
@@ -383,6 +413,16 @@ func collectModelItems() []ModelItem {
 	return modelItems
 }
 
+// generateModelToml creates a formatted TOML string from a slice of ModelItem structures.
+// It converts each model configuration into a TOML section with properties like provider,
+// API key, model name, temperature, and rate limits. Each model is assigned a sequential
+// number in the TOML output.
+//
+// Parameters:
+//   - modelsItems: A slice of ModelItem structures containing model configurations
+//
+// Returns:
+//   - A formatted string containing TOML configuration for the [project.llm] section
 func generateModelToml(modelsItems []ModelItem) string {
 	var tomlModelsSection strings.Builder
 
@@ -401,7 +441,23 @@ func generateModelToml(modelsItems []ModelItem) string {
 	return tomlModelsSection.String()
 }
 
-// Function to interactively collect review items and generate the [review] section of the TOML file
+// collectReviewItems interactively prompts the user to define review criteria
+// for project configuration. It repeatedly asks the user if they want to add
+// review items, collecting a key and a set of possible values for each one.
+//
+// The function uses an interactive command-line interface to:
+// 1. Ask if the user wants to add a review item
+// 2. If yes, prompt for a key name
+// 3. Collect possible values as a comma-separated list
+// 4. Convert the input into a ReviewItem structure
+// 5. Continue until the user chooses not to add more items
+//
+// Returns:
+//   - A slice of ReviewItem structures, each containing a key string and
+//     a slice of possible values for that key
+//
+// Each ReviewItem will later be converted into a section in the TOML configuration
+// file under the [review] section.
 func collectReviewItems() []ReviewItem {
 	var reviewItems []ReviewItem
 	count := 1
@@ -441,7 +497,15 @@ func collectReviewItems() []ReviewItem {
 	return reviewItems
 }
 
-// Helper function to generate the TOML configuration string for the [review] section
+// generateReviewToml creates a formatted TOML string from a slice of ReviewItem structures.
+// It converts each review item into a TOML section with a key and an array of possible values.
+// Each review item is assigned a sequential number in the TOML output.
+//
+// Parameters:
+//   - reviewItems: A slice of ReviewItem structures containing keys and their possible values
+//
+// Returns:
+//   - A formatted string containing TOML configuration for the [review] section
 func generateReviewToml(reviewItems []ReviewItem) string {
 	var tomlReviewSection strings.Builder
 
@@ -462,7 +526,15 @@ func generateReviewToml(reviewItems []ReviewItem) string {
 	return tomlReviewSection.String()
 }
 
-// Function to interactively collect definitions based on review items
+// collectDefinitions interactively prompts the user to provide definitions for review items.
+// It iterates through the provided review items, asking if the user wants to define
+// each one. For each confirmed item, it collects a descriptive definition text.
+//
+// Parameters:
+//   - reviewItems: A slice of ReviewItem structures containing keys and their possible values
+//
+// Returns:
+//   - A concatenated string containing all the provided definitions with spaces in between
 func collectDefinitions(reviewItems []ReviewItem) string {
 	definitions := ""
 	for i, rev := range reviewItems {
@@ -487,7 +559,15 @@ func collectDefinitions(reviewItems []ReviewItem) string {
 	return definitions
 }
 
-// Function to interactively collect examples based on review items
+// collectExamples interactively prompts the user to provide examples for each review item.
+// It iterates through the provided review items, asking if the user wants to create an
+// example for each one. For each confirmed item, it collects a descriptive example text.
+//
+// Parameters:
+//   - reviewItems: A slice of ReviewItem structures containing keys and their possible values
+//
+// Returns:
+//   - A concatenated string containing all the provided examples with spaces in between
 func collectExamples(reviewItems []ReviewItem) string {
 	examples := ""
 	for i, rev := range reviewItems {
@@ -512,7 +592,32 @@ func collectExamples(reviewItems []ReviewItem) string {
 	return examples
 }
 
-// Helper function to generate the TOML configuration string
+// generateTomlConfig creates a formatted TOML configuration string from the provided parameters.
+// It structures the configuration into sections for project metadata, operational settings,
+// LLM configuration, prompt components, and review criteria.
+//
+// Parameters:
+//   - projectName: Name of the project
+//   - author: Author of the project
+//   - version: Version number
+//   - inputDir: Directory containing input files
+//   - resultsFileName: Name of the file to store results
+//   - outputFormat: Format for output data (e.g., "csv", "json")
+//   - logLevel: Logging verbosity level
+//   - duplication: Whether to enable duplication for debugging
+//   - cotJustification: Whether to enable chain-of-thought justification
+//   - summary: Whether to enable document summarization
+//   - models: Pre-formatted TOML string for LLM model configurations
+//   - persona: Description of the AI persona for the review prompt
+//   - task: Description of the task for the review prompt
+//   - expected_result: Description of expected results for the review prompt
+//   - failsafe: Fallback instructions for the review prompt
+//   - definitions: Definitions of key terms used in the review
+//   - example: Example reviews to guide the LLM
+//   - review: Pre-formatted TOML string for review criteria
+//
+// Returns:
+//   - A formatted TOML configuration string with all whitespace trimmed
 func generateTomlConfig(projectName, author, version, inputDir, resultsFileName, outputFormat,
 	logLevel, duplication, cotJustification, summary, models,
 	persona, task, expected_result, failsafe, definitions, example, review string) string {
@@ -549,7 +654,16 @@ example = "%s"
 	return strings.TrimSpace(config)
 }
 
-// Helper function to write the TOML configuration to a file
+// writeTomlConfigToFile writes the generated TOML configuration string to a file
+// at the specified path. It creates the file if it doesn't exist or truncates it
+// if it already exists.
+//
+// Parameters:
+//   - config: A string containing the complete TOML configuration content
+//   - filePath: The path where the configuration file should be saved
+//
+// Returns:
+//   - An error if file creation or writing fails; nil otherwise
 func writeTomlConfigToFile(config, filePath string) error {
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -561,7 +675,17 @@ func writeTomlConfigToFile(config, filePath string) error {
 	return err
 }
 
-// CheckErr is a helper to check and handle errors
+// checkErr is a helper function that handles error checking by terminating
+// the program when an error is encountered. It prints the error message to
+// standard output before exiting with status code 1.
+//
+// Parameters:
+//   - err: The error to check. If nil, the function returns normally.
+//     If non-nil, the error message is printed and the program exits.
+//
+// Note that this function will terminate the entire program if an error
+// is detected, making it appropriate for initialization code where errors
+// are non-recoverable.
 func checkErr(err error) {
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -569,7 +693,16 @@ func checkErr(err error) {
 	}
 }
 
-// validatePath checks if the directory in the given path exists and if the file name is valid.
+// validatePath checks if the provided path is valid by verifying both the directory
+// and file components. It separates the path into directory and filename parts,
+// then validates each part individually.
+//
+// Parameters:
+//   - path: A string representing the full file path to validate
+//
+// Returns:
+//   - An error if either the directory doesn't exist or the filename contains
+//     invalid characters; nil if the entire path is valid
 func validatePath(path string) error {
 	// Separate the directory from the file
 	dir := filepath.Dir(path)
@@ -589,7 +722,16 @@ func validatePath(path string) error {
 	return nil
 }
 
-// validateDirectory checks if the given directory is valid.
+// validateDirectory checks if the given directory path exists and is a valid directory.
+// It verifies both that the path exists in the filesystem and that it points to a
+// directory rather than a regular file or other file system object.
+//
+// Parameters:
+//   - dir: A string representing the directory path to validate
+//
+// Returns:
+//   - An error if the directory doesn't exist, cannot be accessed, or is not a directory;
+//     nil if the directory is valid and accessible
 func validateDirectory(dir string) error {
 	// Check if the directory exists and is a valid directory
 	info, err := os.Stat(dir)
@@ -607,7 +749,16 @@ func validateDirectory(dir string) error {
 	return nil
 }
 
-// validateFileName checks if the file name contains invalid characters
+// validateFileName checks if the provided filename is valid for use in a file system.
+// It validates that the filename doesn't contain characters that are invalid
+// in most file systems, ensures it's not empty, and confirms it has a .toml extension.
+//
+// Parameters:
+//   - fileName: The filename string to validate
+//
+// Returns:
+//   - An error if the filename contains invalid characters, is empty, or
+//     doesn't have a .toml extension; nil otherwise
 func validateFileName(fileName string) error {
 	// Define a regular expression for invalid characters in file names
 	// For example, on Windows: <>:"/\|?*
@@ -630,6 +781,14 @@ func validateFileName(fileName string) error {
 	return nil
 }
 
+// validateNonNegative checks if the provided string value represents a non-negative number.
+// It returns an error if the value is empty or starts with a negative sign.
+//
+// Parameters:
+//   - value: The string to validate
+//
+// Returns:
+//   - An error if the value is empty or negative, nil otherwise
 func validateNonNegative(value string) error {
 	if value == "" {
 		return fmt.Errorf("value cannot be empty")
