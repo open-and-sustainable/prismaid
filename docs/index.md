@@ -26,9 +26,9 @@ prismAId offers a suite of tools to support every stage of your systematic revie
 </div>
 
 ### Core Tools
-1. **Review** - Process systematic literature reviews based on TOML configurations
-2. **Download** - Acquire papers from Zotero collections or from URL lists
-3. **Convert** - Transform files (PDF, DOCX, HTML) to plain text for analysis
+1. **Download** - Acquire papers from Zotero collections or from URL lists
+2. **Convert** - Transform files (PDF, DOCX, HTML) to plain text for analysis
+3. **Review** - Process systematic literature reviews based on TOML configurations
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows

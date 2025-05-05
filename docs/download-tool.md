@@ -166,7 +166,6 @@ For the binary method, create a TOML configuration file (e.g., `zotero_config.to
 user = "12345678"  # Your Zotero user ID
 api_key = "AbCdEfGhIjKlMnOpQrStUv"  # Your Zotero API key
 group = "Systematic Review/Climate Papers"  # Your collection path
-output_directory = "./papers"  # Optional output directory
 ```
 
 ### Running the Download
@@ -181,7 +180,7 @@ Or with Python:
 
 ```python
 import prismaid
-prismaid.download_zotero_pdfs("12345678", "AbCdEfGhIjKlMnOpQrStUv", "Systematic Review/Climate Papers", "./papers")
+prismaid.download_zotero_pdfs("12345678", "AbCdEfGhIjKlMnOpQrStUv", "Systematic Review/Climate Papers")
 ```
 
 ## Best Practices
