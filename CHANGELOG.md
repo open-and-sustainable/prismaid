@@ -9,20 +9,21 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.8.0] - unreleased
+## [0.8.0] - 2025-05-05
 ### Removed
 - Removed Zotero integration and input conversion from TOML project configuration & template
 - Removed Zotero integration and input conversion from terminal configuration init
 - Removed Zotero integration and input conversion from review logic
 - Removed Zotero integration and input conversion from TOML loading logic
+- model features and rate limits in documentation, moved to `alembica` project
 ### Added
 - Added Zotero integration and input conversion from terminal command flags
 - Added Zotero integration and input conversion from main class programmatic access
-- Added Zotero integration and input conversion from other languages access through the shared library
+- Added Zotero integration and input conversion from other languages access through the shared library and ports to Python, R, and Julia
 ### Changed
 - Codebase structure
 ### Fixed
-- Documentation incode and website to reflect changes in this release
+- Documentation inline and website to reflect changes in this release
 
 ##  [0.7.2] - 2025-04-28
 ### Fixed
