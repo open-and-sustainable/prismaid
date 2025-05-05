@@ -555,5 +555,5 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
                   gh issue comment --repo open-and-sustainable/prismaid \
-                    --body $'@JuliaRegistrator register subdir=julia/PrismAId \n there are no breaking changes' \
+                    --body $'@JuliaRegistrator register subdir=julia/PrismAId \n \n Release notes: \n \n There are no breaking changes. See the changelog.' \
                     85
