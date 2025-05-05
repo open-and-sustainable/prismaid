@@ -20,16 +20,16 @@ It provides simple-to-use, efficient, and replicable methods for analyzing resea
 ---
 
 ## Tools Overview
-prismAId has been restructured to offer a comprehensive set of tools for systematic literature reviews:
+prismAId offers a comprehensive set of tools for systematic literature reviews:
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 40%;">
 </div>
 
 ### Core Tools
-1. **Review** - Process systematic literature reviews based on TOML configurations
-2. **Download** - Download papers from Zotero collections or from URL lists
-3. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
+1. **Download** - Download papers from Zotero collections or from URL lists
+2. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
+3. **Review** - Process systematic literature reviews based on TOML configurations
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows
