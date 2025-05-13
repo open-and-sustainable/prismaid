@@ -16,7 +16,7 @@ It provides simple-to-use, efficient, and replicable methods for analyzing resea
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796) 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.07616/status.svg)](https://doi.org/10.21105/joss.07616)
-[![DOI]( https://img.shields.io/badge/prismaid_manual-10.5281/zenodo.15394332-blue)](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf)
+[![DOI]( https://img.shields.io/badge/user_manual-10.5281/zenodo.15394332-blue)](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf)
 
 ---
 
@@ -64,7 +64,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 ---
 
 ## Documentation
-All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf). 
+All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId User Manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf). 
 
 ---
 
