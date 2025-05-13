@@ -64,7 +64,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 ---
 
 ## Documentation
-All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/).
+All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf). 
 
 ---
 
