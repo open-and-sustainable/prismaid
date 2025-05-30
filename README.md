@@ -9,11 +9,12 @@ It provides simple-to-use, efficient, and replicable methods for analyzing resea
 
 [![GitHub Release](https://img.shields.io/github/v/release/Open-and-Sustainable/prismAId?sort=semver&display_name=tag&style=flat)](https://github.com/Open-and-Sustainable/prismAId/releases)
 [![GitHub top language](https://img.shields.io/github/languages/top/Open-and-Sustainable/prismAId?style=flat)](https://go.dev/)
-[![GitHub License](https://img.shields.io/github/license/Open-and-Sustainable/prismAId?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html#license-text)
+[![Go Report Card](https://goreportcard.com/badge/github.com/open-and-sustainable/prismaid)](https://goreportcard.com/report/github.com/open-and-sustainable/prismaid)
 [![Go Reference](https://pkg.go.dev/badge/github.com/open-and-sustainable/prismaid.svg)](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
 [![PyPI - Version](https://img.shields.io/pypi/v/prismaid?logo=pypi)](https://pypi.org/project/prismaid/)
 [![R-universe status badge](https://open-and-sustainable.r-universe.dev/badges/prismaid)](https://open-and-sustainable.r-universe.dev/prismaid)
 
+[![GitHub License](https://img.shields.io/github/license/Open-and-Sustainable/prismAId?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html#license-text)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796) 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.07616/status.svg)](https://doi.org/10.21105/joss.07616)
 [![DOI]( https://img.shields.io/badge/user_manual-10.5281/zenodo.15394332-blue)](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf)
