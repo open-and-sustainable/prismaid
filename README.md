@@ -15,7 +15,7 @@ It provides simple-to-use, efficient, and replicable methods for analyzing resea
 [![R-universe status badge](https://open-and-sustainable.r-universe.dev/badges/prismaid)](https://open-and-sustainable.r-universe.dev/prismaid)
 
 [![GitHub License](https://img.shields.io/github/license/Open-and-Sustainable/prismAId?style=flat)](https://www.gnu.org/licenses/agpl-3.0.en.html#license-text)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796) 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.07616/status.svg)](https://doi.org/10.21105/joss.07616)
 [![DOI]( https://img.shields.io/badge/user_manual-10.5281/zenodo.15394332-blue)](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf)
 
@@ -53,11 +53,11 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
   - Julia [package](https://github.com/JuliaRegistries/General/tree/master/P/PrismAId)
   - 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) for Windows, MacOS, and Linux (AMD64/ARM64)
 - **Supported LLMs**:
-    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, and GPT-4o Mini
-    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, and Gemini 1.5 Flash
-    3. **Cohere**: Command, Command Light, Command R, Command R+, and Command R7B
-    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet
-    5. **DeepSeek**: DeepSeek Chat v3
+    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, GPT-4o Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, o1, o1 Mini, o3, o3 Mini, and o4 Mini
+    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, Gemini 1.5 Flash, Gemini 2.0 Flash, and Gemini 2.0 Flash Lite
+    3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), and Command A
+    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 sonnet, Claude 4.0 Sonnet, and Claude 4.0 Opus
+    5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required
 - **Programming Language**: Core implementation in Go with bindings for Python, R, and Julia
@@ -65,7 +65,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 ---
 
 ## Documentation
-All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId User Manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf). 
+All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId User Manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf).
 
 ---
 

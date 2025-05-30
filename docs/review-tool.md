@@ -166,11 +166,11 @@ The **`[project.llm.#]`** fields manage LLM usage:
 - **`api_key`**: Define project-specific keys here, or leave empty to default to environment variables.
 - **`model`**: select model:
     - Leave blank `''` for cost-efficient automatic model selection.
-    - **OpenAI**: Models include `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
-    - **GoogleAI**: Choose from `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`.
-    - **Cohere**: Options are `command-r7b-12-2024`, `command-r-plus`, `command-r`, `command-light`, `command`.
-    - **Anthropic**: Includes `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
-    - **DeepSeek**: Provides `deepseek-chat`, version 3.
+    - **OpenAI**: Models include `o4-mini`, `o3-mini`, `o3`, `o1-mini`, `o1`, `gpt-4.1-nano`, `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
+    - **GoogleAI**: Choose from `gemini-2.0-flash-lite`, `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`.
+    - **Cohere**: Options are `command-a-03-2025`, `command-r-08-2024`, `command-r7b-12-2024`, `command-r-plus`, `command-r`, `command-light`, `command`.
+    - **Anthropic**: Includes `claude-4-0-opus`, `claude-4-0-sonnet`, `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
+    - **DeepSeek**: Provides `deepseek-chat`, and `deepseek-reasoner` version 3.
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
 - **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay).
 - **`rpm_limit`**: Sets maximum requests per minute. Default is `0` (no limit).
