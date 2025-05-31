@@ -335,6 +335,14 @@ func collectModelItems() []ModelItem {
 					{Text: "gpt-4-turbo", Note: "GPT-4 Turbo."},
 					{Text: "gpt-4o", Note: "GPT-4 Omni."},
 					{Text: "gpt-4o-mini", Note: "GPT-4 Omni Mini."},
+					{Text: "gpt-4.1", Note: "GPT-4.1."},
+					{Text: "gpt-4.1-mini", Note: "GPT-4.1 Mini."},
+					{Text: "gpt-4.1-nano", Note: "GPT-4.1 Nano."},
+					{Text: "o1", Note: "o1."},
+					{Text: "o1-mini", Note: "o1 Mini."},
+					{Text: "o3", Note: "o3."},
+					{Text: "o3-mini", Note: "o3 Mini."},
+					{Text: "o4-mini", Note: "o4 Mini."},
 				},
 				choose.WithHelp(true))
 
@@ -345,6 +353,8 @@ func collectModelItems() []ModelItem {
 					{Text: "gemini-1.0-pro", Note: "Gemini 1.0 Pro."},
 					{Text: "gemini-1.5-pro", Note: "Gemini 1.5 Pro."},
 					{Text: "gemini-1.5-flash", Note: "Gemini 1.5 Flash."},
+					{Text: "gemini-2.0-flash", Note: "Gemini 2.0 Flash."},
+					{Text: "gemini-2.0-flash-lite", Note: "Gemini 2.0 Flash Lite."},
 				},
 				choose.WithHelp(true))
 		} else if provider == "Cohere" {
@@ -354,8 +364,10 @@ func collectModelItems() []ModelItem {
 					{Text: "command", Note: "Command."},
 					{Text: "command-light", Note: "Command Light."},
 					{Text: "command-r", Note: "Command R."},
+					{Text: "command-r-08-2024", Note: "Command R August 2024."},
 					{Text: "command-r-plus", Note: "Command R+."},
 					{Text: "command-r7b-12-2024", Note: "Command R7B."},
+					{Text: "command-a-03-2025", Note: "Command A."},
 				},
 				choose.WithHelp(true))
 		} else if provider == "Anthropic" {
@@ -367,6 +379,9 @@ func collectModelItems() []ModelItem {
 					{Text: "claude-3-opus", Note: "Claude 3 Opus."},
 					{Text: "claude-3-5-haiku", Note: "Claude 3.5 Haiku."},
 					{Text: "claude-3-5-sonnet", Note: "Claude 3.5 Sonnet."},
+					{Text: "claude-3-7-sonnet", Note: "Claude 3.7 Sonnet."},
+					{Text: "claude-4-0-sonnet", Note: "Claude 4.0 Sonnet."},
+					{Text: "claude-4-0-opus", Note: "Claude 4.0 Opus."},
 				},
 				choose.WithHelp(true))
 		} else if provider == "DeepSeek" {
@@ -374,6 +389,7 @@ func collectModelItems() []ModelItem {
 				[]choose.Choice{
 					{Text: "", Note: "Model chosen automatically to minimize costs."},
 					{Text: "deepseek-chat", Note: "DeepSeek Chat - v3."},
+					{Text: "deepseek-reasoner", Note: "DeepSeek Reasoner - v3."},
 				},
 				choose.WithHelp(true))
 		}

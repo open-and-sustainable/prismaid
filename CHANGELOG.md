@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.8.1] - 2025-05-30
+### Changed
+- Updated dependencies, including alembica with support for multiple new models
+
 ## [0.8.0] - 2025-05-05
 ### Removed
 - Removed Zotero integration and input conversion from TOML project configuration & template
