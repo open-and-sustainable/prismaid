@@ -1,15 +1,16 @@
 package html
 
 import (
+	"io"
 	"os"
 
-	html "jaytaylor.com/html2text"
+	"github.com/k3a/html2text"
 )
 
 // ReadHtml converts an HTML file located at the specified path to plain text.
 //
-// It reads the HTML file, processes it with specific options to extract only the text content
-// (excluding links and tables), and returns the plain text representation.
+// It reads the HTML file, processes it to extract only the text content
+// (excluding HTML formatting), and returns the plain text representation.
 //
 // Parameters:
 //   - path: A string containing the file path to the HTML document to be converted.
@@ -25,18 +26,16 @@ func ReadHtml(path string) (string, error) {
 	}
 	defer file.Close()
 
-	// Set options with TextOnly flag set to true
-	options := html.Options{
-		TextOnly:     true,
-		PrettyTables: false,
-		OmitLinks:    true,
-	}
-
-	// Convert HTML to plain text
-	text, err := html.FromReader(file, options)
+	// Read the entire file content
+	htmlContent, err := io.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
+
+	// Convert HTML to plain text
+	// github.com/k3a/html2text automatically handles stripping HTML tags,
+	// links, and formatting to produce clean plain text
+	text := html2text.HTML2Text(string(htmlContent))
 
 	return text, nil
 }
