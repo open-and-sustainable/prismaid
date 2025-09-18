@@ -18,10 +18,9 @@ log_level = "medium"                          # Log level: "low", "medium", or "
 
 ### Deduplication filter - identifies duplicate manuscripts
 [filters.deduplication]
-enabled = true                                 # Enable deduplication filter
-method = "fuzzy"                              # Method: "exact", "fuzzy", or "semantic"
-threshold = 0.85                              # Similarity threshold for fuzzy/semantic (0.0-1.0)
-compare_fields = ["title", "abstract"]        # Fields to compare for duplication
+enabled = false
+use_ai = false                              # Use AI model for similarity detection
+compare_fields = ["title", "abstract"]     # Fields to compare for duplication
 
 ### Language detection filter - screens by language
 [filters.language]

@@ -1,65 +1,43 @@
 package filters
 
 import (
-	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/alembica/extraction"
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 // ManuscriptData represents the data structure for a manuscript
 type ManuscriptData struct {
-	ID           string
-	OriginalData map[string]string
-	Text         string
+	ID            string
+	OriginalData  map[string]string
+	LowerFieldMap map[string]string // Lowercase to original field name mapping
+	Text          string
 }
 
 // DeduplicationConfig represents the configuration for deduplication
 type DeduplicationConfig struct {
-	Method        string
-	Threshold     float64
+	UseAI         bool
 	CompareFields []string
+	LLMConfigs    []interface{} // LLM configurations for AI-based deduplication
 }
 
 // FindDuplicates identifies duplicate manuscripts based on the configuration
 // Returns a map where key is manuscript ID and value is a tuple (isDuplicate, originalID)
 func FindDuplicates(records []ManuscriptData, config DeduplicationConfig) map[string][2]interface{} {
-	switch config.Method {
-	case "exact":
-		return findExactDuplicates(records, config.CompareFields)
-	case "fuzzy":
-		return findFuzzyDuplicates(records, config.CompareFields, config.Threshold)
-	case "semantic":
-		// Semantic matching would require AI/embeddings - placeholder for now
-		return findSemanticDuplicates(records, config.CompareFields, config.Threshold)
-	default:
-		return findExactDuplicates(records, config.CompareFields)
+	if config.UseAI && len(config.LLMConfigs) > 0 {
+		logger.Info("Using AI-based deduplication with %d models", len(config.LLMConfigs))
+		return findAIMatches(records, config)
 	}
+	logger.Info("Using simple matching for deduplication")
+	return findSimpleMatches(records, config.CompareFields)
 }
 
-// findExactDuplicates finds exact matches based on specified fields
-func findExactDuplicates(manuscripts []ManuscriptData, compareFields []string) map[string][2]interface{} {
-	duplicates := make(map[string][2]interface{})
-	hashMap := make(map[string]string) // hash -> first occurrence ID
-
-	for _, manuscript := range manuscripts {
-		// Create a hash of the comparison fields
-		hash := computeHash(manuscript, compareFields)
-
-		if originalID, exists := hashMap[hash]; exists {
-			// This is a duplicate
-			duplicates[manuscript.ID] = [2]interface{}{true, originalID}
-		} else {
-			// First occurrence
-			hashMap[hash] = manuscript.ID
-			duplicates[manuscript.ID] = [2]interface{}{false, ""}
-		}
-	}
-
-	return duplicates
-}
-
-// findFuzzyDuplicates finds similar matches using string similarity algorithms
-func findFuzzyDuplicates(manuscripts []ManuscriptData, compareFields []string, threshold float64) map[string][2]interface{} {
+// findSimpleMatches finds matches allowing for single character differences
+func findSimpleMatches(manuscripts []ManuscriptData, compareFields []string) map[string][2]interface{} {
 	duplicates := make(map[string][2]interface{})
 
 	// Initialize all as non-duplicates
@@ -69,14 +47,18 @@ func findFuzzyDuplicates(manuscripts []ManuscriptData, compareFields []string, t
 
 	// Compare each manuscript with others
 	for i := 0; i < len(manuscripts); i++ {
-		for j := i + 1; j < len(manuscripts); j++ {
-			similarity := calculateSimilarity(manuscripts[i], manuscripts[j], compareFields)
+		if duplicates[manuscripts[i].ID][0].(bool) {
+			continue // Skip if already marked as duplicate
+		}
 
-			if similarity >= threshold {
+		for j := i + 1; j < len(manuscripts); j++ {
+			if duplicates[manuscripts[j].ID][0].(bool) {
+				continue // Skip if already marked as duplicate
+			}
+
+			if areSimpleMatches(manuscripts[i], manuscripts[j], compareFields) {
 				// Mark the second one as duplicate of the first
-				if !duplicates[manuscripts[j].ID][0].(bool) {
-					duplicates[manuscripts[j].ID] = [2]interface{}{true, manuscripts[i].ID}
-				}
+				duplicates[manuscripts[j].ID] = [2]interface{}{true, manuscripts[i].ID}
 			}
 		}
 	}
@@ -84,65 +66,179 @@ func findFuzzyDuplicates(manuscripts []ManuscriptData, compareFields []string, t
 	return duplicates
 }
 
-// findSemanticDuplicates would use embeddings for semantic similarity
-// This is a placeholder implementation - actual implementation would require AI integration
-func findSemanticDuplicates(manuscripts []ManuscriptData, compareFields []string, threshold float64) map[string][2]interface{} {
-	// For now, fall back to fuzzy matching
-	// In a full implementation, this would:
-	// 1. Generate embeddings for each manuscript
-	// 2. Calculate cosine similarity between embeddings
-	// 3. Mark as duplicates if similarity > threshold
-	return findFuzzyDuplicates(manuscripts, compareFields, threshold)
-}
+// areSimpleMatches checks if two manuscripts are matches allowing for single character differences
+func areSimpleMatches(m1, m2 ManuscriptData, compareFields []string) bool {
+	// First, check if DOI field exists and matches exactly - if so, it's a duplicate
+	for _, field := range compareFields {
+		fieldLower := strings.ToLower(field)
+		if fieldLower == "doi" {
+			// Try to get DOI with different case variations
+			doi1 := getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "doi")
+			doi2 := getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "doi")
 
-// computeHash creates a hash from specified fields
-func computeHash(manuscript ManuscriptData, compareFields []string) string {
-	h := sha256.New()
-
-	if len(compareFields) == 0 {
-		// If no fields specified, use the full text
-		h.Write([]byte(normalizeText(manuscript.Text)))
-	} else {
-		// Use specified fields
-		for _, field := range compareFields {
-			if field == "text" {
-				h.Write([]byte(normalizeText(manuscript.Text)))
-			} else if value, exists := manuscript.OriginalData[field]; exists {
-				h.Write([]byte(normalizeText(value)))
+			// If both have DOIs and they match exactly, it's a duplicate
+			if doi1 != "" && doi2 != "" && doi1 == doi2 {
+				return true
 			}
 		}
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil))
-}
-
-// calculateSimilarity calculates similarity between two manuscripts
-func calculateSimilarity(m1, m2 ManuscriptData, compareFields []string) float64 {
-	// Get comparison strings
-	str1 := getComparisonString(m1, compareFields)
-	str2 := getComparisonString(m2, compareFields)
-
-	// Use Jaccard similarity for now
-	return jaccardSimilarity(str1, str2)
-}
-
-// getComparisonString builds a string from specified fields
-func getComparisonString(manuscript ManuscriptData, compareFields []string) string {
-	var parts []string
-
-	if len(compareFields) == 0 {
-		return normalizeText(manuscript.Text)
-	}
+	// Check for author+year+(title OR abstract) combination
+	hasAuthors := false
+	hasYear := false
+	hasTitle := false
+	hasAbstract := false
 
 	for _, field := range compareFields {
-		if field == "text" {
-			parts = append(parts, normalizeText(manuscript.Text))
-		} else if value, exists := manuscript.OriginalData[field]; exists {
-			parts = append(parts, normalizeText(value))
+		fieldLower := strings.ToLower(field)
+		if fieldLower == "authors" || fieldLower == "author" {
+			hasAuthors = true
+		}
+		if fieldLower == "year" {
+			hasYear = true
+		}
+		if fieldLower == "title" {
+			hasTitle = true
+		}
+		if fieldLower == "abstract" {
+			hasAbstract = true
 		}
 	}
 
-	return strings.Join(parts, " ")
+	// If we have the required fields for combination check
+	if hasAuthors && hasYear && (hasTitle || hasAbstract) {
+		authorsMatch := false
+		yearMatch := false
+		titleMatch := false
+		abstractMatch := false
+
+		// Check authors
+		val1 := getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "authors")
+		if val1 == "" {
+			val1 = getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "author")
+		}
+		val2 := getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "authors")
+		if val2 == "" {
+			val2 = getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "author")
+		}
+		if val1 != "" && val2 != "" {
+			authorsMatch = isSingleCharDifference(val1, val2)
+		}
+
+		// Check year
+		val1 = getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "year")
+		val2 = getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "year")
+		if val1 != "" && val2 != "" {
+			yearMatch = isSingleCharDifference(val1, val2)
+		}
+
+		// Check title
+		if hasTitle {
+			val1 = getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "title")
+			val2 = getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "title")
+			if val1 != "" && val2 != "" {
+				titleMatch = isSingleCharDifference(val1, val2)
+			}
+		}
+
+		// Check abstract
+		if hasAbstract {
+			val1 = getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, "abstract")
+			val2 = getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, "abstract")
+			if val1 != "" && val2 != "" {
+				abstractMatch = isSingleCharDifference(val1, val2)
+			}
+		}
+
+		// If authors and year match, and either title or abstract matches, it's a duplicate
+		if authorsMatch && yearMatch && (titleMatch || abstractMatch) {
+			return true
+		}
+	}
+
+	// If no special logic matched, check all fields with AND logic
+	for _, field := range compareFields {
+		fieldLower := strings.ToLower(field)
+
+		// Skip DOI as it was already checked
+		if fieldLower == "doi" {
+			continue
+		}
+
+		val1 := ""
+		val2 := ""
+
+		if fieldLower == "text" {
+			val1 = normalizeText(m1.Text)
+			val2 = normalizeText(m2.Text)
+		} else {
+			val1 = getFieldValueWithMapping(m1.OriginalData, m1.LowerFieldMap, field)
+			val2 = getFieldValueWithMapping(m2.OriginalData, m2.LowerFieldMap, field)
+		}
+
+		// If both values are empty, skip this field
+		if val1 == "" && val2 == "" {
+			continue
+		}
+
+		// Check for exact match or single character difference
+		if !isSingleCharDifference(val1, val2) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isSingleCharDifference checks if two strings are identical or differ by at most one character
+func isSingleCharDifference(s1, s2 string) bool {
+	// Exact match
+	if s1 == s2 {
+		return true
+	}
+
+	// Check if length difference is at most 1
+	lenDiff := len(s1) - len(s2)
+	if lenDiff < -1 || lenDiff > 1 {
+		return false
+	}
+
+	// Same length - check for single substitution
+	if lenDiff == 0 {
+		differences := 0
+		for i := 0; i < len(s1); i++ {
+			if s1[i] != s2[i] {
+				differences++
+				if differences > 1 {
+					return false
+				}
+			}
+		}
+		return differences <= 1
+	}
+
+	// Different length by 1 - check for single insertion/deletion
+	shorter, longer := s1, s2
+	if len(s1) > len(s2) {
+		shorter, longer = s2, s1
+	}
+
+	i, j := 0, 0
+	differences := 0
+	for i < len(shorter) && j < len(longer) {
+		if shorter[i] != longer[j] {
+			differences++
+			if differences > 1 {
+				return false
+			}
+			j++ // Skip character in longer string
+		} else {
+			i++
+			j++
+		}
+	}
+
+	return true
 }
 
 // normalizeText normalizes text for comparison
@@ -156,111 +252,245 @@ func normalizeText(text string) string {
 	return text
 }
 
-// jaccardSimilarity calculates Jaccard similarity between two strings
-func jaccardSimilarity(str1, str2 string) float64 {
-	// Tokenize strings into words
-	words1 := strings.Fields(str1)
-	words2 := strings.Fields(str2)
-
-	// Create sets
-	set1 := make(map[string]bool)
-	set2 := make(map[string]bool)
-
-	for _, word := range words1 {
-		set1[word] = true
-	}
-	for _, word := range words2 {
-		set2[word] = true
+// getFieldValueCaseInsensitive tries to get a field value with case-insensitive matching
+func getFieldValueCaseInsensitive(data map[string]string, fieldName string) string {
+	// Direct match first
+	if val, exists := data[fieldName]; exists {
+		return normalizeText(val)
 	}
 
-	// Calculate intersection and union
-	intersection := 0
-	union := make(map[string]bool)
-
-	for word := range set1 {
-		union[word] = true
-		if set2[word] {
-			intersection++
-		}
+	// Try case variations
+	fieldLower := strings.ToLower(fieldName)
+	if val, exists := data[fieldLower]; exists {
+		return normalizeText(val)
 	}
-	for word := range set2 {
-		union[word] = true
+	if val, exists := data[strings.ToUpper(fieldName)]; exists {
+		return normalizeText(val)
+	}
+	if val, exists := data[strings.Title(fieldName)]; exists {
+		return normalizeText(val)
 	}
 
-	if len(union) == 0 {
-		return 0.0
-	}
-
-	return float64(intersection) / float64(len(union))
+	return ""
 }
 
-// LevenshteinDistance calculates the edit distance between two strings
-func LevenshteinDistance(s1, s2 string) int {
-	if len(s1) == 0 {
-		return len(s2)
-	}
-	if len(s2) == 0 {
-		return len(s1)
+// getFieldValueWithMapping tries to get a field value using the lowercase field mapping
+func getFieldValueWithMapping(data map[string]string, lowerMap map[string]string, fieldName string) string {
+	// Try direct match first
+	if val, exists := data[fieldName]; exists {
+		return normalizeText(val)
 	}
 
-	// Create matrix
-	matrix := make([][]int, len(s1)+1)
-	for i := range matrix {
-		matrix[i] = make([]int, len(s2)+1)
+	// Try using lowercase mapping
+	fieldLower := strings.ToLower(fieldName)
+	if originalField, exists := lowerMap[fieldLower]; exists {
+		if val, exists := data[originalField]; exists {
+			return normalizeText(val)
+		}
 	}
 
-	// Initialize first column and row
-	for i := 0; i <= len(s1); i++ {
-		matrix[i][0] = i
-	}
-	for j := 0; j <= len(s2); j++ {
-		matrix[0][j] = j
+	return ""
+}
+
+// findAIMatches uses AI models to detect duplicates
+func findAIMatches(manuscripts []ManuscriptData, config DeduplicationConfig) map[string][2]interface{} {
+	duplicates := make(map[string][2]interface{})
+
+	logger.Info("Starting AI-based duplicate detection for %d manuscripts", len(manuscripts))
+
+	// Initialize all as non-duplicates
+	for _, manuscript := range manuscripts {
+		duplicates[manuscript.ID] = [2]interface{}{false, ""}
 	}
 
-	// Fill matrix
-	for i := 1; i <= len(s1); i++ {
-		for j := 1; j <= len(s2); j++ {
-			cost := 0
-			if s1[i-1] != s2[j-1] {
-				cost = 1
+	// Prepare AI model configurations
+	var models []definitions.Model
+	for _, llmConfig := range config.LLMConfigs {
+		if llm, ok := llmConfig.(map[string]interface{}); ok {
+			model := definitions.Model{
+				Provider:    getStringValue(llm, "provider"),
+				APIKey:      getStringValue(llm, "api_key"),
+				Model:       getStringValue(llm, "model"),
+				Temperature: getFloatValue(llm, "temperature"),
+				TPMLimit:    getIntValue(llm, "tpm_limit"),
+				RPMLimit:    getIntValue(llm, "rpm_limit"),
+			}
+			models = append(models, model)
+		}
+	}
+
+	if len(models) == 0 {
+		logger.Info("No valid AI models configured, falling back to simple matching")
+		// Fall back to simple matching if no valid models
+		return findSimpleMatches(manuscripts, config.CompareFields)
+	}
+
+	logger.Info("Configured %d AI models for deduplication", len(models))
+
+	// Compare each manuscript pair using AI
+	for i := 0; i < len(manuscripts); i++ {
+		if duplicates[manuscripts[i].ID][0].(bool) {
+			continue // Skip if already marked as duplicate
+		}
+
+		for j := i + 1; j < len(manuscripts); j++ {
+			if duplicates[manuscripts[j].ID][0].(bool) {
+				continue // Skip if already marked as duplicate
 			}
 
-			matrix[i][j] = min(
-				matrix[i-1][j]+1,      // deletion
-				matrix[i][j-1]+1,      // insertion
-				matrix[i-1][j-1]+cost, // substitution
-			)
+			// Check if they are duplicates using AI
+			logger.Info("Comparing manuscripts %s and %s with AI", manuscripts[i].ID, manuscripts[j].ID)
+			isDuplicate := checkDuplicateWithAI(manuscripts[i], manuscripts[j], config.CompareFields, models)
+			if isDuplicate {
+				logger.Info("AI detected duplicate: %s is duplicate of %s", manuscripts[j].ID, manuscripts[i].ID)
+				duplicates[manuscripts[j].ID] = [2]interface{}{true, manuscripts[i].ID}
+			}
 		}
 	}
 
-	return matrix[len(s1)][len(s2)]
+	return duplicates
 }
 
-// min returns the minimum of three integers
-func min(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
+// checkDuplicateWithAI uses AI to determine if two manuscripts are duplicates
+func checkDuplicateWithAI(m1, m2 ManuscriptData, compareFields []string, models []definitions.Model) bool {
+	// Build the comparison data
+	comparison1 := buildComparisonData(m1, compareFields)
+	comparison2 := buildComparisonData(m2, compareFields)
+
+	// Build field names list for context
+	fieldsList := strings.Join(compareFields, ", ")
+
+	// Create the prompt
+	prompt := fmt.Sprintf(`You are a scientific reviewer tasked with identifying duplicate manuscripts in a research database. You are provided with specific fields from two different records to compare.
+
+CONTEXT:
+- You are comparing the following fields: %s
+- Records may have variations due to:
+  * Author name formats (initials vs full names, middle names, order variations)
+  * Character encoding issues (é→e, ü→u, ñ→n, ø→o, incorrect UTF-8 representation)
+  * Non-standard character replacements (Müller→Mueller, Gómez→Gomez, Søren→Soren)
+  * Technical simplifications in database entries
+  * Minor transcription differences
+  * Abbreviated vs full journal names
+  * Different citation styles or formats
+  * Minor typos or punctuation differences
+
+IMPORTANT CONSIDERATIONS:
+- If DOI is provided and identical, they are definitely duplicates
+- For author names: "Smith, J." and "Smith, John" likely refer to the same person
+- Character variations: "Müller" and "Mueller" or "André" and "Andre" are likely the same
+- For titles: ignore minor differences in capitalization, punctuation, or small words
+- For years: same year is a strong indicator if other fields match
+- For abstracts: similar content with different phrasing may still be duplicates
+
+MANUSCRIPT 1:
+%s
+
+MANUSCRIPT 2:
+%s
+
+TASK: Determine if these represent the same publication.
+Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}`, fieldsList, comparison1, comparison2)
+
+	// Prepare the input for alembica
+	input := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       "1.0",
+			SchemaVersion: "1.0",
+		},
+		Models: models,
+		Prompts: []definitions.Prompt{
+			{
+				PromptContent:  prompt,
+				SequenceID:     "1",
+				SequenceNumber: 1,
+			},
+		},
+	}
+
+	// Convert to JSON
+	jsonInput, err := json.Marshal(input)
+	if err != nil {
+		return false
+	}
+
+	// Call alembica
+	logger.Info("Calling AI model for duplicate detection")
+	result, err := extraction.Extract(string(jsonInput))
+	if err != nil {
+		logger.Error("AI extraction failed: %v", err)
+		return false
+	}
+
+	// Parse the response
+	var output definitions.Output
+	if err := json.Unmarshal([]byte(result), &output); err != nil {
+		logger.Error("Failed to parse AI response: %v", err)
+		return false
+	}
+
+	// Check the first response
+	if len(output.Responses) > 0 && len(output.Responses[0].ModelResponses) > 0 {
+		var response map[string]interface{}
+		if err := json.Unmarshal([]byte(output.Responses[0].ModelResponses[0]), &response); err == nil {
+			if duplicate, ok := response["duplicate"].(bool); ok {
+				logger.Info("AI response: duplicate=%v", duplicate)
+				return duplicate
+			}
+			logger.Info("AI response did not contain expected 'duplicate' field")
 		}
-		return c
 	}
-	if b < c {
-		return b
-	}
-	return c
+
+	return false
 }
 
-// NormalizedLevenshteinSimilarity returns similarity score between 0 and 1
-func NormalizedLevenshteinSimilarity(s1, s2 string) float64 {
-	maxLen := len(s1)
-	if len(s2) > maxLen {
-		maxLen = len(s2)
+// buildComparisonData builds a string representation of manuscript data for comparison
+func buildComparisonData(m ManuscriptData, compareFields []string) string {
+	var parts []string
+	for _, field := range compareFields {
+		var value string
+		fieldLower := strings.ToLower(field)
+		if fieldLower == "text" {
+			value = m.Text
+		} else {
+			value = getFieldValueWithMapping(m.OriginalData, m.LowerFieldMap, field)
+		}
+
+		if value != "" {
+			// Format field name for better readability
+			formattedField := strings.ToUpper(strings.ReplaceAll(field, "_", " "))
+			parts = append(parts, fmt.Sprintf("%s: %s", formattedField, value))
+		}
 	}
 
-	if maxLen == 0 {
-		return 1.0
+	if len(parts) == 0 {
+		return "[No data available for comparison fields]"
 	}
 
-	distance := LevenshteinDistance(s1, s2)
-	return 1.0 - float64(distance)/float64(maxLen)
+	return strings.Join(parts, "\n")
+}
+
+// Helper functions to extract values from interface maps
+func getStringValue(m map[string]interface{}, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func getFloatValue(m map[string]interface{}, key string) float64 {
+	if v, ok := m[key].(float64); ok {
+		return v
+	}
+	return 0.0
+}
+
+func getIntValue(m map[string]interface{}, key string) int {
+	if v, ok := m[key].(int); ok {
+		return v
+	}
+	if v, ok := m[key].(float64); ok {
+		return int(v)
+	}
+	return 0
 }

@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"bufio"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
+	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid/screening/filters"
 )
 
@@ -43,8 +45,7 @@ type FiltersConfig struct {
 // DeduplicationConfig for duplicate detection
 type DeduplicationConfig struct {
 	Enabled       bool     `toml:"enabled"`
-	Method        string   `toml:"method"`         // "exact", "fuzzy", "semantic"
-	Threshold     float64  `toml:"threshold"`      // Similarity threshold for fuzzy/semantic
+	UseAI         bool     `toml:"use_ai"`         // Use AI for similarity detection
 	CompareFields []string `toml:"compare_fields"` // Fields to compare for duplication
 }
 
@@ -78,6 +79,7 @@ type LLMConfig struct {
 type ManuscriptRecord struct {
 	ID              string                 `json:"id"`
 	OriginalData    map[string]string      `json:"original_data"`
+	LowerFieldMap   map[string]string      `json:"-"` // Lowercase to original field name mapping
 	Text            string                 `json:"-"` // Text content (not exported to JSON)
 	Tags            map[string]interface{} `json:"tags"`
 	ExclusionReason string                 `json:"exclusion_reason,omitempty"`
@@ -91,6 +93,7 @@ type ScreeningResult struct {
 	ExcludedRecords int                `json:"excluded_records"`
 	Records         []ManuscriptRecord `json:"records"`
 	Statistics      map[string]int     `json:"statistics"`
+	LLMConfigs      []LLMConfig        `json:"-"` // Pass LLM configs through for filters
 }
 
 // Screen performs the main screening process
@@ -106,6 +109,15 @@ func Screen(tomlConfiguration string) error {
 		return fmt.Errorf("configuration validation error: %v", err)
 	}
 
+	// Setup logger based on configuration
+	if config.Project.LogLevel == "high" {
+		logger.SetupLogging(logger.File, config.Project.OutputFile)
+	} else if config.Project.LogLevel == "medium" {
+		logger.SetupLogging(logger.Stdout, config.Project.OutputFile)
+	} else {
+		logger.SetupLogging(logger.Silent, config.Project.OutputFile) // default value
+	}
+
 	// Load input data
 	manuscripts, err := loadInputData(config.Project.InputFile, config.Project.TextColumn, config.Project.IdentifierColumn)
 	if err != nil {
@@ -117,6 +129,7 @@ func Screen(tomlConfiguration string) error {
 		TotalRecords: len(manuscripts),
 		Records:      manuscripts,
 		Statistics:   make(map[string]int),
+		LLMConfigs:   config.Filters.LLM,
 	}
 
 	// Apply filters
@@ -182,15 +195,18 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 		return nil, fmt.Errorf("error reading CSV header: %v", err)
 	}
 
-	// Find column indices
+	// Create lowercase map for field lookups while preserving original names
+	headerMap := make(map[string]string) // lowercase -> original
+	for _, col := range header {
+		headerMap[strings.ToLower(col)] = col
+	}
+
+	// Find column indices (case-insensitive)
 	textIdx := -1
-	idIdx := -1
+	textColumnLower := strings.ToLower(textColumn)
 	for i, col := range header {
-		if col == textColumn {
+		if strings.ToLower(col) == textColumnLower {
 			textIdx = i
-		}
-		if col == idColumn {
-			idIdx = i
 		}
 	}
 
@@ -215,22 +231,21 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 
 		// Create manuscript record
 		manuscript := ManuscriptRecord{
-			OriginalData: make(map[string]string),
-			Tags:         make(map[string]interface{}),
-			Include:      true, // Initially include all records
+			OriginalData:  make(map[string]string),
+			LowerFieldMap: make(map[string]string),
+			Tags:          make(map[string]interface{}),
+			Include:       true, // Initially include all records
 		}
 
-		// Set ID
-		if idIdx >= 0 && idIdx < len(record) {
-			manuscript.ID = record[idIdx]
-		} else {
-			manuscript.ID = fmt.Sprintf("record_%d", recordNum)
-		}
+		// Use row number as unique internal ID
+		manuscript.ID = fmt.Sprintf("%d", recordNum)
 
 		// Store all original data
 		for i, value := range record {
 			if i < len(header) {
 				manuscript.OriginalData[header[i]] = value
+				// Store lowercase mapping for case-insensitive lookups
+				manuscript.LowerFieldMap[strings.ToLower(header[i])] = header[i]
 			}
 		}
 
@@ -259,25 +274,27 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 
 // loadTSVData loads data from TSV/TXT file
 func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecord, error) {
-	// Create a CSV reader configured for tab-separated values
-	reader := csv.NewReader(file)
-	reader.Comma = '\t'
+	scanner := bufio.NewScanner(file)
 
 	// Read header
-	header, err := reader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("error reading TSV header: %v", err)
+	if !scanner.Scan() {
+		return nil, fmt.Errorf("error reading TSV header")
+	}
+	header := strings.Split(scanner.Text(), "\t")
+
+	// Create lowercase map for field lookups while preserving original names
+	headerMap := make(map[string]string) // lowercase -> original
+	for _, col := range header {
+		headerMap[strings.ToLower(col)] = col
 	}
 
-	// Find column indices
+	// Find column indices (case-insensitive)
 	textIdx := -1
-	idIdx := -1
+	textColumnLower := strings.ToLower(textColumn)
 	for i, col := range header {
-		if col == textColumn {
+		colLower := strings.ToLower(col)
+		if colLower == textColumnLower {
 			textIdx = i
-		}
-		if col == idColumn {
-			idIdx = i
 		}
 	}
 
@@ -289,56 +306,50 @@ func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 	var manuscripts []ManuscriptRecord
 	recordNum := 0
 
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error reading TSV record: %v", err)
-		}
+	for scanner.Scan() {
+		line := scanner.Text()
+		values := strings.Split(line, "\t")
 
 		recordNum++
 
 		// Create manuscript record
 		manuscript := ManuscriptRecord{
-			OriginalData: make(map[string]string),
-			Tags:         make(map[string]interface{}),
-			Include:      true, // Initially include all records
+			OriginalData:  make(map[string]string),
+			LowerFieldMap: make(map[string]string),
+			Tags:          make(map[string]interface{}),
+			Include:       true, // Initially include all records
 		}
 
-		// Set ID
-		if idIdx >= 0 && idIdx < len(record) {
-			manuscript.ID = record[idIdx]
-		} else {
-			manuscript.ID = fmt.Sprintf("record_%d", recordNum)
-		}
+		// Use row number as unique internal ID
+		manuscript.ID = fmt.Sprintf("%d", recordNum)
 
 		// Store all original data
-		for i, value := range record {
+		for i, value := range values {
 			if i < len(header) {
 				manuscript.OriginalData[header[i]] = value
+				// Store lowercase mapping for case-insensitive lookups
+				manuscript.LowerFieldMap[strings.ToLower(header[i])] = header[i]
 			}
 		}
 
-		// Get text content (could be a path to file or actual text)
-		if textIdx < len(record) {
-			textContent := record[textIdx]
-			// Check if it's a file path
-			if fileExists(textContent) {
-				content, err := os.ReadFile(textContent)
-				if err != nil {
-					fmt.Printf("Warning: Could not read file %s: %v\n", textContent, err)
-					manuscript.Text = textContent // Use as is if file can't be read
-				} else {
-					manuscript.Text = string(content)
-				}
-			} else {
-				manuscript.Text = textContent
+		// Set text (abstract)
+		if textIdx >= 0 && textIdx < len(values) {
+			manuscript.Text = values[textIdx]
+		}
+
+		// Try to read the text from file if it's a path
+		if manuscript.Text != "" && fileExists(manuscript.Text) {
+			content, err := os.ReadFile(manuscript.Text)
+			if err == nil {
+				manuscript.Text = string(content)
 			}
 		}
 
 		manuscripts = append(manuscripts, manuscript)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading TSV file: %v", err)
 	}
 
 	return manuscripts, nil
@@ -350,17 +361,18 @@ func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfi
 	manuscripts := make([]filters.ManuscriptData, len(result.Records))
 	for i, record := range result.Records {
 		manuscripts[i] = filters.ManuscriptData{
-			ID:           record.ID,
-			OriginalData: record.OriginalData,
-			Text:         record.Text,
+			ID:            record.ID,
+			OriginalData:  record.OriginalData,
+			LowerFieldMap: record.LowerFieldMap,
+			Text:          record.Text,
 		}
 	}
 
 	// Convert config to filters.DeduplicationConfig
 	filterConfig := filters.DeduplicationConfig{
-		Method:        config.Method,
-		Threshold:     config.Threshold,
+		UseAI:         config.UseAI,
 		CompareFields: config.CompareFields,
+		LLMConfigs:    convertLLMConfigs(result.LLMConfigs),
 	}
 
 	duplicates := filters.FindDuplicates(manuscripts, filterConfig)
@@ -655,4 +667,20 @@ func validateConfig(config *ScreeningConfig) error {
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
+}
+
+// convertLLMConfigs converts LLMConfig to interface{} for filter usage
+func convertLLMConfigs(configs []LLMConfig) []interface{} {
+	result := make([]interface{}, len(configs))
+	for i, config := range configs {
+		result[i] = map[string]interface{}{
+			"provider":    config.Provider,
+			"api_key":     config.APIKey,
+			"model":       config.Model,
+			"temperature": config.Temperature,
+			"tpm_limit":   config.TPMLimit,
+			"rpm_limit":   config.RPMLimit,
+		}
+	}
+	return result
 }

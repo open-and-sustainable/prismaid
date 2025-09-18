@@ -116,9 +116,8 @@ The filters section controls which screening criteria to apply:
 
 [filters.deduplication]
 enabled = true
-method = "fuzzy"                          # "exact", "fuzzy", or "semantic"
-threshold = 0.85                          # Similarity threshold (0.0-1.0)
-compare_fields = ["title", "abstract"]    # Fields to compare
+use_ai = false                            # Use AI for similarity detection
+compare_fields = ["title", "abstract", "doi", "authors", "year"]  # Fields to compare for duplication
 
 [filters.language]
 enabled = true
@@ -151,22 +150,68 @@ rpm_limit = 0                             # Requests per minute limit
 
 ### Deduplication Filter
 
-The deduplication filter identifies duplicate manuscripts using three methods:
+The deduplication filter identifies duplicate manuscripts using two methods:
 
-#### 1. Exact Matching
-- Compares specified fields exactly (after normalization)
-- Fastest method with 100% precision
-- Best for: Structured data with consistent formatting
+#### 1. Simple Matching (Non-AI)
+When `use_ai = false`, the filter uses intelligent field comparison:
 
-#### 2. Fuzzy Matching
-- Uses string similarity algorithms (Jaccard, Levenshtein)
-- Configurable threshold (0.0 to 1.0)
-- Best for: Catching near-duplicates with minor variations
+**Priority Matching Rules:**
+- **DOI Match**: If DOI fields exist and match exactly, records are considered duplicates
+- **Combined Fields**: Checks for author + year + (title OR abstract) combinations
+- **Single Character Tolerance**: Allows for minor variations (single character differences) in field comparisons
+- **Text Normalization**: Automatically handles case differences, extra whitespace, and punctuation variations
 
-#### 3. Semantic Matching (Future Enhancement)
-- Uses embeddings for semantic similarity
-- Catches conceptually similar manuscripts
-- Best for: Identifying paraphrased or translated duplicates
+**Best for:** Fast processing when records have consistent metadata or minor variations
+
+#### 2. AI-Assisted Matching
+When `use_ai = true` and LLM is configured, the filter uses semantic understanding:
+
+**AI Capabilities:**
+- Recognizes author name variations (initials vs full names, middle names)
+- Handles character encoding issues (é→e, ü→u, Müller→Mueller)
+- Understands minor title/abstract rephrasing
+- Identifies duplicates despite formatting differences
+
+**AI Prompt Used:**
+```
+You are a scientific reviewer tasked with identifying duplicate manuscripts in a research database. You are provided with specific fields from two different records to compare.
+
+CONTEXT:
+- You are comparing the following fields: [configured fields]
+- Records may have variations due to:
+  * Author name formats (initials vs full names, middle names, order variations)
+  * Character encoding issues (é→e, ü→u, ñ→n, ø→o, incorrect UTF-8 representation)
+  * Non-standard character replacements (Müller→Mueller, Gómez→Gomez, Søren→Soren)
+  * Technical simplifications in database entries
+  * Minor transcription differences
+  * Abbreviated vs full journal names
+  * Different citation styles or formats
+  * Minor typos or punctuation differences
+
+IMPORTANT CONSIDERATIONS:
+- If DOI is provided and identical, they are definitely duplicates
+- For author names: "Smith, J." and "Smith, John" likely refer to the same person
+- Character variations: "Müller" and "Mueller" or "André" and "Andre" are likely the same
+- For titles: ignore minor differences in capitalization, punctuation, or small words
+- For years: same year is a strong indicator if other fields match
+- For abstracts: similar content with different phrasing may still be duplicates
+
+MANUSCRIPT 1:
+[field data]
+
+MANUSCRIPT 2:
+[field data]
+
+TASK: Determine if these represent the same publication.
+Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}
+```
+
+**Output Format:**
+Duplicates are marked in the output with:
+- `tag_is_duplicate`: `true` for duplicates, `false` for originals
+- `tag_duplicate_of`: Contains the ID of the original record (empty for non-duplicates)
+- `include`: Set to `false` for duplicates
+- `exclusion_reason`: "Duplicate of [ID]" for duplicates
 
 ### Language Detection Filter
 

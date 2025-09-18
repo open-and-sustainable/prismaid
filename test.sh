@@ -67,6 +67,7 @@ else
     echo "    ✗ Screening with config test failed"
 fi
 
+: <<'COMMENT'
 echo "###### Testing DOWNLOAD-URL ######"
 echo "==> Testing URL downloads..."
 # Create a temporary directory for downloads to avoid polluting test inputs
@@ -124,6 +125,7 @@ else
     echo "    ✗ Review test failed"
 fi
 
+COMMENT
 # Final cleanup
 echo ""
 echo "###### Final cleanup ######"

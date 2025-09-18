@@ -85,6 +85,7 @@ func main() {
 
 	// Screening process
 	if *screeningConfigPath != "" {
+		logger.SetupLogging(logger.Stdout, "")
 		data, err := os.ReadFile(*screeningConfigPath)
 		if err != nil {
 			logger.Error("Error reading Screening configuration:", err)
@@ -99,6 +100,7 @@ func main() {
 
 	// Review project
 	if *projectConfigPath != "" {
+		logger.SetupLogging(logger.Stdout, "")
 		data, err := os.ReadFile(*projectConfigPath)
 		if err != nil {
 			logger.Error("Error reading Review configuration:", err)

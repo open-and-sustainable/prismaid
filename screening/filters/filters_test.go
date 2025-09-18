@@ -158,7 +158,7 @@ func TestDeduplication(t *testing.T) {
 	// Test exact matching
 	t.Run("Exact matching", func(t *testing.T) {
 		config := DeduplicationConfig{
-			Method:        "exact",
+			UseAI:         false,
 			CompareFields: []string{"title", "abstract"},
 		}
 
@@ -189,8 +189,8 @@ func TestDeduplication(t *testing.T) {
 	})
 
 	// Test fuzzy matching
-	t.Run("Fuzzy matching", func(t *testing.T) {
-		manuscriptsFuzzy := []ManuscriptData{
+	t.Run("Simple matching", func(t *testing.T) {
+		manuscriptsSimple := []ManuscriptData{
 			{
 				ID: "1",
 				OriginalData: map[string]string{
@@ -201,12 +201,19 @@ func TestDeduplication(t *testing.T) {
 			{
 				ID: "2",
 				OriginalData: map[string]string{
-					"title": "Climate Changes and Global Warming", // Minor difference
+					"title": "Climate Change and Global Warming", // Exact match
 				},
 				Text: "Study on climate",
 			},
 			{
 				ID: "3",
+				OriginalData: map[string]string{
+					"title": "Climate Changes and Global Warming", // Single char difference (Change -> Changes)
+				},
+				Text: "Study on climate",
+			},
+			{
+				ID: "4",
 				OriginalData: map[string]string{
 					"title": "Completely Different Study",
 				},
@@ -215,23 +222,30 @@ func TestDeduplication(t *testing.T) {
 		}
 
 		config := DeduplicationConfig{
-			Method:        "fuzzy",
-			Threshold:     0.8,
+			UseAI:         false,
 			CompareFields: []string{"title"},
 		}
 
-		duplicates := FindDuplicates(manuscriptsFuzzy, config)
+		duplicates := FindDuplicates(manuscriptsSimple, config)
 
-		// Check that manuscript 2 is marked as similar to manuscript 1
+		// Check that manuscript 2 is marked as duplicate of manuscript 1 (exact match)
 		if dup, exists := duplicates["2"]; exists {
 			isDuplicate := dup[0].(bool)
 			if !isDuplicate {
-				t.Error("Similar manuscripts should be detected with fuzzy matching")
+				t.Error("Exact matching manuscripts should be detected")
 			}
 		}
 
-		// Check that manuscript 3 is not similar
+		// Check that manuscript 3 is marked as duplicate (single char difference)
 		if dup, exists := duplicates["3"]; exists {
+			isDuplicate := dup[0].(bool)
+			if !isDuplicate {
+				t.Error("Manuscripts with single character difference should be detected")
+			}
+		}
+
+		// Check that manuscript 4 is not similar
+		if dup, exists := duplicates["4"]; exists {
 			isDuplicate := dup[0].(bool)
 			if isDuplicate {
 				t.Error("Dissimilar manuscript should not be marked as duplicate")
@@ -240,7 +254,56 @@ func TestDeduplication(t *testing.T) {
 	})
 }
 
-// TestLevenshteinDistance tests the Levenshtein distance calculation
+// TestBuildComparisonData tests the buildComparisonData function with improved formatting
+func TestBuildComparisonData(t *testing.T) {
+	manuscript := ManuscriptData{
+		ID: "test1",
+		OriginalData: map[string]string{
+			"title":   "Climate Change Study",
+			"authors": "Smith, J.; Johnson, K.",
+			"year":    "2023",
+			"doi":     "10.1234/example.doi",
+		},
+		LowerFieldMap: map[string]string{
+			"title":   "title",
+			"authors": "authors",
+			"year":    "year",
+			"doi":     "doi",
+		},
+	}
+
+	compareFields := []string{"title", "authors", "year", "doi"}
+	result := buildComparisonData(manuscript, compareFields)
+
+	// Check that fields are formatted correctly (values are normalized to lowercase)
+	if !strings.Contains(result, "TITLE: climate change study") {
+		t.Errorf("Expected formatted TITLE field, got: %s", result)
+	}
+	if !strings.Contains(result, "AUTHORS: smith, j.; johnson, k.") {
+		t.Errorf("Expected formatted AUTHORS field, got: %s", result)
+	}
+	if !strings.Contains(result, "YEAR: 2023") {
+		t.Errorf("Expected formatted YEAR field, got: %s", result)
+	}
+	if !strings.Contains(result, "DOI: 10.1234/example.doi") {
+		t.Errorf("Expected formatted DOI field, got: %s", result)
+	}
+
+	// Test with empty fields
+	emptyManuscript := ManuscriptData{
+		ID:            "test2",
+		OriginalData:  map[string]string{},
+		LowerFieldMap: map[string]string{},
+	}
+	emptyResult := buildComparisonData(emptyManuscript, compareFields)
+	if emptyResult != "[No data available for comparison fields]" {
+		t.Errorf("Expected empty data message, got: %s", emptyResult)
+	}
+}
+
+// Levenshtein tests removed - using simple single-character difference matching instead
+/*
+// TestLevenshteinDistance tests the edit distance calculation
 func TestLevenshteinDistance(t *testing.T) {
 	tests := []struct {
 		s1       string
@@ -250,7 +313,8 @@ func TestLevenshteinDistance(t *testing.T) {
 		{"", "", 0},
 		{"hello", "hello", 0},
 		{"hello", "helo", 1},
-		{"hello", "jello", 1},
+		{"hello", "hllo", 1},
+		{"hello", "helloo", 1},
 		{"hello", "world", 4},
 		{"kitten", "sitting", 3},
 		{"saturday", "sunday", 3},
@@ -290,6 +354,7 @@ func TestNormalizedLevenshteinSimilarity(t *testing.T) {
 		})
 	}
 }
+*/
 
 // TestGetLanguageName tests language name lookup
 func TestGetLanguageName(t *testing.T) {

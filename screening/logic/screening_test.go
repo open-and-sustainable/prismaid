@@ -48,7 +48,7 @@ log_level = "low"
 
 [filters.deduplication]
 enabled = true
-method = "exact"
+use_ai = false
 compare_fields = ["title", "abstract"]
 
 [filters.language]
@@ -161,7 +161,7 @@ func TestDeduplicationFilter(t *testing.T) {
 
 	config := DeduplicationConfig{
 		Enabled:       true,
-		Method:        "exact",
+		UseAI:         false,
 		CompareFields: []string{"title", "abstract"},
 	}
 
@@ -396,7 +396,7 @@ func TestConfigValidation(t *testing.T) {
 	}
 }
 
-// TestFuzzyMatching tests fuzzy duplicate detection
+// TestFuzzyMatching tests simple duplicate detection with single character differences
 func TestFuzzyMatching(t *testing.T) {
 	records := []ManuscriptRecord{
 		{
@@ -411,7 +411,7 @@ func TestFuzzyMatching(t *testing.T) {
 		{
 			ID: "2",
 			OriginalData: map[string]string{
-				"title": "Climate Changes and Global Warming", // Minor difference
+				"title": "Climate Change and Global Warmings", // Single char difference
 			},
 			Text:    "Study on climate effects",
 			Tags:    make(map[string]interface{}),
@@ -436,8 +436,7 @@ func TestFuzzyMatching(t *testing.T) {
 
 	config := DeduplicationConfig{
 		Enabled:       true,
-		Method:        "fuzzy",
-		Threshold:     0.8,
+		UseAI:         false,
 		CompareFields: []string{"title"},
 	}
 
@@ -446,9 +445,9 @@ func TestFuzzyMatching(t *testing.T) {
 		t.Fatalf("Fuzzy deduplication failed: %v", err)
 	}
 
-	// Check that similar titles are detected as duplicates
+	// Check that titles with single character difference are detected as duplicates
 	if result.Records[1].Include != false {
-		t.Error("Fuzzy duplicate should be excluded")
+		t.Error("Single character difference duplicate should be excluded")
 	}
 
 	// Check that dissimilar record is not marked as duplicate

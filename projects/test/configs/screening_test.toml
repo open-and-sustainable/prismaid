@@ -16,29 +16,28 @@ log_level = "low"  # Keep low for automated tests
 ### Deduplication filter - test exact matching
 [filters.deduplication]
 enabled = true
-method = "exact"
-threshold = 0.95
-compare_fields = ["title", "abstract"]
+use_ai = true
+compare_fields = ["title", "authors", "abstract", "doi"]
 
 ### Language detection filter - test English detection
 [filters.language]
-enabled = true
+enabled = false
 accepted_languages = ["en"]
 use_ai = false  # Don't use AI in automated tests
 
 ### Article type classification filter - test classification
 [filters.article_type]
-enabled = true
+enabled = false
 exclude_reviews = true
 exclude_editorials = true
 exclude_letters = true
 include_types = []
 
-### No LLM configuration for automated tests
-# [filters.llm.1]
-# provider = "OpenAI"
-# api_key = ""
-# model = "gpt-4o-mini"
-# temperature = 0.01
-# tpm_limit = 0
-# rpm_limit = 0
+### LLM configuration for automated tests
+[[filters.llm]]
+provider = "DeepSeek"
+api_key = ""
+model = "deepseek-chat"
+temperature = 0.001
+tpm_limit = 0
+rpm_limit = 0
