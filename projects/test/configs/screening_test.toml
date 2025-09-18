@@ -16,14 +16,14 @@ log_level = "low"  # Keep low for automated tests
 ### Deduplication filter - test exact matching
 [filters.deduplication]
 enabled = true
-use_ai = true
+use_ai = false
 compare_fields = ["title", "authors", "abstract", "doi"]
 
 ### Language detection filter - test English detection
 [filters.language]
-enabled = false
+enabled = true
 accepted_languages = ["en"]
-use_ai = false  # Don't use AI in automated tests
+use_ai = true
 
 ### Article type classification filter - test classification
 [filters.article_type]

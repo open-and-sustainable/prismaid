@@ -256,7 +256,7 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 			if fileExists(textContent) {
 				content, err := os.ReadFile(textContent)
 				if err != nil {
-					fmt.Printf("Warning: Could not read file %s: %v\n", textContent, err)
+					logger.Error("Could not read file %s: %v", textContent, err)
 					manuscript.Text = textContent // Use as is if file can't be read
 				} else {
 					manuscript.Text = string(content)
@@ -410,14 +410,61 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 		var err error
 
 		if config.UseAI && len(llmConfigs) > 0 {
+			// For AI, pass the entire manuscript data for comprehensive analysis
 			// Convert LLMConfig to interface{} for filter function
-			language, err = filters.DetectLanguageWithAI(result.Records[i].Text, llmConfigs[0])
+			llmInterfaces := convertLLMConfigs(llmConfigs)
+			language, err = filters.DetectLanguageWithAI(result.Records[i].OriginalData, llmInterfaces)
+
+			// Also store AI detection result
+			if language != "" && language != "unknown" {
+				result.Records[i].Tags["ai_detected_language"] = language
+			}
 		} else {
-			language, err = filters.DetectLanguage(result.Records[i].Text)
+			// Non-AI: Detect language from both title and abstract
+			// Try to get title from original data
+			titleText := ""
+			for field, value := range result.Records[i].OriginalData {
+				if strings.ToLower(field) == "title" {
+					titleText = value
+					break
+				}
+			}
+
+			// Get abstract text (from Text field which is populated from text_column)
+			abstractText := result.Records[i].Text
+
+			var titleLang, abstractLang string
+
+			// Detect title language if available
+			if titleText != "" {
+				titleLang, _ = filters.DetectLanguage(titleText)
+			}
+
+			// Detect abstract language if available
+			if abstractText != "" {
+				abstractLang, _ = filters.DetectLanguage(abstractText)
+			}
+
+			// Prioritize title language (as many journals translate abstracts to English)
+			if titleLang != "" && titleLang != "unknown" {
+				language = titleLang
+			} else if abstractLang != "" && abstractLang != "unknown" {
+				language = abstractLang
+			} else {
+				language = "unknown"
+			}
+
+			// Store both detected languages for transparency
+			if titleLang != "" {
+				result.Records[i].Tags["title_language"] = titleLang
+			}
+			if abstractLang != "" {
+				result.Records[i].Tags["abstract_language"] = abstractLang
+			}
 		}
 
 		if err != nil {
-			fmt.Printf("Warning: Language detection failed for %s: %v\n", result.Records[i].ID, err)
+			logger.Error("Language detection failed for %s: %v", result.Records[i].ID, err)
 			continue
 		}
 
@@ -460,7 +507,7 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 
 		articleType, err := filters.ClassifyArticleType(result.Records[i].Text, llmInterfaces)
 		if err != nil {
-			fmt.Printf("Warning: Article type classification failed for %s: %v\n", result.Records[i].ID, err)
+			logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
 			continue
 		}
 
@@ -562,13 +609,20 @@ func saveCSVResults(result *ScreeningResult, outputFile string) error {
 
 	// Build header
 	var header []string
+	allTags := make(map[string]bool)
 	if len(result.Records) > 0 {
 		// Original columns
 		for key := range result.Records[0].OriginalData {
 			header = append(header, key)
 		}
-		// Tag columns
-		for key := range result.Records[0].Tags {
+		// Collect all unique tags from all records
+		for _, record := range result.Records {
+			for key := range record.Tags {
+				allTags[key] = true
+			}
+		}
+		// Add tag columns for all unique tags
+		for key := range allTags {
 			header = append(header, "tag_"+key)
 		}
 		// Status columns
@@ -606,15 +660,15 @@ func saveCSVResults(result *ScreeningResult, outputFile string) error {
 
 // logSummary logs screening summary
 func logSummary(result *ScreeningResult, logLevel string) {
-	fmt.Printf("\n=== Screening Summary ===\n")
-	fmt.Printf("Total Records: %d\n", result.TotalRecords)
-	fmt.Printf("Included: %d\n", result.IncludedRecords)
-	fmt.Printf("Excluded: %d\n", result.ExcludedRecords)
+	logger.Info("\n=== Screening Summary ===")
+	logger.Info("Total Records: %d", result.TotalRecords)
+	logger.Info("Included: %d", result.IncludedRecords)
+	logger.Info("Excluded: %d", result.ExcludedRecords)
 
 	if logLevel == "medium" || logLevel == "high" {
-		fmt.Printf("\n--- Exclusion Statistics ---\n")
+		logger.Info("\n--- Exclusion Statistics ---")
 		for key, value := range result.Statistics {
-			fmt.Printf("%s: %d\n", key, value)
+			logger.Info("%s: %d", key, value)
 		}
 	}
 
@@ -634,7 +688,7 @@ func logSummary(result *ScreeningResult, logLevel string) {
 				}
 				fmt.Fprintf(file, "Tags: %v\n\n", record.Tags)
 			}
-			fmt.Printf("\nDetailed log saved to: %s\n", logFile)
+			logger.Info("\nDetailed log saved to: %s", logFile)
 		}
 	}
 }

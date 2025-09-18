@@ -122,7 +122,7 @@ compare_fields = ["title", "abstract", "doi", "authors", "year"]  # Fields to co
 [filters.language]
 enabled = true
 accepted_languages = ["en", "es", "fr"]   # ISO language codes
-use_ai = false                            # Use AI for detection
+use_ai = false                            # Use AI for detection (recommended for better accuracy)
 
 [filters.article_type]
 enabled = true
@@ -215,19 +215,115 @@ Duplicates are marked in the output with:
 
 ### Language Detection Filter
 
-The language detection filter can operate in two modes:
+The language detection filter identifies the primary language of manuscripts and filters based on accepted languages. It can operate in two modes: rule-based or AI-assisted.
 
-#### Rule-Based Detection
-- Analyzes character scripts (Latin, Cyrillic, CJK, Arabic, etc.)
-- Checks for common words in various languages
-- Fast and privacy-preserving
-- Supports major world languages
+#### Configuration
 
-#### AI-Based Detection
-- Uses LLMs for more accurate detection
-- Handles mixed-language documents
-- Identifies regional variants
-- Requires API configuration
+```toml
+[filters.language]
+enabled = true                             # Enable/disable language filter
+accepted_languages = ["en", "es", "fr"]   # ISO 639-1 language codes to accept
+use_ai = false                            # Use AI for detection (requires LLM config)
+```
+
+#### Working Mechanism
+
+**Processing Order:**
+1. Language detection runs after deduplication (skips already excluded duplicates)
+2. Analyzes each manuscript's title, abstract, and journal fields
+3. Determines primary language
+4. Excludes manuscripts not in the accepted languages list
+
+**Field Priority:**
+- **Title language has priority** over abstract language
+- Many scientific databases translate abstracts to English while keeping original titles
+- Journal names can indicate regional publications (e.g., "Revista Española", "Deutsche Zeitschrift")
+
+#### Rule-Based Detection (use_ai = false)
+
+When `use_ai = false`, the filter uses pattern matching:
+
+**Detection Method:**
+- Analyzes character scripts (Latin, Cyrillic, CJK, Arabic, Hebrew, Greek)
+- Checks for common words in major languages (English, Spanish, French, German, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Arabic)
+- Fast and privacy-preserving (no external API calls)
+- Works offline without dependencies
+
+**Output Tags:**
+- `tag_detected_language`: Final detected language (prioritizes title)
+- `tag_title_language`: Language detected in title field
+- `tag_abstract_language`: Language detected in abstract field
+
+**Limitations:**
+- May struggle with short titles or mixed-language content
+- Limited to major languages with predefined word lists
+- Less accurate for technical/scientific text with many Latin terms
+
+#### AI-Assisted Detection (use_ai = true)
+
+When `use_ai = true` and LLM is configured, the filter uses semantic understanding:
+
+**Detection Method:**
+- Sends title, abstract, and journal fields to configured LLM
+- Uses specialized prompt that understands scientific manuscript conventions
+- Recognizes that abstracts are often translated while titles remain in original language
+- Handles character encoding variations (é→e, ü→u, ñ→n)
+- Identifies primary language even in mixed-language documents
+
+**Graceful Fallback:**
+- If no LLM is configured → falls back to rule-based detection
+- If API call fails → falls back to rule-based detection
+- If response parsing fails → falls back to rule-based detection
+- Always provides a result, never fails completely
+
+**Output Tags:**
+- `tag_detected_language`: Final detected language from AI
+- `tag_ai_detected_language`: Language detected by AI (for debugging)
+
+#### Example Configurations
+
+**Basic rule-based filtering (accept only English):**
+```toml
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+```
+
+**Multi-language with AI detection:**
+```toml
+[filters.language]
+enabled = true
+accepted_languages = ["en", "es", "fr", "de"]
+use_ai = true
+
+[filters.llm.1]
+provider = "OpenAI"
+api_key = ""  # Uses environment variable
+model = "gpt-4o-mini"
+temperature = 0.01
+```
+
+#### Exclusion Handling
+
+Manuscripts excluded by language filter will have:
+- `include`: Set to `false`
+- `exclusion_reason`: "Language not accepted: [detected_language]"
+- Language detection tags preserved for review
+
+#### Performance Considerations
+
+**Rule-based:**
+- Very fast (milliseconds per manuscript)
+- No API costs
+- Consistent results
+- Best for: English-only filtering, quick screening, offline use
+
+**AI-assisted:**
+- Slower (depends on API latency)
+- API costs apply
+- More accurate for edge cases
+- Best for: Multi-language collections, manuscripts with mixed languages, regional publications
 
 ### Article Type Classification Filter
 
@@ -242,6 +338,226 @@ Classifies manuscripts into categories:
 - **Case Reports**: Individual patient cases
 - **Commentary**: Comments on published work
 - **Perspectives**: Author viewpoints
+
+## Filter Interaction and Processing Order
+
+The screening tool applies filters sequentially, which optimizes performance and ensures clear exclusion tracking:
+
+### Processing Pipeline
+
+```
+Input Manuscripts
+    ↓
+[1] DEDUPLICATION FILTER
+    ├─ Identifies duplicates
+    ├─ Marks with: tag_is_duplicate=true
+    └─ Sets: include=false, exclusion_reason="Duplicate of [ID]"
+    ↓
+[2] LANGUAGE FILTER
+    ├─ Skips already excluded records
+    ├─ Detects language (title priority)
+    └─ Excludes non-accepted languages
+    ↓
+[3] ARTICLE TYPE FILTER
+    ├─ Skips already excluded records
+    ├─ Classifies article types
+    └─ Excludes specified types
+    ↓
+Final Output (CSV/JSON)
+```
+
+### Key Principles
+
+1. **Sequential Processing**: Filters run in order - deduplication → language → article type
+2. **Exclusion Preservation**: Once excluded, a manuscript is not reprocessed by subsequent filters
+3. **Single Exclusion Reason**: Each manuscript shows only the first reason for exclusion
+4. **Performance Optimization**: Skipping excluded records reduces API calls and processing time
+5. **Tag Accumulation**: Included manuscripts may have tags from multiple filters
+
+### Example Filter Interaction
+
+Given this configuration:
+```toml
+[filters.deduplication]
+enabled = true
+use_ai = false
+compare_fields = ["doi", "title"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+
+[filters.article_type]
+enabled = true
+exclude_editorials = true
+```
+
+Processing flow for a duplicate Spanish editorial:
+1. **Deduplication**: Marked as duplicate → excluded (exclusion_reason: "Duplicate of 123")
+2. **Language**: Skipped (already excluded) → no language detection performed
+3. **Article Type**: Skipped (already excluded) → no type classification performed
+
+Result: Single exclusion reason preserved, no unnecessary processing.
+
+## Output Format
+
+The screening tool saves results with comprehensive information about each manuscript and the applied filters:
+
+### CSV Output Structure
+
+The CSV output includes the following column types:
+
+1. **Original Data Columns**: All columns from the input file are preserved
+2. **Tag Columns**: Added with prefix `tag_` containing filter results:
+   - `tag_is_duplicate`: `true` if duplicate, `false` or empty otherwise
+   - `tag_duplicate_of`: ID of the original record if duplicate
+   - `tag_detected_language`: Primary language detected (prioritizes title)
+   - `tag_title_language`: Language detected in title (when non-AI mode)
+   - `tag_abstract_language`: Language detected in abstract (when non-AI mode)
+   - `tag_article_type`: Classified article type
+3. **Status Columns**:
+   - `include`: `true` for included records, `false` for excluded
+   - `exclusion_reason`: Explanation for exclusion (e.g., "Duplicate of 123", "Language not accepted: fr")
+
+### Filter Processing Order
+
+Filters are applied sequentially, and excluded records are not reprocessed:
+
+1. **Deduplication**: Marks duplicates, sets `include=false` with reason
+2. **Language**: Skips already excluded records, processes only included ones
+3. **Article Type**: Skips already excluded records, processes only included ones
+
+This ensures:
+- Exclusion reasons are preserved from the first filter that excludes a record
+- Processing efficiency by not running unnecessary filters on excluded records
+- Clear traceability of why each record was excluded
+
+### Language Detection Priority
+
+When using non-AI language detection:
+- **Title language takes priority** over abstract language
+- Many journals translate abstracts to English while keeping original titles
+- Both `title_language` and `abstract_language` tags are saved for transparency
+- The final `detected_language` uses title language when available and valid
+
+### Example CSV Output
+
+```csv
+title,abstract,doi,tag_is_duplicate,tag_duplicate_of,tag_detected_language,tag_title_language,tag_abstract_language,include,exclusion_reason
+"Climate Study","Research on climate...","10.1234",false,,en,en,en,true,
+"Climate Study","Research on climate...","10.1234",true,1,,,,,false,"Duplicate of 1"
+"Étude climatique","Cette recherche...","10.5678",false,,fr,fr,fr,false,"Language not accepted: fr"
+```
+
+## Practical Examples
+
+### Example 1: Basic English-Only Screening
+
+**Scenario**: Screen manuscripts keeping only English research articles, removing duplicates.
+
+```toml
+[project]
+name = "English Literature Review"
+author = "Research Team"
+version = "1.0"
+input_file = "./manuscripts.csv"
+output_file = "./screened_results"
+text_column = "abstract"
+identifier_column = "id"
+output_format = "csv"
+log_level = "medium"
+
+[filters.deduplication]
+enabled = true
+use_ai = false
+compare_fields = ["doi", "title", "authors"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+
+[filters.article_type]
+enabled = true
+exclude_editorials = true
+exclude_letters = true
+exclude_reviews = false  # Keep reviews for literature review
+```
+
+### Example 2: Multi-Language Screening with AI
+
+**Scenario**: Accept manuscripts in English, Spanish, and Portuguese, using AI for accurate detection.
+
+```toml
+[project]
+name = "Latin American Climate Research"
+input_file = "./la_climate_papers.csv"
+output_file = "./filtered_papers"
+
+[filters.deduplication]
+enabled = true
+use_ai = true  # AI helps with author name variations
+compare_fields = ["title", "authors", "year"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en", "es", "pt"]
+use_ai = true  # Better for regional language variants
+
+[filters.llm.1]
+provider = "OpenAI"
+api_key = ""  # Uses OPENAI_API_KEY env variable
+model = "gpt-4o-mini"
+temperature = 0.01
+```
+
+### Example 3: Strict Deduplication for Systematic Review
+
+**Scenario**: Aggressive deduplication for systematic review, accepting only primary research articles.
+
+```toml
+[project]
+name = "Systematic Review Screening"
+log_level = "high"  # Detailed logging for audit trail
+
+[filters.deduplication]
+enabled = true
+use_ai = false  # Faster for large datasets
+compare_fields = ["doi", "title", "authors", "year", "abstract"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+
+[filters.article_type]
+enabled = true
+exclude_reviews = true      # No reviews
+exclude_editorials = true   # No editorials
+exclude_letters = true      # No letters
+include_types = ["research_article"]  # Only primary research
+```
+
+### Example 4: Minimal Filtering for Broad Inclusion
+
+**Scenario**: Keep most manuscripts, only remove obvious duplicates.
+
+```toml
+[project]
+name = "Broad Literature Search"
+
+[filters.deduplication]
+enabled = true
+use_ai = false
+compare_fields = ["doi"]  # Only exact DOI matches
+
+[filters.language]
+enabled = false  # Accept all languages
+
+[filters.article_type]
+enabled = false  # Accept all article types
+```
 
 Classification uses multiple indicators:
 - Keywords and phrases

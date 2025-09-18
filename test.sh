@@ -27,44 +27,94 @@ else
 fi
 
 echo "###### Testing SCREENING ######"
-echo "==> Running screening logic tests..."
-if go test -v ./screening/logic -run TestScreeningWithBasicConfig; then
-    echo "    ✓ Screening logic test passed"
+echo "==> Running screening unit tests..."
+if go test ./screening/logic ./screening/filters -v > /dev/null 2>&1; then
+    echo "    ✓ All screening unit tests passed"
 else
-    echo "    ✗ Screening logic test failed"
-fi
-
-echo "==> Running language detection tests..."
-if go test -v ./screening/filters -run TestLanguageDetection; then
-    echo "    ✓ Language detection test passed"
-else
-    echo "    ✗ Language detection test failed (may not be implemented yet)"
-fi
-
-echo "==> Running article type classification tests..."
-if go test -v ./screening/filters -run TestArticleTypeClassification; then
-    echo "    ✓ Article type classification test passed"
-else
-    echo "    ✗ Article type classification test failed (may not be implemented yet)"
-fi
-
-echo "==> Running deduplication tests..."
-if go test -v ./screening/filters -run TestDeduplication; then
-    echo "    ✓ Deduplication test passed"
-else
-    echo "    ✗ Deduplication test failed (may not be implemented yet)"
+    echo "    ✗ Some screening unit tests failed"
 fi
 
 echo "###### Testing SCREENING with config ######"
-if go run cmd/main.go --screening projects/test/configs/screening_test.toml; then
-    echo "    ✓ Screening with config test passed"
-    if [ -f "projects/test/outputs/screening/test_screening_output.csv" ]; then
-        echo "    ✓ Screening output file created"
+echo "==> Running screening on test manuscripts..."
+if go run cmd/main.go --screening projects/test/configs/screening_test.toml > /tmp/screening_output.log 2>&1; then
+    echo "    ✓ Screening completed successfully"
+
+    OUTPUT_FILE="projects/test/outputs/screening/test_screening_output.csv"
+    if [ -f "$OUTPUT_FILE" ]; then
+        echo ""
+        echo "╔════════════════════════════════════════════════════════════╗"
+        echo "║              MANUSCRIPT SCREENING SUMMARY                   ║"
+        echo "╚════════════════════════════════════════════════════════════╝"
+
+        # Use Python for accurate CSV parsing
+        python3 -c "
+import csv
+import sys
+
+with open('$OUTPUT_FILE', 'r') as f:
+    reader = csv.DictReader(f)
+    rows = list(reader)
+
+    total = len(rows)
+    duplicates = sum(1 for r in rows if r.get('tag_is_duplicate') == 'true')
+    included = sum(1 for r in rows if r.get('include') == 'true')
+
+    # Count exclusion reasons
+    lang_excluded = sum(1 for r in rows if 'Language not accepted' in r.get('exclusion_reason', ''))
+    editorial_excluded = sum(1 for r in rows if 'Editorial' in r.get('exclusion_reason', ''))
+    letter_excluded = sum(1 for r in rows if 'Letter' in r.get('exclusion_reason', ''))
+    review_excluded = sum(1 for r in rows if 'Review' in r.get('exclusion_reason', ''))
+
+    article_excluded = editorial_excluded + letter_excluded + review_excluded
+
+    print('')
+    print('  📚 INITIAL POOL:')
+    print(f'     Total manuscripts loaded: {total}')
+
+    print('')
+    print('  🔄 DEDUPLICATION FILTER:')
+    print(f'     Duplicates removed: {duplicates}')
+    print(f'     Remaining: {total - duplicates}')
+
+    print('')
+    print('  🌐 LANGUAGE FILTER:')
+    print(f'     Non-English removed: {lang_excluded}')
+    print(f'     Remaining: {total - duplicates - lang_excluded}')
+
+    if article_excluded > 0:
+        print('')
+        print('  📝 ARTICLE TYPE FILTER:')
+        print(f'     Excluded types: {article_excluded}')
+        if editorial_excluded > 0:
+            print(f'       - Editorials: {editorial_excluded}')
+        if letter_excluded > 0:
+            print(f'       - Letters: {letter_excluded}')
+        if review_excluded > 0:
+            print(f'       - Reviews: {review_excluded}')
+        print(f'     Remaining: {total - duplicates - lang_excluded - article_excluded}')
+
+    print('')
+    print('  ═══════════════════════════════════════════════════════════')
+    print('')
+    print('  📊 FINAL RESULTS:')
+    print(f'     ✅ Manuscripts included: {included}')
+    print(f'     ❌ Total excluded: {total - included}')
+    if total > 0:
+        percentage = int(included * 100 / total)
+        print(f'     📈 Inclusion rate: {percentage}%')
+
+    print('')
+    print('  ═══════════════════════════════════════════════════════════')
+    print('')
+    print(f'  💾 Output saved to: $OUTPUT_FILE')
+    print('')
+"
     else
         echo "    ⚠ Warning: Screening output file not found"
     fi
 else
     echo "    ✗ Screening with config test failed"
+    echo "    Check /tmp/screening_output.log for details"
 fi
 
 : <<'COMMENT'
