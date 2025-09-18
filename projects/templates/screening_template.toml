@@ -1,0 +1,146 @@
+### Screening Tool Configuration Template
+### This template provides all available options for manuscript screening
+
+### The [project] section contains basic information and paths
+[project]
+name = "Manuscript Screening Example"           # Project title
+author = "John Doe"                            # Project author
+version = "1.0"                                # Configuration version
+input_file = "/path/to/manuscripts.csv"        # Input CSV or TXT file with manuscript data
+output_file = "/path/to/screening_results"     # Output file path (without extension)
+text_column = "abstract"                       # Column name containing text or path to text files
+identifier_column = "doi"                      # Column name for unique identifiers (optional, auto-generated if empty)
+output_format = "csv"                          # Output format: "csv" or "json"
+log_level = "medium"                          # Log level: "low", "medium", or "high"
+
+### The [filters] section configures which screening filters to apply
+[filters]
+
+### Deduplication filter - identifies duplicate manuscripts
+[filters.deduplication]
+enabled = true                                 # Enable deduplication filter
+method = "fuzzy"                              # Method: "exact", "fuzzy", or "semantic"
+threshold = 0.85                              # Similarity threshold for fuzzy/semantic (0.0-1.0)
+compare_fields = ["title", "abstract"]        # Fields to compare for duplication
+
+### Language detection filter - screens by language
+[filters.language]
+enabled = true                                 # Enable language filter
+accepted_languages = ["en", "es", "fr"]       # ISO language codes to accept
+use_ai = false                                # Use AI for detection (requires LLM config)
+
+### Article type classification filter
+[filters.article_type]
+enabled = true                                 # Enable article type filter
+exclude_reviews = true                        # Exclude review articles
+exclude_editorials = true                     # Exclude editorials
+exclude_letters = true                        # Exclude letters to editor
+include_types = []                            # If specified, ONLY include these types (e.g., ["research_article", "case_report"])
+
+### LLM configuration for AI-assisted screening (optional)
+### Multiple LLMs can be configured for ensemble processing
+[filters.llm]
+
+### First LLM configuration
+[filters.llm.1]
+provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", or "DeepSeek"
+api_key = ""                                  # API key (uses environment variable if empty)
+model = "gpt-4o-mini"                         # Model name (provider-specific)
+temperature = 0.01                            # Temperature (0-1 for most providers, 0-2 for GoogleAI)
+tpm_limit = 0                                 # Tokens per minute limit (0 = unlimited)
+rpm_limit = 0                                 # Requests per minute limit (0 = unlimited)
+
+### Additional LLM configurations (optional)
+# [filters.llm.2]
+# provider = "GoogleAI"
+# api_key = ""
+# model = "gemini-1.5-flash"
+# temperature = 0.01
+# tpm_limit = 0
+# rpm_limit = 0
+
+### Example configurations for different scenarios:
+
+### Scenario 1: Simple deduplication only
+# [project]
+# name = "Deduplication Only"
+# input_file = "manuscripts.csv"
+# output_file = "deduplicated"
+# text_column = "content"
+# identifier_column = "id"
+# output_format = "csv"
+# log_level = "low"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = true
+# method = "exact"
+# compare_fields = ["title", "doi"]
+#
+# [filters.language]
+# enabled = false
+#
+# [filters.article_type]
+# enabled = false
+
+### Scenario 2: Language filtering for English-only manuscripts
+# [project]
+# name = "English Only Filter"
+# input_file = "manuscripts.csv"
+# output_file = "english_only"
+# text_column = "abstract"
+# identifier_column = "pmid"
+# output_format = "json"
+# log_level = "medium"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = false
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = false
+
+### Scenario 3: Exclude reviews and editorials, keep only research articles
+# [project]
+# name = "Research Articles Only"
+# input_file = "all_papers.csv"
+# output_file = "research_only"
+# text_column = "full_text_path"  # Can be a path to text files
+# identifier_column = "paper_id"
+# output_format = "csv"
+# log_level = "high"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = true
+# method = "fuzzy"
+# threshold = 0.9
+# compare_fields = ["title", "abstract"]
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = true
+# exclude_reviews = true
+# exclude_editorials = true
+# exclude_letters = true
+# include_types = ["research_article", "case_report"]
+
+### Notes:
+# 1. The input file should have column headers in the first row
+# 2. The text_column can contain either:
+#    - Actual text content (abstracts, full text)
+#    - Paths to text files that will be read
+# 3. If identifier_column is not specified or doesn't exist, auto-generated IDs will be used
+# 4. The output file will include all original columns plus new tag columns
+# 5. Excluded manuscripts will have "include" = false and an "exclusion_reason"
+# 6. When using AI features, ensure API keys are configured
+# 7. Filters are applied in order: deduplication -> language -> article_type

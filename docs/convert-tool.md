@@ -217,18 +217,20 @@ To achieve optimal conversion results:
 
 The Convert tool is a critical bridge in the systematic review workflow:
 
-1. **Literature Identification**:
-   - Search databases and identify relevant papers
+1. **Literature Search**:
+   - Search databases and identify potentially relevant papers
+   - Export search results to CSV or reference manager
 
-2. **Literature Acquisition** ([Download Tool](download-tool)):
-   - Download papers from Zotero collections or URL lists
+2. **Screening** ([Screening Tool](screening-tool)):
+   - Filter out duplicates, wrong languages, and irrelevant article types
+   - Create a refined list of papers to acquire
 
-3. **Format Conversion** (Convert Tool):
+3. **Literature Acquisition** ([Download Tool](download-tool)):
+   - Download only the screened papers from Zotero collections or URL lists
+
+4. **Format Conversion** (Convert Tool):
    - Convert downloaded papers to text format for analysis
    - Verify conversion quality before proceeding
-
-4. **Review Configuration**:
-   - Set up your review project configuration
 
 5. **Systematic Review** ([Review Tool](review-tool)):
    - Process the converted text files to extract structured information

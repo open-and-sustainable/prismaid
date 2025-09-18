@@ -36,16 +36,21 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 prismAId offers several specialized tools to support systematic reviews:
 
-1. **Review Tool**: Process systematic literature reviews based on TOML configurations
+1. **Screening Tool**: Filter manuscripts to identify items for exclusion
+   - Remove duplicates using exact or fuzzy matching
+   - Filter by language detection
+   - Classify and filter by article type (research, review, editorial, etc.)
+
+2. **Review Tool**: Process systematic literature reviews based on TOML configurations
    - Configure review criteria, AI model settings, and output formats
    - Extract structured information from scientific papers
    - Generate comprehensive review summaries
 
-2. **Download Tool**: Acquire papers for your review
+3. **Download Tool**: Acquire papers for your review
    - Download PDFs directly from Zotero collections
    - Download files from URL lists
 
-3. **Convert Tool**: Transform documents into analyzable text
+4. **Convert Tool**: Transform documents into analyzable text
    - Convert PDFs, DOCX, and HTML files to plain text
    - Prepare documents for AI processing
 
@@ -78,6 +83,9 @@ go get "github.com/open-and-sustainable/prismaid"
 ```go
 import "github.com/open-and-sustainable/prismaid"
 
+// Run screening on manuscripts
+err := prismaid.Screening(tomlConfigString)
+
 // Run a systematic review
 err := prismaid.Review(tomlConfigString)
 
@@ -99,6 +107,9 @@ Download the appropriate executable for your OS from our [GitHub Releases](https
 Use the command line interface to access all tools:
 
 ```bash
+# Screen manuscripts to filter out duplicates and irrelevant papers
+./prismaid -screening screening_config.toml
+
 # Run a systematic review
 ./prismaid -project your_project.toml
 
@@ -134,6 +145,11 @@ This Python package provides access to all prismAId tools:
 ```python
 import prismaid
 
+# Run screening on manuscripts
+with open("screening.toml", "r") as file:
+    screening_config = file.read()
+prismaid.screening(screening_config)
+
 # Run a systematic review
 with open("project.toml", "r") as file:
     toml_config = file.read()
@@ -162,6 +178,10 @@ Access all prismAId tools from R:
 ```r
 library(prismaid)
 
+# Run screening on manuscripts
+screening_content <- paste(readLines("screening.toml"), collapse = "\n")
+Screening(screening_content)  # Note the capitalization
+
 # Run a systematic review
 toml_content <- paste(readLines("project.toml"), collapse = "\n")
 RunReview(toml_content)  # Note the capitalization
@@ -189,6 +209,10 @@ Pkg.add("PrismAId")
 Access all prismAId tools from Julia:
 ```julia
 using PrismAId
+
+# Run screening on manuscripts
+screening_config = read("screening.toml", String)
+PrismAId.screening(screening_config)
 
 # Run a systematic review
 toml_config = read("project.toml", String)

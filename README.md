@@ -29,9 +29,10 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 </div>
 
 ### Core Tools
-1. **Download** - Download papers from Zotero collections or from URL lists
-2. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
-3. **Review** - Process systematic literature reviews based on TOML configurations
+1. **Screening** - Filter and tag manuscripts to identify items for exclusion
+2. **Download** - Download papers from Zotero collections or from URL lists
+3. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
+4. **Review** - Process systematic literature reviews based on TOML configurations
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows
@@ -58,6 +59,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
     3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), and Command A
     4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 sonnet, Claude 4.0 Sonnet, and Claude 4.0 Opus
     5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
+- **Screening capabilities**: Deduplication, language detection, article type classification
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required
 - **Programming Language**: Core implementation in Go with bindings for Python, R, and Julia

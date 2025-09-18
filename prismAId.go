@@ -7,6 +7,7 @@ import (
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
 	"github.com/open-and-sustainable/prismaid/review/logic"
+	screening "github.com/open-and-sustainable/prismaid/screening/logic"
 )
 
 // Review processes a systematic literature review based on the provided TOML configuration.
@@ -63,4 +64,21 @@ func DownloadURLList(path string) {
 // files, unsupported formats, or file system permission issues.
 func Convert(inputDir, selectedFormats string) error {
 	return conversion.Convert(inputDir, selectedFormats)
+}
+
+// Screening processes a list of manuscripts to identify items for exclusion based on various criteria.
+//
+// The tomlConfiguration parameter should contain a valid TOML string with all the necessary
+// settings for the screening process, including input/output files, filter configurations,
+// and optional LLM settings for AI-assisted screening.
+//
+// The screening tool can apply multiple filters:
+//   - Deduplication: Identifies duplicate manuscripts using exact, fuzzy, or semantic matching
+//   - Language detection: Filters manuscripts based on detected language
+//   - Article type classification: Identifies and filters based on article types (reviews, editorials, etc.)
+//
+// Returns an error if the screening process fails for any reason, such as invalid configuration,
+// inaccessible files, or processing errors.
+func Screening(tomlConfiguration string) error {
+	return screening.Screen(tomlConfiguration)
 }

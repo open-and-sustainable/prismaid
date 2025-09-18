@@ -1,0 +1,44 @@
+### Test Configuration for Screening Tool
+
+[project]
+name = "Automated Screening Test"
+author = "Test Suite"
+version = "1.0"
+input_file = "./projects/test/inputs/screening/screening_test_input.csv"
+output_file = "./projects/test/outputs/screening/test_screening_output"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "low"  # Keep low for automated tests
+
+[filters]
+
+### Deduplication filter - test exact matching
+[filters.deduplication]
+enabled = true
+method = "exact"
+threshold = 0.95
+compare_fields = ["title", "abstract"]
+
+### Language detection filter - test English detection
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false  # Don't use AI in automated tests
+
+### Article type classification filter - test classification
+[filters.article_type]
+enabled = true
+exclude_reviews = true
+exclude_editorials = true
+exclude_letters = true
+include_types = []
+
+### No LLM configuration for automated tests
+# [filters.llm.1]
+# provider = "OpenAI"
+# api_key = ""
+# model = "gpt-4o-mini"
+# temperature = 0.01
+# tpm_limit = 0
+# rpm_limit = 0

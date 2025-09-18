@@ -1,0 +1,18 @@
+## do not include personal API keys needed to test Zotero connections
+projects/zotero_test.toml
+
+# Ignore test outputs but keep directory structure
+projects/test/outputs/**
+!projects/test/outputs/
+!projects/test/outputs/**/
+!projects/test/outputs/**/.gitkeep
+
+# Ignore user workspace contents but keep directory structure
+projects/workspace/**
+!projects/workspace/
+!projects/workspace/**/
+!projects/workspace/**/.gitkeep
+
+# Ignore any log files
+*.log
+screening_log.txt

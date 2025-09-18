@@ -240,19 +240,20 @@ To get the most out of the Download tool:
 
 The Download tool is designed to fit seamlessly into your systematic review workflow:
 
-1. **Literature Identification**:
-   - Search databases and identify relevant papers
-   - Save references to Zotero or create a URL list
+1. **Literature Search**:
+   - Search databases and identify potentially relevant papers
+   - Export search results to CSV or reference manager
 
-2. **Literature Acquisition** (Download Tool):
-   - Download papers from Zotero collections or URL lists
+2. **Screening** ([Screening Tool](screening-tool)):
+   - Filter out duplicates, wrong languages, and irrelevant article types
+   - Create a refined list of papers to acquire
+
+3. **Literature Acquisition** (Download Tool):
+   - Download only the screened papers from Zotero collections or URL lists
    - Organize papers in a structured directory
 
-3. **Format Conversion** ([Convert Tool](convert-tool)):
+4. **Format Conversion** ([Convert Tool](convert-tool)):
    - Convert downloaded papers to text format for analysis
-
-4. **Review Configuration**:
-   - Set up your review project configuration
 
 5. **Systematic Review** ([Review Tool](review-tool)):
    - Process papers and extract structured information

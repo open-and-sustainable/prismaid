@@ -4,8 +4,8 @@ author = "Riccardo Boero"
 version = "0.4"
 
 [project.configuration]
-input_directory = "projects/input/test"
-results_file_name = "projects/output/test/output_test"
+input_directory = "projects/test/inputs/documents"
+results_file_name = "projects/test/outputs/review/test_results"
 output_format = "csv"
 log_level = "low"
 duplication = "no"
