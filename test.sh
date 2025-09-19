@@ -59,13 +59,37 @@ with open('$OUTPUT_FILE', 'r') as f:
     duplicates = sum(1 for r in rows if r.get('tag_is_duplicate') == 'true')
     included = sum(1 for r in rows if r.get('include') == 'true')
 
+    # Collect article type classifications for analysis
+    article_types = {}
+    for r in rows:
+        if 'tag_article_type' in r and r['tag_article_type']:
+            art_type = r['tag_article_type']
+            article_types[art_type] = article_types.get(art_type, 0) + 1
+
     # Count exclusion reasons
     lang_excluded = sum(1 for r in rows if 'Language not accepted' in r.get('exclusion_reason', ''))
-    editorial_excluded = sum(1 for r in rows if 'Editorial' in r.get('exclusion_reason', ''))
-    letter_excluded = sum(1 for r in rows if 'Letter' in r.get('exclusion_reason', ''))
-    review_excluded = sum(1 for r in rows if 'Review' in r.get('exclusion_reason', ''))
 
-    article_excluded = editorial_excluded + letter_excluded + review_excluded
+    # Article type exclusions
+    editorial_excluded = sum(1 for r in rows if 'editorial' in r.get('exclusion_reason', '').lower())
+    letter_excluded = sum(1 for r in rows if 'letter' in r.get('exclusion_reason', '').lower())
+    review_excluded = sum(1 for r in rows if 'review' in r.get('exclusion_reason', '').lower())
+    case_report_excluded = sum(1 for r in rows if 'case report' in r.get('exclusion_reason', '').lower())
+    commentary_excluded = sum(1 for r in rows if 'commentary' in r.get('exclusion_reason', '').lower())
+    perspective_excluded = sum(1 for r in rows if 'perspective' in r.get('exclusion_reason', '').lower())
+
+    # Methodological type exclusions
+    theoretical_excluded = sum(1 for r in rows if 'theoretical' in r.get('exclusion_reason', '').lower())
+    empirical_excluded = sum(1 for r in rows if 'empirical' in r.get('exclusion_reason', '').lower())
+    methods_excluded = sum(1 for r in rows if 'methods' in r.get('exclusion_reason', '').lower())
+
+    # Study scope exclusions
+    single_case_excluded = sum(1 for r in rows if 'single case' in r.get('exclusion_reason', '').lower())
+    sample_excluded = sum(1 for r in rows if 'sample study' in r.get('exclusion_reason', '').lower())
+
+    article_excluded = (editorial_excluded + letter_excluded + review_excluded +
+                       case_report_excluded + commentary_excluded + perspective_excluded +
+                       theoretical_excluded + empirical_excluded + methods_excluded +
+                       single_case_excluded + sample_excluded)
 
     print('')
     print('  📚 INITIAL POOL:')
@@ -84,13 +108,43 @@ with open('$OUTPUT_FILE', 'r') as f:
     if article_excluded > 0:
         print('')
         print('  📝 ARTICLE TYPE FILTER:')
-        print(f'     Excluded types: {article_excluded}')
-        if editorial_excluded > 0:
-            print(f'       - Editorials: {editorial_excluded}')
-        if letter_excluded > 0:
-            print(f'       - Letters: {letter_excluded}')
-        if review_excluded > 0:
-            print(f'       - Reviews: {review_excluded}')
+        print(f'     Total excluded by type: {article_excluded}')
+
+        # Traditional publication types
+        if any([editorial_excluded, letter_excluded, review_excluded, case_report_excluded,
+                commentary_excluded, perspective_excluded]):
+            print('     Publication types:')
+            if editorial_excluded > 0:
+                print(f'       - Editorials: {editorial_excluded}')
+            if letter_excluded > 0:
+                print(f'       - Letters: {letter_excluded}')
+            if review_excluded > 0:
+                print(f'       - Reviews: {review_excluded}')
+            if case_report_excluded > 0:
+                print(f'       - Case Reports: {case_report_excluded}')
+            if commentary_excluded > 0:
+                print(f'       - Commentary: {commentary_excluded}')
+            if perspective_excluded > 0:
+                print(f'       - Perspectives: {perspective_excluded}')
+
+        # Methodological types
+        if any([theoretical_excluded, empirical_excluded, methods_excluded]):
+            print('     Methodological types:')
+            if theoretical_excluded > 0:
+                print(f'       - Theoretical: {theoretical_excluded}')
+            if empirical_excluded > 0:
+                print(f'       - Empirical: {empirical_excluded}')
+            if methods_excluded > 0:
+                print(f'       - Methods: {methods_excluded}')
+
+        # Study scope
+        if any([single_case_excluded, sample_excluded]):
+            print('     Study scope:')
+            if single_case_excluded > 0:
+                print(f'       - Single Case: {single_case_excluded}')
+            if sample_excluded > 0:
+                print(f'       - Sample Studies: {sample_excluded}')
+
         print(f'     Remaining: {total - duplicates - lang_excluded - article_excluded}')
 
     print('')
@@ -105,6 +159,15 @@ with open('$OUTPUT_FILE', 'r') as f:
 
     print('')
     print('  ═══════════════════════════════════════════════════════════')
+
+    # Article type distribution
+    if article_types:
+        print('')
+        print('  📊 ARTICLE TYPE DISTRIBUTION:')
+        for art_type, count in sorted(article_types.items(), key=lambda x: x[1], reverse=True):
+            if art_type and art_type != 'unknown':
+                print(f'     - {art_type}: {count}')
+
     print('')
     print(f'  💾 Output saved to: $OUTPUT_FILE')
     print('')

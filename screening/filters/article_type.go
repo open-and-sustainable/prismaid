@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/alembica/extraction"
+	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
 // ArticleType represents the classification of an article
 type ArticleType string
 
 const (
+	// Traditional publication types
 	ResearchArticle  ArticleType = "research_article"
 	ReviewArticle    ArticleType = "review"
 	Editorial        ArticleType = "editorial"
@@ -19,33 +24,111 @@ const (
 	Perspective      ArticleType = "perspective"
 	MetaAnalysis     ArticleType = "meta_analysis"
 	SystematicReview ArticleType = "systematic_review"
-	Unknown          ArticleType = "unknown"
+
+	// Methodological distinctions
+	EmpiricalStudy   ArticleType = "empirical_study"
+	TheoreticalPaper ArticleType = "theoretical_paper"
+	MethodsPaper     ArticleType = "methods_paper"
+
+	// Study scope classifications
+	SingleCaseStudy ArticleType = "single_case_study"
+	SampleStudy     ArticleType = "sample_study"
+
+	Unknown ArticleType = "unknown"
 )
 
-// ClassifyArticleType determines the type of article based on its content
+// ArticleClassification represents multiple overlapping classifications for an article
+type ArticleClassification struct {
+	PrimaryType         ArticleType             `json:"primary_type"`
+	AllTypes            []ArticleType           `json:"all_types"`
+	TypeScores          map[ArticleType]float64 `json:"type_scores"`
+	MethodologicalTypes []ArticleType           `json:"methodological_types"`
+	ScopeTypes          []ArticleType           `json:"scope_types"`
+}
+
+// ArticleTypeScore represents a type with its confidence score
+type ArticleTypeScore struct {
+	Type       ArticleType
+	Score      float64
+	Confidence string // "high", "medium", "low"
+}
+
+// ClassifyArticleType determines all applicable types for an article
+// Returns a JSON string representing the classification for backward compatibility
 func ClassifyArticleType(text string, llmConfigs []interface{}) (string, error) {
 	if text == "" {
 		return string(Unknown), fmt.Errorf("empty text provided")
 	}
 
-	// Try rule-based classification first
-	articleType := classifyByRules(text)
+	// Get comprehensive classification
+	classification := classifyArticleComprehensive(text)
 
-	// If rule-based classification is confident, return it
-	if articleType != Unknown && articleType != "" {
-		return string(articleType), nil
-	}
-
-	// If LLM configs are provided, use AI classification
+	// If LLM configs are provided, enhance with AI classification
 	if len(llmConfigs) > 0 {
-		return classifyWithAI(text, llmConfigs[0])
+		enhanceWithAI(text, llmConfigs[0], classification)
 	}
 
-	return string(articleType), nil
+	// Convert to JSON for backward compatibility
+	jsonData, err := json.Marshal(classification)
+	if err != nil {
+		// Fallback to primary type string
+		return string(classification.PrimaryType), nil
+	}
+
+	return string(jsonData), nil
 }
 
-// classifyByRules uses heuristics to classify article type
-func classifyByRules(text string) ArticleType {
+// ClassifyArticleTypeWithAI uses AI to classify article type
+func ClassifyArticleTypeWithAI(manuscriptData map[string]string, useAI bool, llmConfigs []interface{}) (*ArticleClassification, error) {
+	// Extract relevant fields
+	title := ""
+	abstract := ""
+
+	// Try to get fields with case-insensitive lookup
+	for field, value := range manuscriptData {
+		fieldLower := strings.ToLower(field)
+		switch fieldLower {
+		case "title":
+			title = value
+		case "abstract", "summary":
+			abstract = value
+		}
+	}
+
+	// Combine title and abstract for analysis
+	text := title + " " + abstract
+	if text == "" {
+		return &ArticleClassification{PrimaryType: Unknown}, fmt.Errorf("no text fields available")
+	}
+
+	if !useAI || len(llmConfigs) == 0 {
+		// Use rule-based classification
+		return classifyArticleComprehensive(text), nil
+	}
+
+	// Use AI-based classification
+	return classifyWithAIComprehensive(title, abstract, llmConfigs)
+}
+
+// ClassifyArticleTypes returns multiple applicable article types
+func ClassifyArticleTypes(text string, llmConfigs []interface{}) (*ArticleClassification, error) {
+	if text == "" {
+		return &ArticleClassification{PrimaryType: Unknown}, fmt.Errorf("empty text provided")
+	}
+
+	// Get comprehensive classification
+	classification := classifyArticleComprehensive(text)
+
+	// If LLM configs are provided, enhance with AI classification
+	if len(llmConfigs) > 0 {
+		enhanceWithAI(text, llmConfigs[0], classification)
+	}
+
+	return classification, nil
+}
+
+// classifyArticleComprehensive performs comprehensive rule-based classification
+func classifyArticleComprehensive(text string) *ArticleClassification {
 	textLower := strings.ToLower(text)
 
 	// Extract first 2000 characters for abstract/introduction analysis
@@ -54,427 +137,971 @@ func classifyByRules(text string) ArticleType {
 		sampleText = textLower[:2000]
 	}
 
-	// Check for systematic review indicators
-	if isSystematicReview(sampleText, textLower) {
-		return SystematicReview
+	classification := &ArticleClassification{
+		AllTypes:            []ArticleType{},
+		TypeScores:          make(map[ArticleType]float64),
+		MethodologicalTypes: []ArticleType{},
+		ScopeTypes:          []ArticleType{},
 	}
 
-	// Check for meta-analysis indicators
-	if isMetaAnalysis(sampleText, textLower) {
-		return MetaAnalysis
-	}
+	// Calculate scores for all publication types
+	calculatePublicationTypeScores(sampleText, textLower, classification)
 
-	// Check for review article indicators
-	if isReviewArticle(sampleText, textLower) {
-		return ReviewArticle
-	}
+	// Calculate methodological type scores
+	calculateMethodologicalScores(sampleText, textLower, classification)
 
-	// Check for editorial indicators
-	if isEditorial(sampleText, textLower) {
-		return Editorial
-	}
+	// Calculate study scope scores
+	calculateStudyScopeScores(sampleText, textLower, classification)
 
-	// Check for letter indicators
-	if isLetter(sampleText, textLower) {
-		return Letter
-	}
+	// Determine primary type based on highest score
+	determinePrimaryType(classification)
 
-	// Check for case report indicators
-	if isCaseReport(sampleText, textLower) {
-		return CaseReport
-	}
+	// Build comprehensive type list
+	buildTypeList(classification)
 
-	// Check for commentary indicators
-	if isCommentary(sampleText, textLower) {
-		return Commentary
-	}
-
-	// Check for perspective indicators
-	if isPerspective(sampleText, textLower) {
-		return Perspective
-	}
-
-	// Check for research article indicators
-	if isResearchArticle(sampleText, textLower) {
-		return ResearchArticle
-	}
-
-	return Unknown
+	return classification
 }
 
-// isSystematicReview checks for systematic review indicators
-func isSystematicReview(sample, full string) bool {
-	indicators := []string{
+// calculatePublicationTypeScores calculates scores for traditional publication types
+func calculatePublicationTypeScores(sample, full string, classification *ArticleClassification) {
+	// Check for systematic review
+	if score := calculateSystematicReviewScore(sample, full); score > 0 {
+		classification.TypeScores[SystematicReview] = score
+	}
+
+	// Check for meta-analysis
+	if score := calculateMetaAnalysisScore(sample, full); score > 0 {
+		classification.TypeScores[MetaAnalysis] = score
+	}
+
+	// Check for review article
+	if score := calculateReviewScore(sample, full); score > 0 {
+		classification.TypeScores[ReviewArticle] = score
+	}
+
+	// Check for editorial
+	if score := calculateEditorialScore(sample, full); score > 0 {
+		classification.TypeScores[Editorial] = score
+	}
+
+	// Check for letter
+	if score := calculateLetterScore(sample, full); score > 0 {
+		classification.TypeScores[Letter] = score
+	}
+
+	// Check for case report
+	if score := calculateCaseReportScore(sample, full); score > 0 {
+		classification.TypeScores[CaseReport] = score
+	}
+
+	// Check for commentary
+	if score := calculateCommentaryScore(sample, full); score > 0 {
+		classification.TypeScores[Commentary] = score
+	}
+
+	// Check for perspective
+	if score := calculatePerspectiveScore(sample, full); score > 0 {
+		classification.TypeScores[Perspective] = score
+	}
+
+	// Check for research article
+	if score := calculateResearchScore(sample, full); score > 0 {
+		classification.TypeScores[ResearchArticle] = score
+	}
+}
+
+// calculateMethodologicalScores calculates scores for methodological types
+func calculateMethodologicalScores(sample, full string, classification *ArticleClassification) {
+	empiricalScore := calculateEmpiricalScore(sample, full)
+	theoreticalScore := calculateTheoreticalScore(sample, full)
+	methodsScore := calculateMethodsScore(sample, full)
+
+	// A paper can be both empirical and methods-focused
+	if empiricalScore > 5 {
+		classification.TypeScores[EmpiricalStudy] = empiricalScore
+		classification.MethodologicalTypes = append(classification.MethodologicalTypes, EmpiricalStudy)
+	}
+
+	if theoreticalScore > 5 {
+		classification.TypeScores[TheoreticalPaper] = theoreticalScore
+		classification.MethodologicalTypes = append(classification.MethodologicalTypes, TheoreticalPaper)
+	}
+
+	if methodsScore > 5 {
+		classification.TypeScores[MethodsPaper] = methodsScore
+		classification.MethodologicalTypes = append(classification.MethodologicalTypes, MethodsPaper)
+	}
+}
+
+// calculateStudyScopeScores calculates scores for study scope types
+func calculateStudyScopeScores(sample, full string, classification *ArticleClassification) {
+	// Only calculate scope if there's empirical content
+	empiricalScore, hasEmpirical := classification.TypeScores[EmpiricalStudy]
+	researchScore, hasResearch := classification.TypeScores[ResearchArticle]
+	caseScore, hasCase := classification.TypeScores[CaseReport]
+
+	if (hasEmpirical && empiricalScore > 0) || (hasResearch && researchScore > 0) || (hasCase && caseScore > 0) {
+
+		singleCaseScore := calculateSingleCaseScore(sample, full)
+		sampleScore := calculateSampleScore(sample, full)
+
+		if singleCaseScore > 5 {
+			classification.TypeScores[SingleCaseStudy] = singleCaseScore
+			classification.ScopeTypes = append(classification.ScopeTypes, SingleCaseStudy)
+		}
+
+		if sampleScore > 5 {
+			classification.TypeScores[SampleStudy] = sampleScore
+			classification.ScopeTypes = append(classification.ScopeTypes, SampleStudy)
+		}
+	}
+}
+
+// determinePrimaryType determines the primary type based on priority and scores
+func determinePrimaryType(classification *ArticleClassification) {
+	// Priority order for primary type determination
+	priorityOrder := []ArticleType{
+		MetaAnalysis,
+		SystematicReview,
+		ReviewArticle,
+		MethodsPaper,
+		ResearchArticle,
+		CaseReport,
+		Editorial,
+		Letter,
+		Commentary,
+		Perspective,
+		EmpiricalStudy,
+		TheoreticalPaper,
+		SingleCaseStudy,
+		SampleStudy,
+	}
+
+	var maxScore float64
+	classification.PrimaryType = Unknown
+
+	for _, articleType := range priorityOrder {
+		if score, exists := classification.TypeScores[articleType]; exists && score > maxScore {
+			maxScore = score
+			classification.PrimaryType = articleType
+		}
+	}
+
+	// If still unknown, check for any type with score
+	if classification.PrimaryType == Unknown {
+		for articleType, score := range classification.TypeScores {
+			if score > 0 {
+				classification.PrimaryType = articleType
+				break
+			}
+		}
+	}
+}
+
+// buildTypeList builds the comprehensive list of all applicable types
+func buildTypeList(classification *ArticleClassification) {
+	// Add all types with significant scores (>5)
+	for articleType, score := range classification.TypeScores {
+		if score > 5 {
+			// Avoid duplicates
+			found := false
+			for _, existing := range classification.AllTypes {
+				if existing == articleType {
+					found = true
+					break
+				}
+			}
+			if !found {
+				classification.AllTypes = append(classification.AllTypes, articleType)
+			}
+		}
+	}
+
+	// Ensure primary type is in the list
+	if classification.PrimaryType != Unknown {
+		found := false
+		for _, existing := range classification.AllTypes {
+			if existing == classification.PrimaryType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			classification.AllTypes = append([]ArticleType{classification.PrimaryType}, classification.AllTypes...)
+		}
+	}
+}
+
+// Scoring functions for publication types
+
+func calculateSystematicReviewScore(sample, full string) float64 {
+	var score float64
+
+	// Strong indicators
+	strongIndicators := []string{
 		"systematic review",
 		"prisma",
 		"cochrane",
-		"search strategy",
+		"prospero",
+		"systematic literature review",
+		"systematic search",
+	}
+
+	for _, indicator := range strongIndicators {
+		if strings.Contains(sample, indicator) {
+			score += 10
+		} else if strings.Contains(full, indicator) {
+			score += 5
+		}
+	}
+
+	// Methodological indicators
+	methodIndicators := []string{
 		"inclusion criteria",
 		"exclusion criteria",
+		"database search",
+		"search strategy",
 		"quality assessment",
 		"risk of bias",
-		"literature search",
-		"database search",
-		"pooled analysis",
+		"data extraction",
 	}
 
-	score := 0
-	for _, indicator := range indicators {
-		if strings.Contains(sample, indicator) {
-			score += 2
-		}
+	for _, indicator := range methodIndicators {
 		if strings.Contains(full, indicator) {
-			score++
+			score += 3
 		}
 	}
 
-	return score >= 6
+	return score
 }
 
-// isMetaAnalysis checks for meta-analysis indicators
-func isMetaAnalysis(sample, full string) bool {
-	indicators := []string{
-		"meta-analysis",
-		"meta analysis",
-		"pooled estimate",
+func calculateMetaAnalysisScore(sample, full string) float64 {
+	var score float64
+
+	// Strong indicators
+	if strings.Contains(sample, "meta-analysis") || strings.Contains(sample, "meta analysis") ||
+		strings.Contains(sample, "metaanalysis") {
+		score += 15
+	}
+
+	// Statistical pooling indicators
+	poolingIndicators := []string{
+		"pooled",
 		"forest plot",
 		"funnel plot",
 		"heterogeneity",
 		"random effects",
 		"fixed effects",
-		"pooled odds ratio",
-		"pooled risk ratio",
-		"pooled hazard ratio",
+		"effect size",
+		"pooled estimate",
+		"combined results",
+		"statistical synthesis",
 	}
 
-	score := 0
-	for _, indicator := range indicators {
-		if strings.Contains(sample, indicator) {
-			score += 2
-		}
+	for _, indicator := range poolingIndicators {
 		if strings.Contains(full, indicator) {
-			score++
+			score += 4
 		}
 	}
 
-	return score >= 4
+	// If it's also a systematic review, boost the score
+	if strings.Contains(full, "systematic review") && score > 0 {
+		score += 5
+	}
+
+	return score
 }
 
-// isReviewArticle checks for review article indicators
-func isReviewArticle(sample, full string) bool {
-	indicators := []string{
-		"review",
+func calculateReviewScore(sample, full string) float64 {
+	var score float64
+
+	// Direct indicators
+	reviewIndicators := []string{
 		"literature review",
 		"narrative review",
 		"scoping review",
-		"we reviewed",
-		"this review",
-		"review of the literature",
-		"comprehensive review",
+		"integrative review",
 		"critical review",
+		"review of",
+		"reviews the",
+		"we review",
+		"this review",
 	}
 
-	// Negative indicators (things that would indicate it's NOT a review)
-	negativeIndicators := []string{
-		"peer review",
-		"review board",
-		"ethics review",
-		"review and approval",
-		"reviewed the manuscript",
-	}
-
-	score := 0
-	for _, indicator := range indicators {
+	for _, indicator := range reviewIndicators {
 		if strings.Contains(sample, indicator) {
+			score += 8
+		} else if strings.Contains(full, indicator) {
+			score += 4
+		}
+	}
+
+	// Check for review structure without empirical data
+	if strings.Contains(full, "review") && !strings.Contains(full, "data collection") &&
+		!strings.Contains(full, "participants") && !strings.Contains(full, "subjects") {
+		score += 3
+	}
+
+	return score
+}
+
+func calculateResearchScore(sample, full string) float64 {
+	var score float64
+
+	// Research structure indicators
+	methodIndicators := []string{
+		"methods",
+		"methodology",
+		"data collection",
+		"participants",
+		"subjects",
+		"sample",
+		"procedure",
+		"materials",
+	}
+
+	resultsIndicators := []string{
+		"results",
+		"findings",
+		"analysis",
+		"statistical",
+		"significant",
+		"p-value",
+		"correlation",
+		"regression",
+	}
+
+	for _, indicator := range methodIndicators {
+		if strings.Contains(full, indicator) {
 			score += 2
 		}
 	}
 
-	// Reduce score for negative indicators
-	for _, indicator := range negativeIndicators {
-		if strings.Contains(sample, indicator) {
-			score--
+	for _, indicator := range resultsIndicators {
+		if strings.Contains(full, indicator) {
+			score += 2
 		}
 	}
 
-	// Check for typical research article sections that reviews don't have
-	if strings.Contains(full, "materials and methods") ||
-		strings.Contains(full, "study population") ||
-		strings.Contains(full, "data collection") {
-		score -= 2
+	// Check for research article structure
+	if strings.Contains(full, "introduction") && strings.Contains(full, "discussion") {
+		score += 3
 	}
 
-	return score >= 3
+	return score
 }
 
-// isEditorial checks for editorial indicators
-func isEditorial(sample, full string) bool {
-	indicators := []string{
+func calculateEditorialScore(sample, full string) float64 {
+	var score float64
+
+	editorialIndicators := []string{
 		"editorial",
-		"editor's note",
+		"editor's",
 		"from the editor",
 		"guest editorial",
 		"this issue",
 		"in this issue",
+		"special issue",
 	}
 
-	for _, indicator := range indicators {
+	for _, indicator := range editorialIndicators {
 		if strings.Contains(sample, indicator) {
-			return true
+			score += 10
+		} else if strings.Contains(full, indicator) {
+			score += 5
 		}
 	}
 
-	// Editorials are typically short
-	if len(full) < 3000 {
-		shortIndicators := []string{"we believe", "we think", "our opinion"}
-		for _, indicator := range shortIndicators {
-			if strings.Contains(sample, indicator) {
-				return true
-			}
-		}
+	// Editorial characteristics
+	if score > 0 && len(full) < 3000 {
+		score += 3
 	}
 
-	return false
+	return score
 }
 
-// isLetter checks for letter indicators
-func isLetter(sample, full string) bool {
-	indicators := []string{
-		"letter to the editor",
-		"letter to editor",
-		"correspondence",
-		"in response to",
-		"we read with interest",
+func calculateLetterScore(sample, full string) float64 {
+	var score float64
+
+	letterIndicators := []string{
+		"letter to",
 		"dear editor",
 		"to the editor",
+		"correspondence",
+		"we read with interest",
+		"response to",
+		"reply to",
+		"comment on",
 	}
 
-	for _, indicator := range indicators {
+	for _, indicator := range letterIndicators {
 		if strings.Contains(sample, indicator) {
-			return true
+			score += 10
+		} else if strings.Contains(full, indicator) {
+			score += 5
 		}
 	}
 
-	// Letters are typically very short
-	if len(full) < 2000 {
-		if strings.Contains(sample, "dear ") || strings.Contains(sample, "sincerely,") {
-			return true
-		}
+	// Letter characteristics
+	if score > 0 && len(full) < 2000 {
+		score += 3
 	}
 
-	return false
+	return score
 }
 
-// isCaseReport checks for case report indicators
-func isCaseReport(sample, full string) bool {
-	indicators := []string{
+func calculateCaseReportScore(sample, full string) float64 {
+	var score float64
+
+	caseIndicators := []string{
 		"case report",
 		"case presentation",
 		"case study",
 		"patient presentation",
-		"we report a case",
+		"clinical case",
+		"case description",
+		"we report",
 		"we present a case",
-		"year-old patient",
-		"year-old male",
-		"year-old female",
-		"year-old woman",
-		"year-old man",
+		"year-old",
+		"presented with",
 		"chief complaint",
-		"physical examination revealed",
+		"medical history",
+		"clinical findings",
+		"diagnosis",
+		"treatment",
+		"follow-up",
 	}
 
-	score := 0
-	for _, indicator := range indicators {
+	for _, indicator := range caseIndicators {
 		if strings.Contains(sample, indicator) {
+			score += 4
+		} else if strings.Contains(full, indicator) {
 			score += 2
 		}
-		if strings.Contains(full, indicator) {
-			score++
-		}
 	}
 
-	return score >= 4
+	// Medical case indicators
+	if strings.Contains(full, "patient") && strings.Contains(full, "diagnosis") {
+		score += 3
+	}
+
+	return score
 }
 
-// isCommentary checks for commentary indicators
-func isCommentary(sample, full string) bool {
-	indicators := []string{
+func calculateCommentaryScore(sample, full string) float64 {
+	var score float64
+
+	commentaryIndicators := []string{
 		"commentary",
-		"comment on",
+		"comment",
 		"viewpoint",
-		"opinion piece",
+		"opinion",
 		"we comment",
 		"authors comment",
+		"invited commentary",
 	}
 
-	for _, indicator := range indicators {
+	for _, indicator := range commentaryIndicators {
 		if strings.Contains(sample, indicator) {
-			return true
+			score += 8
+		} else if strings.Contains(full, indicator) {
+			score += 4
 		}
 	}
 
-	return false
+	return score
 }
 
-// isPerspective checks for perspective indicators
-func isPerspective(sample, full string) bool {
-	indicators := []string{
+func calculatePerspectiveScore(sample, full string) float64 {
+	var score float64
+
+	perspectiveIndicators := []string{
 		"perspective",
-		"perspectives on",
-		"personal view",
 		"point of view",
+		"personal view",
+		"author's perspective",
+		"our perspective",
 	}
 
-	for _, indicator := range indicators {
+	for _, indicator := range perspectiveIndicators {
 		if strings.Contains(sample, indicator) {
-			return true
+			score += 8
+		} else if strings.Contains(full, indicator) {
+			score += 4
 		}
 	}
 
-	return false
+	return score
 }
 
-// isResearchArticle checks for research article indicators
-func isResearchArticle(sample, full string) bool {
-	indicators := []string{
-		"methods",
-		"methodology",
-		"participants",
-		"results",
+// Scoring functions for methodological types
+
+func calculateEmpiricalScore(sample, full string) float64 {
+	var score float64
+
+	// Data collection indicators
+	dataIndicators := []string{
 		"data collection",
-		"statistical analysis",
-		"study design",
-		"inclusion criteria",
-		"sample size",
-		"primary outcome",
-		"secondary outcome",
-		"p value",
-		"confidence interval",
-		"standard deviation",
-		"we conducted",
-		"we performed",
-		"we analyzed",
-		"we investigated",
-		"this study",
-		"our study",
-		"the present study",
+		"data were collected",
+		"collected data",
+		"gathered data",
+		"survey",
+		"experiment",
+		"observation",
+		"measurement",
+		"empirical",
+		"fieldwork",
+		"interviews",
+		"questionnaire",
 	}
 
-	score := 0
-	for _, indicator := range indicators {
+	for _, indicator := range dataIndicators {
 		if strings.Contains(sample, indicator) {
-			score++
-		}
-		if strings.Contains(full, indicator) {
-			score++
+			score += 4
+		} else if strings.Contains(full, indicator) {
+			score += 2
 		}
 	}
 
-	// Check for typical research article structure
-	hasMethodsSection := strings.Contains(full, "method") || strings.Contains(full, "materials")
-	hasResultsSection := strings.Contains(full, "results") || strings.Contains(full, "findings")
-	hasDiscussionSection := strings.Contains(full, "discussion") || strings.Contains(full, "conclusions")
+	// Analysis indicators
+	analysisIndicators := []string{
+		"statistical analysis",
+		"data analysis",
+		"analyzed",
+		"tested",
+		"measured",
+		"calculated",
+		"regression",
+		"correlation",
+		"anova",
+		"t-test",
+	}
 
-	if hasMethodsSection && hasResultsSection {
+	for _, indicator := range analysisIndicators {
+		if strings.Contains(full, indicator) {
+			score += 2
+		}
+	}
+
+	// Results from data
+	if strings.Contains(full, "results") && (strings.Contains(full, "data") ||
+		strings.Contains(full, "participants") || strings.Contains(full, "sample")) {
+		score += 3
+	}
+
+	return score
+}
+
+func calculateTheoreticalScore(sample, full string) float64 {
+	var score float64
+
+	// Theoretical indicators
+	theoryIndicators := []string{
+		"theoretical",
+		"conceptual",
+		"framework",
+		"model",
+		"theory",
+		"proposition",
+		"hypothesis",
+		"conceptualize",
+		"theorize",
+		"theoretical framework",
+		"conceptual model",
+		"theoretical model",
+	}
+
+	for _, indicator := range theoryIndicators {
+		if strings.Contains(sample, indicator) {
+			score += 4
+		} else if strings.Contains(full, indicator) {
+			score += 2
+		}
+	}
+
+	// Abstract concepts without empirical data
+	abstractIndicators := []string{
+		"we propose",
+		"we argue",
+		"we posit",
+		"we theorize",
+		"this paper argues",
+		"we conceptualize",
+		"philosophical",
+		"epistemological",
+		"ontological",
+	}
+
+	for _, indicator := range abstractIndicators {
+		if strings.Contains(full, indicator) {
+			score += 3
+		}
+	}
+
+	// Penalty for empirical indicators
+	if strings.Contains(full, "data collection") || strings.Contains(full, "empirical") {
+		score -= 5
+	}
+
+	return score
+}
+
+func calculateMethodsScore(sample, full string) float64 {
+	var score float64
+
+	methodsIndicators := []string{
+		"novel method",
+		"new method",
+		"method for",
+		"technique for",
+		"algorithm",
+		"protocol",
+		"procedure",
+		"methodology",
+		"methodological",
+		"we present a method",
+		"we introduce",
+		"we develop",
+	}
+
+	for _, indicator := range methodsIndicators {
+		if strings.Contains(sample, indicator) {
+			score += 5
+		} else if strings.Contains(full, indicator) {
+			score += 2
+		}
+	}
+
+	return score
+}
+
+// Scoring functions for study scope types
+
+func calculateSingleCaseScore(sample, full string) float64 {
+	var score float64
+
+	singleIndicators := []string{
+		"single case",
+		"one case",
+		"individual case",
+		"one patient",
+		"single patient",
+		"one company",
+		"single company",
+		"one organization",
+		"single organization",
+		"n=1",
+		"n = 1",
+		"single subject",
+		"individual subject",
+	}
+
+	for _, indicator := range singleIndicators {
+		if strings.Contains(sample, indicator) {
+			score += 10
+		} else if strings.Contains(full, indicator) {
+			score += 5
+		}
+	}
+
+	// Check for case study without multiple
+	if (strings.Contains(full, "case study") || strings.Contains(full, "case analysis")) &&
+		!strings.Contains(full, "multiple") && !strings.Contains(full, "cases") &&
+		!strings.Contains(full, "comparative") {
 		score += 5
 	}
 
-	if hasDiscussionSection {
-		score += 2
-	}
-
-	return score >= 8
+	return score
 }
 
-// classifyWithAI uses LLM to classify article type
+func calculateSampleScore(sample, full string) float64 {
+	var score float64
+
+	// Multiple subjects indicators
+	multipleIndicators := []string{
+		"participants",
+		"subjects",
+		"respondents",
+		"patients",
+		"sample",
+		"cohort",
+		"population",
+		"cases",
+		"companies",
+		"organizations",
+		"individuals",
+	}
+
+	for _, indicator := range multipleIndicators {
+		if strings.Contains(sample, indicator) {
+			score += 3
+		} else if strings.Contains(full, indicator) {
+			score += 1.5
+		}
+	}
+
+	// Study design indicators
+	designIndicators := []string{
+		"cross-sectional",
+		"longitudinal",
+		"cohort study",
+		"case-control",
+		"randomized",
+		"controlled trial",
+		"survey",
+		"questionnaire",
+		"recruited",
+		"enrolled",
+		"sampled",
+	}
+
+	for _, indicator := range designIndicators {
+		if strings.Contains(full, indicator) {
+			score += 4
+		}
+	}
+
+	// Sample size indicators
+	if strings.Contains(full, "n=") || strings.Contains(full, "n =") {
+		// Check if it's not n=1
+		if !strings.Contains(full, "n=1") && !strings.Contains(full, "n = 1") {
+			score += 5
+		}
+	}
+
+	return score
+}
+
+// AI enhancement functions
+
+func enhanceWithAI(text string, llmConfig interface{}, classification *ArticleClassification) error {
+	// This would integrate with the AI model to enhance classification
+	// For now, it's a placeholder that can be implemented with actual LLM calls
+	return nil
+}
+
 func classifyWithAI(text string, llmConfig interface{}) (string, error) {
-	// This would integrate with the alembica package for AI calls
-	// For now, returning a placeholder implementation
-
-	// Extract sample for efficiency
-	sampleText := text
-	if len(text) > 3000 {
-		sampleText = text[:3000]
-	}
-
-	// In actual implementation, this would:
-	// 1. Create a structured prompt asking the LLM to classify the article
-	// 2. Call the appropriate LLM API through alembica
-	// 3. Parse the JSON response to extract the article type
-
-	// Placeholder: fall back to rule-based classification
-	result := classifyByRules(sampleText)
-	return string(result), nil
+	// Placeholder for AI-based classification
+	// This would make actual LLM API calls
+	return string(Unknown), nil
 }
 
-// GetArticleTypeDescription returns a description of the article type
-func GetArticleTypeDescription(articleType string) string {
-	descriptions := map[string]string{
-		"research_article":  "Original research presenting new empirical findings",
-		"review":            "Review of existing literature on a topic",
-		"systematic_review": "Systematic review following structured methodology",
-		"meta_analysis":     "Statistical analysis of multiple studies",
-		"editorial":         "Opinion piece by journal editors",
-		"letter":            "Letter to the editor or correspondence",
-		"case_report":       "Report of individual patient case(s)",
-		"commentary":        "Commentary on published work",
-		"perspective":       "Author's perspective on a topic",
-		"unknown":           "Article type could not be determined",
+// classifyWithAIComprehensive performs AI-based article type classification
+func classifyWithAIComprehensive(title, abstract string, llmConfigs []interface{}) (*ArticleClassification, error) {
+	// Prepare AI model configurations
+	var models []definitions.Model
+	for _, llmConfig := range llmConfigs {
+		if llm, ok := llmConfig.(map[string]interface{}); ok {
+			model := definitions.Model{
+				Provider:    getStringValue(llm, "provider"),
+				APIKey:      getStringValue(llm, "api_key"),
+				Model:       getStringValue(llm, "model"),
+				Temperature: getFloatValue(llm, "temperature"),
+				TPMLimit:    getIntValue(llm, "tpm_limit"),
+				RPMLimit:    getIntValue(llm, "rpm_limit"),
+			}
+			models = append(models, model)
+		}
 	}
 
-	if desc, exists := descriptions[articleType]; exists {
-		return desc
+	if len(models) == 0 {
+		logger.Info("No valid AI models configured for article type classification, falling back to rule-based")
+		// Fall back to rule-based classification
+		text := title + " " + abstract
+		return classifyArticleComprehensive(text), nil
 	}
 
-	return "Unknown article type"
+	// Build the manuscript data string
+	dataStr := fmt.Sprintf("Title: %s\nAbstract: %s", title, abstract)
+
+	// Create the comprehensive prompt
+	prompt := fmt.Sprintf(`You are an expert in scientific literature classification. Analyze the following manuscript and classify it into ALL applicable categories.
+
+IMPORTANT: A manuscript can belong to MULTIPLE overlapping categories. For example:
+- A paper can be both "research_article" AND "empirical_study" AND "sample_study"
+- A paper can be both "systematic_review" AND "meta_analysis"
+- A paper can be both "methods_paper" AND "empirical_study"
+
+MANUSCRIPT DATA:
+%s
+
+CLASSIFICATION CATEGORIES:
+
+1. TRADITIONAL PUBLICATION TYPES (select all that apply):
+- research_article: Original research with methods and results
+- review: Literature review or narrative review
+- systematic_review: Following structured protocols (e.g., PRISMA)
+- meta_analysis: Statistical synthesis of multiple studies
+- editorial: Opinion piece by editors
+- letter: Correspondence to editors
+- case_report: Report of individual case(s)
+- commentary: Comment on published work
+- perspective: Author viewpoint/opinion
+
+2. METHODOLOGICAL TYPES (select all that apply):
+- empirical_study: Based on observation/experimentation with data collection
+- theoretical_paper: Conceptual work without empirical data
+- methods_paper: Presenting new methods/techniques/protocols
+
+3. STUDY SCOPE (for empirical studies, select if applicable):
+- single_case_study: In-depth analysis of single case/patient/organization (n=1)
+- sample_study: Multiple participants/subjects (cohort, cross-sectional, survey, etc.)
+
+RESPONSE FORMAT:
+Provide a JSON object with:
+{
+  "primary_type": "most_specific_type",
+  "all_types": ["type1", "type2", "type3"],
+  "methodological_types": ["empirical_study", "theoretical_paper", or "methods_paper"],
+  "scope_types": ["single_case_study" or "sample_study"] if applicable
 }
 
-// ArticleTypeScore represents confidence scores for each article type
-type ArticleTypeScore struct {
-	Type       string  `json:"type"`
-	Score      float64 `json:"score"`
-	Confidence string  `json:"confidence"`
+Example response for a research article with empirical data from multiple participants:
+{
+  "primary_type": "research_article",
+  "all_types": ["research_article", "empirical_study", "sample_study"],
+  "methodological_types": ["empirical_study"],
+  "scope_types": ["sample_study"]
+}`, dataStr)
+
+	// Prepare the input for alembica
+	input := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       "1.0",
+			SchemaVersion: "1.0",
+		},
+		Models: models,
+		Prompts: []definitions.Prompt{
+			{
+				PromptContent:  prompt,
+				SequenceID:     "1",
+				SequenceNumber: 1,
+			},
+		},
+	}
+
+	// Convert to JSON
+	jsonInput, err := json.Marshal(input)
+	if err != nil {
+		logger.Error("Failed to marshal input for AI: %v", err)
+		// Fall back to rule-based
+		text := title + " " + abstract
+		return classifyArticleComprehensive(text), nil
+	}
+
+	// Call alembica
+	logger.Info("Calling AI model for article type classification")
+	result, err := extraction.Extract(string(jsonInput))
+	if err != nil {
+		logger.Error("AI extraction failed: %v", err)
+		// Fall back to rule-based
+		text := title + " " + abstract
+		return classifyArticleComprehensive(text), nil
+	}
+
+	// Parse the response
+	var output definitions.Output
+	if err := json.Unmarshal([]byte(result), &output); err != nil {
+		logger.Error("Failed to parse AI response: %v", err)
+		// Fall back to rule-based
+		text := title + " " + abstract
+		return classifyArticleComprehensive(text), nil
+	}
+
+	// Extract classification from the response
+	if len(output.Responses) > 0 && len(output.Responses[0].ModelResponses) > 0 {
+		response := output.Responses[0].ModelResponses[0]
+
+		// Try to parse JSON response
+		var aiClassification struct {
+			PrimaryType         string   `json:"primary_type"`
+			AllTypes            []string `json:"all_types"`
+			MethodologicalTypes []string `json:"methodological_types"`
+			ScopeTypes          []string `json:"scope_types"`
+		}
+
+		if err := json.Unmarshal([]byte(response), &aiClassification); err != nil {
+			logger.Error("Failed to parse AI classification response: %v", err)
+			// Fall back to rule-based
+			text := title + " " + abstract
+			return classifyArticleComprehensive(text), nil
+		}
+
+		// Convert to ArticleClassification
+		classification := &ArticleClassification{
+			PrimaryType:         ArticleType(aiClassification.PrimaryType),
+			AllTypes:            []ArticleType{},
+			TypeScores:          make(map[ArticleType]float64),
+			MethodologicalTypes: []ArticleType{},
+			ScopeTypes:          []ArticleType{},
+		}
+
+		// Convert all types
+		for _, t := range aiClassification.AllTypes {
+			articleType := ArticleType(t)
+			classification.AllTypes = append(classification.AllTypes, articleType)
+			// Assign high score for AI-identified types
+			classification.TypeScores[articleType] = 20.0
+		}
+
+		// Convert methodological types
+		for _, t := range aiClassification.MethodologicalTypes {
+			classification.MethodologicalTypes = append(classification.MethodologicalTypes, ArticleType(t))
+		}
+
+		// Convert scope types
+		for _, t := range aiClassification.ScopeTypes {
+			classification.ScopeTypes = append(classification.ScopeTypes, ArticleType(t))
+		}
+
+		// Ensure primary type is in AllTypes
+		if classification.PrimaryType != Unknown {
+			found := false
+			for _, t := range classification.AllTypes {
+				if t == classification.PrimaryType {
+					found = true
+					break
+				}
+			}
+			if !found {
+				classification.AllTypes = append([]ArticleType{classification.PrimaryType}, classification.AllTypes...)
+			}
+		}
+
+		logger.Info("AI classification successful: primary=%s, all=%v", classification.PrimaryType, classification.AllTypes)
+		return classification, nil
+	}
+
+	// If we couldn't get a valid response, fall back to rule-based
+	logger.Info("Could not extract valid classification from AI response, falling back to rule-based")
+	text := title + " " + abstract
+	return classifyArticleComprehensive(text), nil
 }
 
 // ClassifyArticleTypeWithScores returns classification with confidence scores
 func ClassifyArticleTypeWithScores(text string) ([]ArticleTypeScore, error) {
-	if text == "" {
-		return nil, fmt.Errorf("empty text provided")
+	classification, err := ClassifyArticleTypes(text, nil)
+	if err != nil {
+		return nil, err
 	}
 
-	scores := []ArticleTypeScore{}
-	textLower := strings.ToLower(text)
-
-	// Calculate scores for each type
-	types := map[ArticleType]float64{
-		SystematicReview: calculateSystematicReviewScore(textLower),
-		MetaAnalysis:     calculateMetaAnalysisScore(textLower),
-		ReviewArticle:    calculateReviewScore(textLower),
-		ResearchArticle:  calculateResearchScore(textLower),
-		Editorial:        calculateEditorialScore(textLower),
-		Letter:           calculateLetterScore(textLower),
-		CaseReport:       calculateCaseReportScore(textLower),
-		Commentary:       calculateCommentaryScore(textLower),
-		Perspective:      calculatePerspectiveScore(textLower),
-	}
-
-	// Convert to ArticleTypeScore and determine confidence
-	for articleType, score := range types {
+	var scores []ArticleTypeScore
+	for articleType, score := range classification.TypeScores {
 		confidence := "low"
-		if score > 0.7 {
+		if score > 15 {
 			confidence = "high"
-		} else if score > 0.4 {
+		} else if score > 8 {
 			confidence = "medium"
 		}
 
 		scores = append(scores, ArticleTypeScore{
-			Type:       string(articleType),
+			Type:       articleType,
 			Score:      score,
 			Confidence: confidence,
 		})
 	}
 
-	// Sort by score (highest first)
+	// Sort scores in descending order
 	for i := 0; i < len(scores)-1; i++ {
 		for j := i + 1; j < len(scores); j++ {
 			if scores[j].Score > scores[i].Score {
@@ -486,173 +1113,30 @@ func ClassifyArticleTypeWithScores(text string) ([]ArticleTypeScore, error) {
 	return scores, nil
 }
 
-// Helper functions for calculating scores (0.0 to 1.0)
-func calculateSystematicReviewScore(text string) float64 {
-	score := 0.0
-	indicators := []string{
-		"systematic review", "prisma", "cochrane", "search strategy",
-		"inclusion criteria", "exclusion criteria", "quality assessment",
-	}
-
-	for _, indicator := range indicators {
-		if strings.Contains(text, indicator) {
-			score += 0.15
-		}
-	}
-
-	if score > 1.0 {
-		return 1.0
-	}
-	return score
-}
-
-func calculateMetaAnalysisScore(text string) float64 {
-	score := 0.0
-	indicators := []string{
-		"meta-analysis", "pooled estimate", "forest plot", "heterogeneity",
-		"random effects", "fixed effects",
-	}
-
-	for _, indicator := range indicators {
-		if strings.Contains(text, indicator) {
-			score += 0.17
-		}
-	}
-
-	if score > 1.0 {
-		return 1.0
-	}
-	return score
-}
-
-func calculateReviewScore(text string) float64 {
-	score := 0.0
-	indicators := []string{
-		"review", "literature review", "narrative review", "we reviewed",
-	}
-
-	for _, indicator := range indicators {
-		if strings.Contains(text, indicator) {
-			score += 0.25
-		}
-	}
-
-	// Reduce score if it has research article characteristics
-	if strings.Contains(text, "methods") && strings.Contains(text, "results") {
-		score -= 0.3
-	}
-
-	if score < 0 {
-		return 0
-	}
-	if score > 1.0 {
-		return 1.0
-	}
-	return score
-}
-
-func calculateResearchScore(text string) float64 {
-	score := 0.0
-	indicators := []string{
-		"methods", "results", "participants", "data collection",
-		"statistical analysis", "p value", "confidence interval",
-	}
-
-	for _, indicator := range indicators {
-		if strings.Contains(text, indicator) {
-			score += 0.14
-		}
-	}
-
-	if score > 1.0 {
-		return 1.0
-	}
-	return score
-}
-
-func calculateEditorialScore(text string) float64 {
-	if strings.Contains(text, "editorial") || strings.Contains(text, "from the editor") {
-		return 0.9
-	}
-	if len(text) < 3000 && strings.Contains(text, "this issue") {
-		return 0.6
-	}
-	return 0.0
-}
-
-func calculateLetterScore(text string) float64 {
-	if strings.Contains(text, "letter to the editor") || strings.Contains(text, "dear editor") {
-		return 0.95
-	}
-	if strings.Contains(text, "correspondence") || strings.Contains(text, "in response to") {
-		return 0.7
-	}
-	return 0.0
-}
-
-func calculateCaseReportScore(text string) float64 {
-	score := 0.0
-	indicators := []string{
-		"case report", "case presentation", "patient presentation",
-		"year-old patient", "chief complaint",
-	}
-
-	for _, indicator := range indicators {
-		if strings.Contains(text, indicator) {
-			score += 0.3
-		}
-	}
-
-	if score > 1.0 {
-		return 1.0
-	}
-	return score
-}
-
-func calculateCommentaryScore(text string) float64 {
-	if strings.Contains(text, "commentary") || strings.Contains(text, "comment on") {
-		return 0.8
-	}
-	if strings.Contains(text, "viewpoint") || strings.Contains(text, "opinion piece") {
-		return 0.6
-	}
-	return 0.0
-}
-
-func calculatePerspectiveScore(text string) float64 {
-	if strings.Contains(text, "perspective") || strings.Contains(text, "personal view") {
-		return 0.8
-	}
-	if strings.Contains(text, "point of view") {
-		return 0.6
-	}
-	return 0.0
-}
-
-// BatchClassifyArticleTypes classifies multiple articles efficiently
+// BatchClassifyArticleTypes classifies multiple articles
 func BatchClassifyArticleTypes(texts []string, llmConfigs []interface{}) ([]string, error) {
 	results := make([]string, len(texts))
 
 	for i, text := range texts {
-		articleType, err := ClassifyArticleType(text, llmConfigs)
+		result, err := ClassifyArticleType(text, llmConfigs)
 		if err != nil {
 			results[i] = string(Unknown)
 		} else {
-			results[i] = articleType
+			results[i] = result
 		}
 	}
 
 	return results, nil
 }
 
-// ArticleTypeStatistics represents statistics about article type classification
+// ArticleTypeStatistics represents statistics about article type distribution
 type ArticleTypeStatistics struct {
 	TotalArticles int                `json:"total_articles"`
 	Distribution  map[string]int     `json:"distribution"`
 	Percentages   map[string]float64 `json:"percentages"`
 }
 
-// CalculateArticleTypeStatistics computes statistics for a batch of classified articles
+// CalculateArticleTypeStatistics calculates statistics for article types
 func CalculateArticleTypeStatistics(articleTypes []string) ArticleTypeStatistics {
 	stats := ArticleTypeStatistics{
 		TotalArticles: len(articleTypes),
@@ -660,24 +1144,88 @@ func CalculateArticleTypeStatistics(articleTypes []string) ArticleTypeStatistics
 		Percentages:   make(map[string]float64),
 	}
 
-	// Count occurrences
 	for _, articleType := range articleTypes {
 		stats.Distribution[articleType]++
 	}
 
-	// Calculate percentages
 	for articleType, count := range stats.Distribution {
-		stats.Percentages[articleType] = float64(count) / float64(stats.TotalArticles) * 100
+		stats.Percentages[articleType] = (float64(count) / float64(stats.TotalArticles)) * 100
 	}
 
 	return stats
 }
 
-// ExportClassificationResults exports classification results to JSON
-func ExportClassificationResults(results []ArticleTypeScore) (string, error) {
-	jsonData, err := json.MarshalIndent(results, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("error marshaling results: %v", err)
+// ExportClassificationResults exports classification results to various formats
+func ExportClassificationResults(classifications []*ArticleClassification, format string) ([]byte, error) {
+	switch format {
+	case "json":
+		return json.MarshalIndent(classifications, "", "  ")
+	default:
+		return nil, fmt.Errorf("unsupported format: %s", format)
 	}
-	return string(jsonData), nil
+}
+
+// GetArticleTypeDescription returns a description of the article type
+func GetArticleTypeDescription(articleType string) string {
+	descriptions := map[string]string{
+		"research_article":  "Original research presenting new empirical findings",
+		"review":            "Review of existing literature on a topic",
+		"systematic_review": "Systematic review following structured methodology",
+		"meta_analysis":     "Statistical analysis of multiple studies",
+		"editorial":         "Editorial or opinion piece by journal editors",
+		"letter":            "Letter to the editor or correspondence",
+		"case_report":       "Report of a specific case or patient",
+		"commentary":        "Commentary on published work",
+		"perspective":       "Author's perspective on a topic",
+		"empirical_study":   "Study based on observation or experimentation with data",
+		"theoretical_paper": "Conceptual or theoretical work without empirical data",
+		"methods_paper":     "Paper presenting new methods or techniques",
+		"single_case_study": "In-depth analysis of a single case",
+		"sample_study":      "Study involving multiple participants or subjects",
+		"unknown":           "Article type could not be determined",
+	}
+
+	if desc, exists := descriptions[articleType]; exists {
+		return desc
+	}
+	return "No description available"
+}
+
+// Helper functions for checking article types in exclusion logic
+
+// HasArticleType checks if a classification contains a specific type
+func HasArticleType(classification *ArticleClassification, articleType ArticleType) bool {
+	for _, t := range classification.AllTypes {
+		if t == articleType {
+			return true
+		}
+	}
+	return false
+}
+
+// HasAnyArticleType checks if a classification contains any of the specified types
+func HasAnyArticleType(classification *ArticleClassification, types ...ArticleType) bool {
+	for _, t := range types {
+		if HasArticleType(classification, t) {
+			return true
+		}
+	}
+	return false
+}
+
+// ParseArticleClassification parses the JSON classification string back to struct
+func ParseArticleClassification(classificationJSON string) (*ArticleClassification, error) {
+	var classification ArticleClassification
+
+	// First try to parse as JSON
+	err := json.Unmarshal([]byte(classificationJSON), &classification)
+	if err != nil {
+		// Fallback: treat as simple string type for backward compatibility
+		classification = ArticleClassification{
+			PrimaryType: ArticleType(classificationJSON),
+			AllTypes:    []ArticleType{ArticleType(classificationJSON)},
+		}
+	}
+
+	return &classification, nil
 }

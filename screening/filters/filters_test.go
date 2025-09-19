@@ -302,92 +302,6 @@ func TestBuildComparisonData(t *testing.T) {
 	}
 }
 
-// TestDetectLanguageWithAI tests AI-based language detection
-func TestDetectLanguageWithAI(t *testing.T) {
-	// Mock manuscript data with different language scenarios
-	// Commented out since test is skipped - would need mock LLM setup
-	/*
-		tests := []struct {
-			name         string
-			manuscript   map[string]string
-			expectedLang string
-			description  string
-		}{
-			{
-				name: "French title with English abstract",
-				manuscript: map[string]string{
-					"title":    "Étude sur le changement climatique et ses impacts",
-					"abstract": "This study examines the effects of climate change on coastal regions",
-					"journal":  "Environmental Research",
-				},
-				expectedLang: "fr",
-				description:  "Should prioritize title language over translated abstract",
-			},
-			{
-				name: "Spanish publication",
-				manuscript: map[string]string{
-					"title":    "Análisis del impacto ambiental en zonas urbanas",
-					"abstract": "Este estudio analiza el impacto ambiental en las zonas urbanas",
-					"journal":  "Revista Española de Medio Ambiente",
-				},
-				expectedLang: "es",
-				description:  "Should detect Spanish from all fields",
-			},
-			{
-				name: "German title with English abstract",
-				manuscript: map[string]string{
-					"title":    "Untersuchung der Klimaauswirkungen auf marine Ökosysteme",
-					"abstract": "This research investigates climate impacts on marine ecosystems",
-					"journal":  "Deutsche Zeitschrift für Umweltforschung",
-				},
-				expectedLang: "de",
-				description:  "Should detect German despite English abstract",
-			},
-			{
-				name: "English publication",
-				manuscript: map[string]string{
-					"title":    "Climate Change Effects on Biodiversity",
-					"abstract": "We examine the effects of climate change on global biodiversity patterns",
-					"journal":  "Nature Climate Change",
-				},
-				expectedLang: "en",
-				description:  "Should detect English when all fields are in English",
-			},
-		}
-	*/
-
-	// Note: This test would require mock LLM configs and responses
-	// For actual testing, we'd need to mock the alembica extraction
-	t.Skip("Skipping AI-based language detection test - requires LLM mock setup")
-
-	// Example of how the test would work with proper mocking:
-	/*
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				// Mock LLM configs
-				llmConfigs := []interface{}{
-					map[string]interface{}{
-						"provider":    "mock",
-						"api_key":     "test",
-						"model":       "test-model",
-						"temperature": 0.01,
-					},
-				}
-
-				result, err := DetectLanguageWithAI(tt.manuscript, llmConfigs)
-				if err != nil {
-					t.Errorf("DetectLanguageWithAI() error = %v", err)
-					return
-				}
-
-				if result != tt.expectedLang {
-					t.Errorf("DetectLanguageWithAI() = %v, want %v. %s", result, tt.expectedLang, tt.description)
-				}
-			})
-		}
-	*/
-}
-
 // TestGetLanguageName tests language name lookup
 func TestGetLanguageName(t *testing.T) {
 	tests := []struct {
@@ -431,7 +345,7 @@ func TestClassifyArticleTypeWithScores(t *testing.T) {
 
 	// The top score should be either systematic_review or meta_analysis
 	topType := scores[0].Type
-	if topType != "systematic_review" && topType != "meta_analysis" {
+	if topType != SystematicReview && topType != MetaAnalysis {
 		t.Errorf("Expected systematic_review or meta_analysis as top type, got %s", topType)
 	}
 
@@ -470,31 +384,61 @@ func TestBatchClassifyArticleTypes(t *testing.T) {
 
 // TestCalculateArticleTypeStatistics tests statistics calculation
 func TestCalculateArticleTypeStatistics(t *testing.T) {
-	articleTypes := []string{
+	// For statistics, we'll use primary types
+	primaryTypes := []string{
 		"research_article",
 		"research_article",
-		"review",
+		"systematic_review",
 		"editorial",
-		"research_article",
+		"meta_analysis",
 	}
 
-	stats := CalculateArticleTypeStatistics(articleTypes)
+	stats := CalculateArticleTypeStatistics(primaryTypes)
 
 	if stats.TotalArticles != 5 {
 		t.Errorf("Expected 5 total articles, got %d", stats.TotalArticles)
 	}
 
-	if stats.Distribution["research_article"] != 3 {
-		t.Errorf("Expected 3 research articles, got %d", stats.Distribution["research_article"])
+	if stats.Distribution["research_article"] != 2 {
+		t.Errorf("Expected 2 research articles, got %d", stats.Distribution["research_article"])
 	}
 
-	if stats.Distribution["review"] != 1 {
-		t.Errorf("Expected 1 review, got %d", stats.Distribution["review"])
-	}
-
-	// Check percentage calculation
-	expectedPercentage := 60.0 // 3 out of 5 = 60%
+	expectedPercentage := 40.0
 	if stats.Percentages["research_article"] != expectedPercentage {
-		t.Errorf("Expected 60%% for research_article, got %f", stats.Percentages["research_article"])
+		t.Errorf("Expected 40%% research articles, got %.2f%%", stats.Percentages["research_article"])
+	}
+}
+
+// TestParseArticleClassification tests parsing classification JSON
+func TestParseArticleClassification(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		wantType ArticleType
+	}{
+		{
+			name:     "Parse JSON classification",
+			input:    `{"primary_type":"research_article","all_types":["research_article","empirical_study"]}`,
+			wantType: ResearchArticle,
+		},
+		{
+			name:     "Parse legacy string format",
+			input:    "editorial",
+			wantType: Editorial,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			classification, err := ParseArticleClassification(tt.input)
+			if err != nil {
+				t.Fatalf("ParseArticleClassification() error = %v", err)
+			}
+
+			if classification.PrimaryType != tt.wantType {
+				t.Errorf("Expected primary type %s, got %s",
+					tt.wantType, classification.PrimaryType)
+			}
+		})
 	}
 }

@@ -58,11 +58,22 @@ type LanguageConfig struct {
 
 // ArticleTypeConfig for article classification
 type ArticleTypeConfig struct {
-	Enabled           bool     `toml:"enabled"`
-	ExcludeReviews    bool     `toml:"exclude_reviews"`
-	ExcludeEditorials bool     `toml:"exclude_editorials"`
-	ExcludeLetters    bool     `toml:"exclude_letters"`
-	IncludeTypes      []string `toml:"include_types"` // Specific types to include
+	Enabled           bool `toml:"enabled"`
+	UseAI             bool `toml:"use_ai"` // Use AI for classification vs rule-based
+	ExcludeReviews    bool `toml:"exclude_reviews"`
+	ExcludeEditorials bool `toml:"exclude_editorials"`
+	ExcludeLetters    bool `toml:"exclude_letters"`
+
+	// Empirical vs Theoretical filtering
+	ExcludeTheoretical bool `toml:"exclude_theoretical"`
+	ExcludeEmpirical   bool `toml:"exclude_empirical"`
+	ExcludeMethods     bool `toml:"exclude_methods"`
+
+	// Study scope filtering
+	ExcludeSingleCase bool `toml:"exclude_single_case"`
+	ExcludeSample     bool `toml:"exclude_sample"`
+
+	IncludeTypes []string `toml:"include_types"` // Specific types to include
 }
 
 // LLMConfig for AI model configuration (reused from main project)
@@ -502,44 +513,123 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 		// Convert LLMConfig slice to []interface{} for filter function
 		var llmInterfaces []interface{}
 		for _, llm := range llmConfigs {
-			llmInterfaces = append(llmInterfaces, llm)
+			// Convert to map for the filter functions
+			llmMap := map[string]interface{}{
+				"provider":    llm.Provider,
+				"api_key":     llm.APIKey,
+				"model":       llm.Model,
+				"temperature": llm.Temperature,
+				"tpm_limit":   llm.TPMLimit,
+				"rpm_limit":   llm.RPMLimit,
+			}
+			llmInterfaces = append(llmInterfaces, llmMap)
 		}
 
-		articleType, err := filters.ClassifyArticleType(result.Records[i].Text, llmInterfaces)
+		// Get comprehensive article classification
+		var classification *filters.ArticleClassification
+		var err error
+
+		if config.UseAI && len(llmConfigs) > 0 {
+			// Use AI-based classification with manuscript data
+			classification, err = filters.ClassifyArticleTypeWithAI(result.Records[i].OriginalData, true, llmInterfaces)
+		} else {
+			// Use rule-based classification with text
+			classification, err = filters.ClassifyArticleTypes(result.Records[i].Text, nil)
+		}
+
 		if err != nil {
 			logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
 			continue
 		}
 
-		result.Records[i].Tags["article_type"] = articleType
+		// Store complete classification in tags
+		result.Records[i].Tags["article_type"] = classification.PrimaryType
+		result.Records[i].Tags["all_article_types"] = classification.AllTypes
+		result.Records[i].Tags["methodological_types"] = classification.MethodologicalTypes
+		result.Records[i].Tags["scope_types"] = classification.ScopeTypes
+		result.Records[i].Tags["type_scores"] = classification.TypeScores
 
-		// Check exclusion rules
+		// Check exclusion rules against all classified types
 		shouldExclude := false
 		exclusionReason := ""
+		excludedTypes := []string{}
 
-		if config.ExcludeReviews && strings.Contains(strings.ToLower(articleType), "review") {
-			shouldExclude = true
-			exclusionReason = "Review article"
-		} else if config.ExcludeEditorials && strings.Contains(strings.ToLower(articleType), "editorial") {
-			shouldExclude = true
-			exclusionReason = "Editorial"
-		} else if config.ExcludeLetters && strings.Contains(strings.ToLower(articleType), "letter") {
-			shouldExclude = true
-			exclusionReason = "Letter"
+		// Check traditional publication type exclusions
+		if config.ExcludeReviews {
+			if filters.HasAnyArticleType(classification, filters.ReviewArticle, filters.SystematicReview, filters.MetaAnalysis) {
+				shouldExclude = true
+				excludedTypes = append(excludedTypes, "review")
+			}
 		}
 
-		// Check include types if specified
+		if config.ExcludeEditorials && filters.HasArticleType(classification, filters.Editorial) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "editorial")
+		}
+
+		if config.ExcludeLetters && filters.HasArticleType(classification, filters.Letter) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "letter")
+		}
+
+		// Check methodological type exclusions
+		if config.ExcludeTheoretical && filters.HasArticleType(classification, filters.TheoreticalPaper) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "theoretical")
+		}
+
+		if config.ExcludeEmpirical && filters.HasArticleType(classification, filters.EmpiricalStudy) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "empirical")
+		}
+
+		if config.ExcludeMethods && filters.HasArticleType(classification, filters.MethodsPaper) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "methods")
+		}
+
+		// Check study scope exclusions
+		if config.ExcludeSingleCase && filters.HasArticleType(classification, filters.SingleCaseStudy) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "single case")
+		}
+
+		if config.ExcludeSample && filters.HasArticleType(classification, filters.SampleStudy) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "sample study")
+		}
+
+		// Build exclusion reason from all excluded types
+		if len(excludedTypes) > 0 {
+			exclusionReason = fmt.Sprintf("Excluded article types: %s", strings.Join(excludedTypes, ", "))
+		}
+
+		// Check include types if specified (only checks primary type for backward compatibility)
 		if len(config.IncludeTypes) > 0 && !shouldExclude {
 			typeIncluded := false
+			primaryTypeStr := string(classification.PrimaryType)
+
 			for _, includeType := range config.IncludeTypes {
-				if strings.EqualFold(articleType, includeType) {
+				if strings.EqualFold(primaryTypeStr, includeType) {
 					typeIncluded = true
 					break
 				}
+				// Also check against all types for more flexible matching
+				for _, classType := range classification.AllTypes {
+					if strings.EqualFold(string(classType), includeType) {
+						typeIncluded = true
+						break
+					}
+				}
+				if typeIncluded {
+					break
+				}
 			}
+
 			if !typeIncluded {
 				shouldExclude = true
-				exclusionReason = fmt.Sprintf("Article type not in include list: %s", articleType)
+				exclusionReason = fmt.Sprintf("Article types not in include list. Primary: %s, All: %v",
+					classification.PrimaryType, classification.AllTypes)
 			}
 		}
 

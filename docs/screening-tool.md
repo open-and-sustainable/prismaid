@@ -126,10 +126,30 @@ use_ai = false                            # Use AI for detection (recommended fo
 
 [filters.article_type]
 enabled = true
-exclude_reviews = true                    # Exclude review articles
+use_ai = false                             # Use AI for classification (requires LLM config)
+
+# Traditional publication type exclusions
+exclude_reviews = true                    # Exclude all review types (review, systematic_review, meta_analysis)
 exclude_editorials = true                 # Exclude editorials
-exclude_letters = true                    # Exclude letters
-include_types = []                        # Specific types to include
+exclude_letters = true                    # Exclude letters to editor
+exclude_case_reports = false              # Exclude case reports
+exclude_commentary = false                # Exclude commentary articles
+exclude_perspectives = false              # Exclude perspective articles
+
+# Methodological type exclusions (can overlap with publication types)
+exclude_theoretical = false               # Exclude theoretical/conceptual papers
+exclude_empirical = false                 # Exclude empirical studies with data
+exclude_methods = false                   # Exclude methods/methodology papers
+
+# Study scope exclusions (applies to empirical studies)
+exclude_single_case = false               # Exclude single case studies (n=1, individual cases)
+exclude_sample = false                    # Exclude sample studies (cohorts, cross-sectional, multiple subjects)
+
+include_types = []                        # If specified, ONLY include these types
+                                         # Available types: "research_article", "review", "systematic_review",
+                                         # "meta_analysis", "editorial", "letter", "case_report", "commentary",
+                                         # "perspective", "empirical_study", "theoretical_paper", "methods_paper",
+                                         # "single_case_study", "sample_study"
 ```
 
 ### LLM Configuration (Optional)
@@ -327,17 +347,97 @@ Manuscripts excluded by language filter will have:
 
 ### Article Type Classification Filter
 
-Classifies manuscripts into categories:
+Classifies manuscripts into multiple overlapping categories. A single manuscript can belong to several types simultaneously (e.g., a paper can be both "research_article" AND "empirical_study" AND "sample_study").
 
+#### Operating Modes
+
+The filter can operate in two modes:
+
+##### 1. Rule-based Classification (`use_ai = false`)
+- Uses keyword patterns and heuristics to classify articles
+- Analyzes text for specific indicators (e.g., "systematic review", "editorial", "we conducted", "participants")
+- Calculates confidence scores based on keyword frequency and placement
+- Fast and deterministic, no API calls required
+- Best for: Large datasets, offline processing, consistent reproducible results
+
+##### 2. AI-Assisted Classification (`use_ai = true`)
+- Uses configured LLM models for semantic understanding of title and abstract
+- Understands context and meaning beyond keyword matching
+- Can identify subtle distinctions between article types
+- Provides more accurate classification for complex or ambiguous cases
+- Best for: High-accuracy requirements, nuanced classification needs
+
+**Traditional Publication Types:**
 - **Research Articles**: Original research with methods and results
-- **Review Articles**: Literature reviews, narrative reviews
-- **Systematic Reviews**: Following structured protocols
-- **Meta-Analyses**: Statistical analysis of multiple studies
+- **Review Articles**: Literature reviews, narrative reviews  
+- **Systematic Reviews**: Following structured protocols (e.g., PRISMA)
+- **Meta-Analyses**: Statistical synthesis of multiple studies
 - **Editorials**: Opinion pieces by editors
 - **Letters**: Correspondence to editors
-- **Case Reports**: Individual patient cases
+- **Case Reports**: Reports of individual patient cases or specific instances
 - **Commentary**: Comments on published work
-- **Perspectives**: Author viewpoints
+- **Perspectives**: Author viewpoints and opinion pieces
+
+**Methodological Types (can overlap with publication types):**
+- **Empirical Study**: Research based on observation or experimentation with data collection
+- **Theoretical Paper**: Conceptual or theoretical work without empirical data
+- **Methods Paper**: Paper presenting new methods, techniques, or protocols
+
+**Study Scope Classifications (applies to empirical studies):**
+- **Single Case Study**: In-depth analysis of a single case, patient, organization, or instance (n=1)
+- **Sample Study**: Study involving multiple cases, participants, or subjects (includes cohort studies, cross-sectional studies, case-control studies, surveys)
+
+**Important Notes:**
+- Article types are not mutually exclusive - papers receive all applicable classifications
+- Exclusion filters check against ALL assigned types
+- For example, if `exclude_reviews = true`, it will exclude papers classified as "review", "systematic_review", OR "meta_analysis"
+- The `include_types` filter allows specifying exactly which types to accept, overriding exclusion rules
+
+#### AI-Assisted Classification Details
+
+When `use_ai = true`, the filter sends the manuscript's title and abstract to the configured LLM with a comprehensive prompt that:
+
+1. **Requests multiple overlapping classifications** - The AI is explicitly instructed that papers can belong to multiple categories
+2. **Evaluates three dimensions**:
+   - Traditional publication types (research_article, review, editorial, etc.)
+   - Methodological types (empirical_study, theoretical_paper, methods_paper)
+   - Study scope (single_case_study, sample_study)
+3. **Returns structured JSON** with all applicable types
+
+**AI Prompt Components:**
+
+The AI receives:
+- **Manuscript title**: Primary indicator of article type and scope
+- **Abstract**: Full content for semantic analysis
+- **Classification instructions**: Explicit guidance on overlapping categories
+
+The prompt instructs the AI to:
+```
+1. Analyze the manuscript for ALL applicable categories
+2. Identify traditional publication type (research, review, editorial, etc.)
+3. Determine methodological approach (empirical, theoretical, methods)
+4. Assess study scope if empirical (single case vs. sample study)
+5. Return structured JSON with:
+   - primary_type: The most specific/important classification
+   - all_types: Complete list of applicable types
+   - methodological_types: Empirical/theoretical/methods classification
+   - scope_types: Single case or sample study designation
+```
+
+**Example AI Response:**
+```json
+{
+  "primary_type": "research_article",
+  "all_types": ["research_article", "empirical_study", "sample_study"],
+  "methodological_types": ["empirical_study"],
+  "scope_types": ["sample_study"]
+}
+```
+
+**Fallback Behavior:**
+- If AI classification fails or no LLM is configured, automatically falls back to rule-based classification
+- Ensures consistent operation regardless of AI availability
+- Logs warnings when falling back to maintain transparency
 
 ## Filter Interaction and Processing Order
 
@@ -391,6 +491,7 @@ use_ai = false
 [filters.article_type]
 enabled = true
 exclude_editorials = true
+exclude_theoretical = true                # Focus on empirical work only
 ```
 
 Processing flow for a duplicate Spanish editorial:
@@ -415,7 +516,7 @@ The CSV output includes the following column types:
    - `tag_detected_language`: Primary language detected (prioritizes title)
    - `tag_title_language`: Language detected in title (when non-AI mode)
    - `tag_abstract_language`: Language detected in abstract (when non-AI mode)
-   - `tag_article_type`: Classified article type
+   - `tag_article_type`: Classified article type (e.g., research_article, empirical_study, single_case_study)
 3. **Status Columns**:
    - `include`: `true` for included records, `false` for excluded
    - `exclusion_reason`: Explanation for exclusion (e.g., "Duplicate of 123", "Language not accepted: fr")
@@ -480,9 +581,18 @@ use_ai = false
 
 [filters.article_type]
 enabled = true
+use_ai = false                            # Using rule-based classification
+exclude_reviews = false                   # Keep reviews for literature review
 exclude_editorials = true
 exclude_letters = true
-exclude_reviews = false  # Keep reviews for literature review
+exclude_case_reports = false
+exclude_commentary = false
+exclude_perspectives = false
+exclude_theoretical = false
+exclude_empirical = false
+exclude_methods = false
+exclude_single_case = true                # Focus on studies with multiple subjects
+exclude_sample = false
 ```
 
 ### Example 2: Multi-Language Screening with AI
@@ -504,6 +614,12 @@ compare_fields = ["title", "authors", "year"]
 enabled = true
 accepted_languages = ["en", "es", "pt"]
 use_ai = true  # Better for regional language variants
+
+[filters.article_type]
+enabled = true
+use_ai = true  # AI classification for better accuracy
+exclude_reviews = false
+exclude_editorials = true
 
 [filters.llm.1]
 provider = "OpenAI"
@@ -533,10 +649,57 @@ use_ai = false
 
 [filters.article_type]
 enabled = true
-exclude_reviews = true      # No reviews
-exclude_editorials = true   # No editorials
-exclude_letters = true      # No letters
-include_types = ["research_article"]  # Only primary research
+use_ai = false                            # Using rule-based classification
+exclude_reviews = true                    # No reviews (includes systematic reviews and meta-analyses)
+exclude_editorials = true                 # No editorials
+exclude_letters = true                    # No letters
+exclude_case_reports = true               # No case reports
+exclude_commentary = true                 # No commentary
+exclude_perspectives = true               # No perspectives
+exclude_theoretical = true                # Only empirical work
+exclude_empirical = false                 # Keep empirical studies
+exclude_methods = false                   # Keep methods papers
+exclude_single_case = true                # Only studies with samples
+exclude_sample = false                    # Keep sample studies
+include_types = ["empirical_study", "sample_study"]  # Focus on empirical research with samples
+
+### Example 3b: Same Screening with AI Classification
+
+**Scenario**: Same requirements but using AI for more accurate article type classification.
+
+```toml
+[project]
+name = "Systematic Review Screening with AI"
+log_level = "high"
+
+[filters.deduplication]
+enabled = true
+use_ai = false
+compare_fields = ["doi", "title", "authors", "year", "abstract"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = true  # AI for better language detection
+
+[filters.article_type]
+enabled = true
+use_ai = true  # AI for comprehensive type classification
+exclude_reviews = true
+exclude_editorials = true
+exclude_letters = true
+exclude_case_reports = true
+exclude_commentary = true
+exclude_perspectives = true
+exclude_theoretical = true
+exclude_single_case = true
+include_types = ["empirical_study", "sample_study"]
+
+[filters.llm.1]
+provider = "OpenAI"
+api_key = ""
+model = "gpt-4o-mini"
+temperature = 0.01
 ```
 
 ### Example 4: Minimal Filtering for Broad Inclusion

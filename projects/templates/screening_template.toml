@@ -29,12 +29,33 @@ accepted_languages = ["en", "es", "fr"]       # ISO language codes to accept
 use_ai = false                                # Use AI for detection (requires LLM config)
 
 ### Article type classification filter
+### Note: Articles can have multiple overlapping types (e.g., a paper can be both "research_article" AND "empirical_study" AND "sample_study")
 [filters.article_type]
 enabled = true                                 # Enable article type filter
-exclude_reviews = true                        # Exclude review articles
+use_ai = false                                 # Use AI for classification (requires LLM config)
+
+# Traditional publication type exclusions
+exclude_reviews = true                        # Exclude all review types (review, systematic_review, meta_analysis)
 exclude_editorials = true                     # Exclude editorials
 exclude_letters = true                        # Exclude letters to editor
-include_types = []                            # If specified, ONLY include these types (e.g., ["research_article", "case_report"])
+exclude_case_reports = false                  # Exclude case reports
+exclude_commentary = false                    # Exclude commentary articles
+exclude_perspectives = false                  # Exclude perspective articles
+
+# Methodological type exclusions (can overlap with publication types)
+exclude_theoretical = false                   # Exclude theoretical/conceptual papers
+exclude_empirical = false                     # Exclude empirical studies with data
+exclude_methods = false                       # Exclude methods/methodology papers
+
+# Study scope exclusions (applies to empirical studies)
+exclude_single_case = false                   # Exclude single case studies (n=1, individual cases)
+exclude_sample = false                        # Exclude sample studies (cohorts, cross-sectional, multiple subjects)
+
+include_types = []                            # If specified, ONLY include these types
+                                             # Available types: "research_article", "review", "systematic_review",
+                                             # "meta_analysis", "editorial", "letter", "case_report", "commentary",
+                                             # "perspective", "empirical_study", "theoretical_paper", "methods_paper",
+                                             # "single_case_study", "sample_study"
 
 ### LLM configuration for AI-assisted screening (optional)
 ### Multiple LLMs can be configured for ensemble processing
@@ -128,10 +149,16 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 #
 # [filters.article_type]
 # enabled = true
-# exclude_reviews = true
+# use_ai = false
+# exclude_reviews = true           # Excludes review, systematic_review, meta_analysis
 # exclude_editorials = true
 # exclude_letters = true
-# include_types = ["research_article", "case_report"]
+# exclude_case_reports = true
+# exclude_commentary = true
+# exclude_perspectives = false
+# exclude_theoretical = true       # Focus on empirical work
+# exclude_single_case = true       # Exclude single cases (n=1)
+# include_types = ["empirical_study", "sample_study"]  # Only include papers that are BOTH empirical AND multi-subject
 
 ### Notes:
 # 1. The input file should have column headers in the first row
@@ -143,3 +170,7 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 # 5. Excluded manuscripts will have "include" = false and an "exclusion_reason"
 # 6. When using AI features, ensure API keys are configured
 # 7. Filters are applied in order: deduplication -> language -> article_type
+# 8. Article types are not mutually exclusive - a paper can be classified as multiple types
+#    For example: a paper can be "research_article" + "empirical_study" + "sample_study"
+# 9. Exclusion criteria check ALL assigned types (e.g., if a paper is both "review" and "systematic_review",
+#    it will be excluded if exclude_reviews=true)

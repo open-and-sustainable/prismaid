@@ -23,15 +23,32 @@ compare_fields = ["title", "authors", "abstract", "doi"]
 [filters.language]
 enabled = true
 accepted_languages = ["en"]
-use_ai = true
+use_ai = false
 
 ### Article type classification filter - test classification
+### Note: Articles can have multiple overlapping types
 [filters.article_type]
-enabled = false
-exclude_reviews = true
+enabled = true
+use_ai = false
+
+# Traditional publication type exclusions
+exclude_reviews = true              # Excludes review, systematic_review, meta_analysis
 exclude_editorials = true
 exclude_letters = true
-include_types = []
+exclude_case_reports = false
+exclude_commentary = false
+exclude_perspectives = false
+
+# Methodological type exclusions
+exclude_theoretical = false
+exclude_empirical = false
+exclude_methods = false
+
+# Study scope exclusions
+exclude_single_case = false
+exclude_sample = false
+
+include_types = []                  # Empty for test - accepts all non-excluded types
 
 ### LLM configuration for automated tests
 [[filters.llm]]
