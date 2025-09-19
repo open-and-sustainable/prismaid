@@ -150,6 +150,19 @@ include_types = []                        # If specified, ONLY include these typ
                                          # "meta_analysis", "editorial", "letter", "case_report", "commentary",
                                          # "perspective", "empirical_study", "theoretical_paper", "methods_paper",
                                          # "single_case_study", "sample_study"
+
+[filters.topic_relevance]
+enabled = false                           # Enable topic relevance filtering
+use_ai = false                            # Use AI for semantic relevance scoring
+topics = []                               # List of topic descriptions
+                                         # Example: ["machine learning in healthcare",
+                                         #           "artificial intelligence for medical diagnosis"]
+min_score = 0.5                          # Minimum relevance score (0.0-1.0)
+
+[filters.topic_relevance.score_weights]
+keyword_match = 0.4                      # Weight for keyword matching
+concept_match = 0.4                      # Weight for concept/phrase matching
+field_relevance = 0.2                    # Weight for journal/field relevance
 ```
 
 ### LLM Configuration (Optional)
@@ -168,276 +181,30 @@ rpm_limit = 0                             # Requests per minute limit
 
 ## Screening Filters
 
+The screening tool includes four main filters that can be applied in sequence:
+
+1. **[Deduplication Filter](filters/deduplication.md)** - Identifies and removes duplicate manuscripts
+2. **[Language Detection Filter](filters/language.md)** - Filters manuscripts by language
+3. **[Article Type Classification Filter](filters/article-type.md)** - Classifies and filters by publication type
+4. **[Topic Relevance Filter](filters/topic-relevance.md)** - Scores manuscripts based on topic relevance
+
+Each filter has detailed documentation available through the links above. Below is a brief overview of each filter's capabilities.
+
 ### Deduplication Filter
 
-The deduplication filter identifies duplicate manuscripts using two methods:
-
-#### 1. Simple Matching (Non-AI)
-When `use_ai = false`, the filter uses intelligent field comparison:
-
-**Priority Matching Rules:**
-- **DOI Match**: If DOI fields exist and match exactly, records are considered duplicates
-- **Combined Fields**: Checks for author + year + (title OR abstract) combinations
-- **Single Character Tolerance**: Allows for minor variations (single character differences) in field comparisons
-- **Text Normalization**: Automatically handles case differences, extra whitespace, and punctuation variations
-
-**Best for:** Fast processing when records have consistent metadata or minor variations
-
-#### 2. AI-Assisted Matching
-When `use_ai = true` and LLM is configured, the filter uses semantic understanding:
-
-**AI Capabilities:**
-- Recognizes author name variations (initials vs full names, middle names)
-- Handles character encoding issues (é→e, ü→u, Müller→Mueller)
-- Understands minor title/abstract rephrasing
-- Identifies duplicates despite formatting differences
-
-**AI Prompt Used:**
-```
-You are a scientific reviewer tasked with identifying duplicate manuscripts in a research database. You are provided with specific fields from two different records to compare.
-
-CONTEXT:
-- You are comparing the following fields: [configured fields]
-- Records may have variations due to:
-  * Author name formats (initials vs full names, middle names, order variations)
-  * Character encoding issues (é→e, ü→u, ñ→n, ø→o, incorrect UTF-8 representation)
-  * Non-standard character replacements (Müller→Mueller, Gómez→Gomez, Søren→Soren)
-  * Technical simplifications in database entries
-  * Minor transcription differences
-  * Abbreviated vs full journal names
-  * Different citation styles or formats
-  * Minor typos or punctuation differences
-
-IMPORTANT CONSIDERATIONS:
-- If DOI is provided and identical, they are definitely duplicates
-- For author names: "Smith, J." and "Smith, John" likely refer to the same person
-- Character variations: "Müller" and "Mueller" or "André" and "Andre" are likely the same
-- For titles: ignore minor differences in capitalization, punctuation, or small words
-- For years: same year is a strong indicator if other fields match
-- For abstracts: similar content with different phrasing may still be duplicates
-
-MANUSCRIPT 1:
-[field data]
-
-MANUSCRIPT 2:
-[field data]
-
-TASK: Determine if these represent the same publication.
-Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}
-```
-
-**Output Format:**
-Duplicates are marked in the output with:
-- `tag_is_duplicate`: `true` for duplicates, `false` for originals
-- `tag_duplicate_of`: Contains the ID of the original record (empty for non-duplicates)
-- `include`: Set to `false` for duplicates
-- `exclusion_reason`: "Duplicate of [ID]" for duplicates
+Identifies duplicate manuscripts using intelligent field comparison or AI-assisted semantic matching. See [full documentation](filters/deduplication.md).
 
 ### Language Detection Filter
 
-The language detection filter identifies the primary language of manuscripts and filters based on accepted languages. It can operate in two modes: rule-based or AI-assisted.
-
-#### Configuration
-
-```toml
-[filters.language]
-enabled = true                             # Enable/disable language filter
-accepted_languages = ["en", "es", "fr"]   # ISO 639-1 language codes to accept
-use_ai = false                            # Use AI for detection (requires LLM config)
-```
-
-#### Working Mechanism
-
-**Processing Order:**
-1. Language detection runs after deduplication (skips already excluded duplicates)
-2. Analyzes each manuscript's title, abstract, and journal fields
-3. Determines primary language
-4. Excludes manuscripts not in the accepted languages list
-
-**Field Priority:**
-- **Title language has priority** over abstract language
-- Many scientific databases translate abstracts to English while keeping original titles
-- Journal names can indicate regional publications (e.g., "Revista Española", "Deutsche Zeitschrift")
-
-#### Rule-Based Detection (use_ai = false)
-
-When `use_ai = false`, the filter uses pattern matching:
-
-**Detection Method:**
-- Analyzes character scripts (Latin, Cyrillic, CJK, Arabic, Hebrew, Greek)
-- Checks for common words in major languages (English, Spanish, French, German, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Arabic)
-- Fast and privacy-preserving (no external API calls)
-- Works offline without dependencies
-
-**Output Tags:**
-- `tag_detected_language`: Final detected language (prioritizes title)
-- `tag_title_language`: Language detected in title field
-- `tag_abstract_language`: Language detected in abstract field
-
-**Limitations:**
-- May struggle with short titles or mixed-language content
-- Limited to major languages with predefined word lists
-- Less accurate for technical/scientific text with many Latin terms
-
-#### AI-Assisted Detection (use_ai = true)
-
-When `use_ai = true` and LLM is configured, the filter uses semantic understanding:
-
-**Detection Method:**
-- Sends title, abstract, and journal fields to configured LLM
-- Uses specialized prompt that understands scientific manuscript conventions
-- Recognizes that abstracts are often translated while titles remain in original language
-- Handles character encoding variations (é→e, ü→u, ñ→n)
-- Identifies primary language even in mixed-language documents
-
-**Graceful Fallback:**
-- If no LLM is configured → falls back to rule-based detection
-- If API call fails → falls back to rule-based detection
-- If response parsing fails → falls back to rule-based detection
-- Always provides a result, never fails completely
-
-**Output Tags:**
-- `tag_detected_language`: Final detected language from AI
-- `tag_ai_detected_language`: Language detected by AI (for debugging)
-
-#### Example Configurations
-
-**Basic rule-based filtering (accept only English):**
-```toml
-[filters.language]
-enabled = true
-accepted_languages = ["en"]
-use_ai = false
-```
-
-**Multi-language with AI detection:**
-```toml
-[filters.language]
-enabled = true
-accepted_languages = ["en", "es", "fr", "de"]
-use_ai = true
-
-[filters.llm.1]
-provider = "OpenAI"
-api_key = ""  # Uses environment variable
-model = "gpt-4o-mini"
-temperature = 0.01
-```
-
-#### Exclusion Handling
-
-Manuscripts excluded by language filter will have:
-- `include`: Set to `false`
-- `exclusion_reason`: "Language not accepted: [detected_language]"
-- Language detection tags preserved for review
-
-#### Performance Considerations
-
-**Rule-based:**
-- Very fast (milliseconds per manuscript)
-- No API costs
-- Consistent results
-- Best for: English-only filtering, quick screening, offline use
-
-**AI-assisted:**
-- Slower (depends on API latency)
-- API costs apply
-- More accurate for edge cases
-- Best for: Multi-language collections, manuscripts with mixed languages, regional publications
+Identifies manuscript language and filters based on accepted languages using rule-based pattern matching or AI-assisted semantic detection. See [full documentation](filters/language.md).
 
 ### Article Type Classification Filter
 
-Classifies manuscripts into multiple overlapping categories. A single manuscript can belong to several types simultaneously (e.g., a paper can be both "research_article" AND "empirical_study" AND "sample_study").
+Classifies manuscripts into multiple overlapping categories (traditional types, methodological types, and study scope). A single manuscript can belong to several types simultaneously. See [full documentation](filters/article-type.md).
 
-#### Operating Modes
+### Topic Relevance Filter
 
-The filter can operate in two modes:
-
-##### 1. Rule-based Classification (`use_ai = false`)
-- Uses keyword patterns and heuristics to classify articles
-- Analyzes text for specific indicators (e.g., "systematic review", "editorial", "we conducted", "participants")
-- Calculates confidence scores based on keyword frequency and placement
-- Fast and deterministic, no API calls required
-- Best for: Large datasets, offline processing, consistent reproducible results
-
-##### 2. AI-Assisted Classification (`use_ai = true`)
-- Uses configured LLM models for semantic understanding of title and abstract
-- Understands context and meaning beyond keyword matching
-- Can identify subtle distinctions between article types
-- Provides more accurate classification for complex or ambiguous cases
-- Best for: High-accuracy requirements, nuanced classification needs
-
-**Traditional Publication Types:**
-- **Research Articles**: Original research with methods and results
-- **Review Articles**: Literature reviews, narrative reviews  
-- **Systematic Reviews**: Following structured protocols (e.g., PRISMA)
-- **Meta-Analyses**: Statistical synthesis of multiple studies
-- **Editorials**: Opinion pieces by editors
-- **Letters**: Correspondence to editors
-- **Case Reports**: Reports of individual patient cases or specific instances
-- **Commentary**: Comments on published work
-- **Perspectives**: Author viewpoints and opinion pieces
-
-**Methodological Types (can overlap with publication types):**
-- **Empirical Study**: Research based on observation or experimentation with data collection
-- **Theoretical Paper**: Conceptual or theoretical work without empirical data
-- **Methods Paper**: Paper presenting new methods, techniques, or protocols
-
-**Study Scope Classifications (applies to empirical studies):**
-- **Single Case Study**: In-depth analysis of a single case, patient, organization, or instance (n=1)
-- **Sample Study**: Study involving multiple cases, participants, or subjects (includes cohort studies, cross-sectional studies, case-control studies, surveys)
-
-**Important Notes:**
-- Article types are not mutually exclusive - papers receive all applicable classifications
-- Exclusion filters check against ALL assigned types
-- For example, if `exclude_reviews = true`, it will exclude papers classified as "review", "systematic_review", OR "meta_analysis"
-- The `include_types` filter allows specifying exactly which types to accept, overriding exclusion rules
-
-#### AI-Assisted Classification Details
-
-When `use_ai = true`, the filter sends the manuscript's title and abstract to the configured LLM with a comprehensive prompt that:
-
-1. **Requests multiple overlapping classifications** - The AI is explicitly instructed that papers can belong to multiple categories
-2. **Evaluates three dimensions**:
-   - Traditional publication types (research_article, review, editorial, etc.)
-   - Methodological types (empirical_study, theoretical_paper, methods_paper)
-   - Study scope (single_case_study, sample_study)
-3. **Returns structured JSON** with all applicable types
-
-**AI Prompt Components:**
-
-The AI receives:
-- **Manuscript title**: Primary indicator of article type and scope
-- **Abstract**: Full content for semantic analysis
-- **Classification instructions**: Explicit guidance on overlapping categories
-
-The prompt instructs the AI to:
-```
-1. Analyze the manuscript for ALL applicable categories
-2. Identify traditional publication type (research, review, editorial, etc.)
-3. Determine methodological approach (empirical, theoretical, methods)
-4. Assess study scope if empirical (single case vs. sample study)
-5. Return structured JSON with:
-   - primary_type: The most specific/important classification
-   - all_types: Complete list of applicable types
-   - methodological_types: Empirical/theoretical/methods classification
-   - scope_types: Single case or sample study designation
-```
-
-**Example AI Response:**
-```json
-{
-  "primary_type": "research_article",
-  "all_types": ["research_article", "empirical_study", "sample_study"],
-  "methodological_types": ["empirical_study"],
-  "scope_types": ["sample_study"]
-}
-```
-
-**Fallback Behavior:**
-- If AI classification fails or no LLM is configured, automatically falls back to rule-based classification
-- Ensures consistent operation regardless of AI availability
-- Logs warnings when falling back to maintain transparency
+Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](filters/topic-relevance.md).
 
 ## Filter Interaction and Processing Order
 
@@ -446,7 +213,7 @@ The screening tool applies filters sequentially, which optimizes performance and
 ### Processing Pipeline
 
 ```
-Input Manuscripts
+Input Manuscripts List (CSV, TXT)
     ↓
 [1] DEDUPLICATION FILTER
     ├─ Identifies duplicates
@@ -463,12 +230,17 @@ Input Manuscripts
     ├─ Classifies article types
     └─ Excludes specified types
     ↓
-Final Output (CSV/JSON)
+[4] TOPIC RELEVANCE FILTER
+    ├─ Skips already excluded records
+    ├─ Calculates relevance score (0.0-1.0)
+    └─ Excludes below minimum threshold
+    ↓
+Final Output List (CSV)
 ```
 
 ### Key Principles
 
-1. **Sequential Processing**: Filters run in order - deduplication → language → article type
+1. **Sequential Processing**: Filters are applied in order: Deduplication → Language → Article Type → Topic Relevance
 2. **Exclusion Preservation**: Once excluded, a manuscript is not reprocessed by subsequent filters
 3. **Single Exclusion Reason**: Each manuscript shows only the first reason for exclusion
 4. **Performance Optimization**: Skipping excluded records reduces API calls and processing time
@@ -865,7 +637,7 @@ The Screening tool fits into the systematic review workflow:
 ### Common Issues and Solutions
 
 #### Issue: High false positive rate in deduplication
-**Solution**: 
+**Solution**:
 - Increase similarity threshold (e.g., from 0.85 to 0.95)
 - Use more specific comparison fields
 - Switch from fuzzy to exact matching for structured data

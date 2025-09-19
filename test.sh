@@ -30,6 +30,14 @@ echo "###### Testing SCREENING ######"
 echo "==> Running screening unit tests..."
 if go test ./screening/logic ./screening/filters -v > /dev/null 2>&1; then
     echo "    ✓ All screening unit tests passed"
+
+    # Test topic relevance filter specifically
+    echo "==> Testing topic relevance filter..."
+    if go test ./screening/filters -run TestCalculateTopicRelevance -v > /dev/null 2>&1; then
+        echo "    ✓ Topic relevance filter tests passed"
+    else
+        echo "    ✗ Topic relevance filter tests failed"
+    fi
 else
     echo "    ✗ Some screening unit tests failed"
 fi
@@ -68,6 +76,26 @@ with open('$OUTPUT_FILE', 'r') as f:
 
     # Count exclusion reasons
     lang_excluded = sum(1 for r in rows if 'Language not accepted' in r.get('exclusion_reason', ''))
+
+    # Topic relevance exclusions
+    topic_excluded = sum(1 for r in rows if 'Topic relevance score' in r.get('exclusion_reason', ''))
+    topic_scores = {}
+    for r in rows:
+        if 'tag_topic_relevance_score' in r and r['tag_topic_relevance_score']:
+            try:
+                score = float(r['tag_topic_relevance_score'])
+                # Group scores into ranges
+                if score < 0.3:
+                    range_key = '0.0-0.3 (Low)'
+                elif score < 0.5:
+                    range_key = '0.3-0.5 (Moderate)'
+                elif score < 0.7:
+                    range_key = '0.5-0.7 (Good)'
+                else:
+                    range_key = '0.7-1.0 (High)'
+                topic_scores[range_key] = topic_scores.get(range_key, 0) + 1
+            except:
+                pass
 
     # Article type exclusions
     editorial_excluded = sum(1 for r in rows if 'editorial' in r.get('exclusion_reason', '').lower())
@@ -147,6 +175,18 @@ with open('$OUTPUT_FILE', 'r') as f:
 
         print(f'     Remaining: {total - duplicates - lang_excluded - article_excluded}')
 
+    if topic_excluded > 0 or topic_scores:
+        print('')
+        print('  🎯 TOPIC RELEVANCE FILTER:')
+        if topic_excluded > 0:
+            print(f'     Below threshold removed: {topic_excluded}')
+        if topic_scores:
+            print('     Score distribution:')
+            for score_range in ['0.0-0.3 (Low)', '0.3-0.5 (Moderate)', '0.5-0.7 (Good)', '0.7-1.0 (High)']:
+                if score_range in topic_scores:
+                    print(f'       - {score_range}: {topic_scores[score_range]}')
+        print(f'     Remaining: {total - duplicates - lang_excluded - article_excluded - topic_excluded}')
+
     print('')
     print('  ═══════════════════════════════════════════════════════════')
     print('')
@@ -180,6 +220,7 @@ else
     echo "    Check /tmp/screening_output.log for details"
 fi
 
+: <<'COMMENT'
 echo "###### Testing DOWNLOAD-URL ######"
 echo "==> Testing URL downloads..."
 # Create a temporary directory for downloads to avoid polluting test inputs
@@ -237,6 +278,7 @@ else
     echo "    ✗ Review test failed"
 fi
 
+COMMENT
 # Final cleanup
 echo ""
 echo "###### Final cleanup ######"

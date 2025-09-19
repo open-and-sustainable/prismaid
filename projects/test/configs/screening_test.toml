@@ -50,6 +50,22 @@ exclude_sample = false
 
 include_types = []                  # Empty for test - accepts all non-excluded types
 
+### Topic relevance filter - test relevance scoring
+[filters.topic_relevance]
+enabled = true
+use_ai = false
+topics = [
+    "machine learning in climate applications",
+    "artificial intelligence for climate predictions",
+    "deep learning models for extreme events"
+]
+min_score = 0.4
+
+[filters.topic_relevance.score_weights]
+keyword_match = 0.4
+concept_match = 0.4
+field_relevance = 0.2
+
 ### LLM configuration for automated tests
 [[filters.llm]]
 provider = "DeepSeek"

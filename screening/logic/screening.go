@@ -36,10 +36,11 @@ type ProjectConfig struct {
 
 // FiltersConfig contains settings for each screening filter
 type FiltersConfig struct {
-	Deduplication DeduplicationConfig `toml:"deduplication"`
-	Language      LanguageConfig      `toml:"language"`
-	ArticleType   ArticleTypeConfig   `toml:"article_type"`
-	LLM           []LLMConfig         `toml:"llm"`
+	Deduplication  DeduplicationConfig  `toml:"deduplication"`
+	Language       LanguageConfig       `toml:"language"`
+	ArticleType    ArticleTypeConfig    `toml:"article_type"`
+	TopicRelevance TopicRelevanceConfig `toml:"topic_relevance"`
+	LLM            []LLMConfig          `toml:"llm"`
 }
 
 // DeduplicationConfig for duplicate detection
@@ -74,6 +75,22 @@ type ArticleTypeConfig struct {
 	ExcludeSample     bool `toml:"exclude_sample"`
 
 	IncludeTypes []string `toml:"include_types"` // Specific types to include
+}
+
+// TopicRelevanceConfig for topic-based filtering
+type TopicRelevanceConfig struct {
+	Enabled      bool                       `toml:"enabled"`
+	UseAI        bool                       `toml:"use_ai"`        // Use AI for relevance scoring
+	Topics       []string                   `toml:"topics"`        // List of topic descriptions
+	MinScore     float64                    `toml:"min_score"`     // Minimum score (0-1) to include
+	ScoreWeights TopicRelevanceScoreWeights `toml:"score_weights"` // Weights for different scoring components
+}
+
+// TopicRelevanceScoreWeights defines the weights for different scoring components
+type TopicRelevanceScoreWeights struct {
+	KeywordMatch   float64 `toml:"keyword_match"`   // Weight for keyword matching
+	ConceptMatch   float64 `toml:"concept_match"`   // Weight for concept matching
+	FieldRelevance float64 `toml:"field_relevance"` // Weight for field/domain relevance
 }
 
 // LLMConfig for AI model configuration (reused from main project)
@@ -159,6 +176,12 @@ func Screen(tomlConfiguration string) error {
 	if config.Filters.ArticleType.Enabled {
 		if err := applyArticleTypeFilter(result, config.Filters.ArticleType, config.Filters.LLM); err != nil {
 			return fmt.Errorf("article type filter error: %v", err)
+		}
+	}
+
+	if config.Filters.TopicRelevance.Enabled {
+		if err := applyTopicRelevanceFilter(result, config.Filters.TopicRelevance, config.Filters.LLM); err != nil {
+			return fmt.Errorf("topic relevance filter error: %v", err)
 		}
 	}
 
@@ -641,6 +664,93 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 	}
 
 	result.Statistics["article_type_excluded"] = excludedCount
+	return nil
+}
+
+// applyTopicRelevanceFilter applies topic relevance scoring to filter off-topic manuscripts
+func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceConfig, llmConfigs []LLMConfig) error {
+	logger.Info("Applying topic relevance filter...")
+	excludedCount := 0
+
+	// Convert LLM configs to interface{} for the filter functions
+	var llmConfigInterfaces []interface{}
+	for _, cfg := range llmConfigs {
+		llmConfigInterfaces = append(llmConfigInterfaces, map[string]interface{}{
+			"provider":    cfg.Provider,
+			"api_key":     cfg.APIKey,
+			"model":       cfg.Model,
+			"temperature": cfg.Temperature,
+			"tpm_limit":   cfg.TPMLimit,
+			"rpm_limit":   cfg.RPMLimit,
+		})
+	}
+
+	for i, record := range result.Records {
+		// Skip if already excluded by previous filters
+		if !record.Include {
+			continue
+		}
+
+		// Calculate topic relevance score
+		var relevanceScore *filters.TopicRelevanceScore
+		var err error
+
+		if config.UseAI && len(llmConfigInterfaces) > 0 {
+			relevanceScore, err = filters.CalculateTopicRelevanceWithAI(
+				record.OriginalData,
+				config.Topics,
+				llmConfigInterfaces,
+			)
+		} else {
+			// Convert score weights
+			weights := filters.ScoreWeights{
+				KeywordMatch:   config.ScoreWeights.KeywordMatch,
+				ConceptMatch:   config.ScoreWeights.ConceptMatch,
+				FieldRelevance: config.ScoreWeights.FieldRelevance,
+			}
+
+			relevanceScore, err = filters.CalculateTopicRelevance(
+				record.OriginalData,
+				config.Topics,
+				weights,
+			)
+		}
+
+		if err != nil {
+			logger.Error("Failed to calculate topic relevance for record %s: %v", record.ID, err)
+			// Don't exclude on error, just log and continue
+			continue
+		}
+
+		// Store relevance score in tags
+		if result.Records[i].Tags == nil {
+			result.Records[i].Tags = make(map[string]interface{})
+		}
+		result.Records[i].Tags["topic_relevance_score"] = relevanceScore.OverallScore
+		result.Records[i].Tags["topic_relevance_confidence"] = relevanceScore.Confidence
+		result.Records[i].Tags["matched_keywords"] = relevanceScore.MatchedKeywords
+		result.Records[i].Tags["matched_concepts"] = relevanceScore.MatchedConcepts
+
+		// Apply minimum score threshold
+		if relevanceScore.OverallScore < config.MinScore {
+			result.Records[i].Include = false
+			result.Records[i].ExclusionReason = fmt.Sprintf(
+				"Topic relevance score (%.2f) below minimum threshold (%.2f)",
+				relevanceScore.OverallScore,
+				config.MinScore,
+			)
+			excludedCount++
+
+			logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+				record.ID,
+				relevanceScore.OverallScore,
+				config.MinScore,
+			)
+		}
+	}
+
+	result.Statistics["topic_relevance_excluded"] = excludedCount
+	logger.Info("Topic relevance filter: excluded %d manuscripts", excludedCount)
 	return nil
 }
 

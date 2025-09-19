@@ -57,6 +57,22 @@ include_types = []                            # If specified, ONLY include these
                                              # "perspective", "empirical_study", "theoretical_paper", "methods_paper",
                                              # "single_case_study", "sample_study"
 
+### Topic relevance filter - screens manuscripts based on topic relevance
+[filters.topic_relevance]
+enabled = false                               # Enable topic relevance filter
+use_ai = false                                # Use AI for relevance scoring (requires LLM config)
+topics = []                                   # List of topic descriptions to match against
+                                             # Example: ["machine learning in healthcare",
+                                             #           "artificial intelligence applications in medical diagnosis",
+                                             #           "deep learning for clinical decision support"]
+min_score = 0.5                              # Minimum relevance score (0.0-1.0) to include manuscript
+
+# Weights for different scoring components (should sum to a positive value)
+[filters.topic_relevance.score_weights]
+keyword_match = 0.4                          # Weight for direct keyword matches
+concept_match = 0.4                          # Weight for conceptual/phrase matches
+field_relevance = 0.2                        # Weight for journal/field relevance
+
 ### LLM configuration for AI-assisted screening (optional)
 ### Multiple LLMs can be configured for ensemble processing
 [filters.llm]
@@ -160,6 +176,45 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 # exclude_single_case = true       # Exclude single cases (n=1)
 # include_types = ["empirical_study", "sample_study"]  # Only include papers that are BOTH empirical AND multi-subject
 
+### Scenario 4: Topic-based filtering for specific research area
+# [project]
+# name = "AI in Healthcare Papers"
+# input_file = "manuscripts.csv"
+# output_file = "ai_healthcare_papers"
+# text_column = "abstract"
+# identifier_column = "doi"
+# output_format = "json"
+# log_level = "medium"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = false
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = false
+#
+# [filters.topic_relevance]
+# enabled = true
+# use_ai = false
+# topics = [
+#     "artificial intelligence in healthcare and medicine",
+#     "machine learning for medical diagnosis and treatment",
+#     "deep learning applications in clinical settings",
+#     "AI-powered medical imaging and radiology",
+#     "predictive analytics for patient outcomes",
+#     "natural language processing for electronic health records"
+# ]
+# min_score = 0.6     # Require 60% relevance score
+# [filters.topic_relevance.score_weights]
+# keyword_match = 0.4
+# concept_match = 0.4
+# field_relevance = 0.2
+
 ### Notes:
 # 1. The input file should have column headers in the first row
 # 2. The text_column can contain either:
@@ -169,8 +224,10 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 # 4. The output file will include all original columns plus new tag columns
 # 5. Excluded manuscripts will have "include" = false and an "exclusion_reason"
 # 6. When using AI features, ensure API keys are configured
-# 7. Filters are applied in order: deduplication -> language -> article_type
+# 7. Filters are applied in order: deduplication -> language -> article_type -> topic_relevance
 # 8. Article types are not mutually exclusive - a paper can be classified as multiple types
 #    For example: a paper can be "research_article" + "empirical_study" + "sample_study"
 # 9. Exclusion criteria check ALL assigned types (e.g., if a paper is both "review" and "systematic_review",
 #    it will be excluded if exclude_reviews=true)
+# 10. Topic relevance scoring assigns a score from 0.0 to 1.0 based on how well the manuscript matches the specified topics
+# 11. Topic descriptions should be detailed phrases rather than simple keywords for better matching

@@ -50,7 +50,11 @@ Our tools support a comprehensive systematic review workflow following the stand
 ## Table of Contents
 Explore this website for comprehensive guidance on using the prismAId toolkit:
 1. [Installation & Setup](installation-setup): Learn how to install prismAId tools and configure them for different environments.
-2. [Screening Tool](screening-tool): Filter manuscripts using deduplication, language detection, and article type classification.
+2. [Screening Tool](screening-tool): Filter manuscripts with multiple screening filters:
+   - [Deduplication](filters/deduplication) - Identify and remove duplicate manuscripts
+   - [Language Detection](filters/language) - Filter by manuscript language
+   - [Article Type](filters/article-type) - Classify publication types
+   - [Topic Relevance](filters/topic-relevance) - Score relevance to research topics
 3. [Download Tool](download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
 4. [Convert Tool](convert-tool): Learn to transform documents from various formats into plain text for analysis.
 5. [Review Tool](review-tool): Master the core systematic review functionality for extracting structured information.
