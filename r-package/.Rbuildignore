@@ -32,5 +32,4 @@ SECURITY.md
 CHANGELOG
 .github
 .vscode
-
-
+generate-docs.R
