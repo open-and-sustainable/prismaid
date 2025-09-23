@@ -9,7 +9,7 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.9.0] - 2025-09-23
+## [0.9.0] - 2025-09-24
 ### Added
 - New Screening tool for filtering manuscripts before download
   - Deduplication filter with exact, and semantic matching algorithms
