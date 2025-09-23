@@ -46,6 +46,11 @@ func runConvert(inputDir, selectedFormats *C.char) error {
 	return prismaid.Convert(goInputDir, goSelectedFormats)
 }
 
+func runScreening(input *C.char) error {
+	goInput := C.GoString(input)
+	return prismaid.Screening(goInput)
+}
+
 // Python-specific function
 //
 //export RunReviewPython
@@ -76,6 +81,15 @@ func DownloadURLListPython(path *C.char) {
 func ConvertPython(inputDir, selectedFormats *C.char) *C.char {
 	defer handlePanic()
 	if err := runConvert(inputDir, selectedFormats); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
+}
+
+//export ScreeningPython
+func ScreeningPython(input *C.char) *C.char {
+	defer handlePanic()
+	if err := runScreening(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -115,6 +129,15 @@ func ConvertR(inputDir, selectedFormats *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString("Conversion completed successfully")
+}
+
+//export ScreeningR
+func ScreeningR(input *C.char) *C.char {
+	defer handlePanic()
+	if err := runScreening(input); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("Screening completed successfully")
 }
 
 // Free memory function used by both interfaces

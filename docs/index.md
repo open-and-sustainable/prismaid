@@ -6,7 +6,7 @@ layout: default
 # Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
 ## Purpose and Benefits
-prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it provides a comprehensive toolkit that simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
+prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it provides a comprehensive toolkit that simplifies the screening, extraction, and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
 
 ### Key Advantages
 
@@ -22,7 +22,7 @@ prismAId changes the way researchers conduct systematic reviews using generative
 prismAId offers a suite of tools to support every stage of your systematic review:
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 40%;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 60%;">
 </div>
 
 ### Core Tools
@@ -78,7 +78,7 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 ![license](https://www.gnu.org/graphics/agplv3-155x51.png)
 
 ## Citation
-Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
+Boero, R. (2025). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796)
 

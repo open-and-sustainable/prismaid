@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.8.1 - Expanded support for new models.
-  Updated dependencies, including alembica with support for multiple new models.
+  v0.9.0 - New Screening tool for filtering manuscripts before download.
+  Filtering of manuscripts based on deduplication, language, article type, and off-topic detection.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
@@ -18,11 +18,7 @@ identifiers:
 repository-code: 'https://github.com/open-and-sustainable/prismaid'
 url: 'https://open-and-sustainable.github.io/prismaid/'
 abstract: >-
-  prismAId uses generative AI models to extract data from
-  scientific literature. It offers simple-to-use, efficient,
-  and replicable methods for analyzing literature when
-  conducting systematic reviews. No coding skills are
-  required to use prismAId.
+  prismAId leverages generative AI models to screen and extract data from scientific literature. It provides efficient, replicable, and user-friendly methods for conducting systematic reviews. Designed in line with Open Science practices, prismAId requires no coding skills to use.
 keywords:
   - Systematic Review
   - Generative AI

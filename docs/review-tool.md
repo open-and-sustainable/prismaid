@@ -38,7 +38,12 @@ Key capabilities include:
 6. **Chain-of-Thought Tracking**: Optional justification logs to track the AI's reasoning process
 7. **Cost Management**: Features for minimizing and tracking API usage costs
 
-The Review tool bridges the gap between traditional manual reviews and custom AI solutions, offering a powerful yet accessible approach to systematic reviews without requiring coding skills.
+The Review tool bridges the gap between traditional manual reviews and custom AI solutions, offering a powerful yet accessible approach to systematic reviews without requiring coding skills. It is accompanied by the [Download Tool](download-tool) and the [Convert Tool](convert-tool) to streamline workflows and assist users throughout the review process.
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/info_extract_tools.png" alt="Tools Overview" style="width: 60%;">
+</div>
+
 
 ## Usage Methods
 

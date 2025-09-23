@@ -30,11 +30,16 @@ The prismAId Screening tool automates the filtering phase of systematic literatu
 1. **Deduplication**: Identifies and removes duplicate manuscripts using various matching algorithms
 2. **Language Filtering**: Detects manuscript language and filters based on accepted languages
 3. **Article Type Classification**: Identifies article types (research articles, reviews, editorials, etc.) for selective inclusion/exclusion
-4. **Batch Processing**: Efficiently processes large volumes of manuscripts with minimal manual intervention
-5. **Transparent Tagging**: Provides clear reasons for exclusions and maintains complete audit trails
-6. **AI-Assisted Analysis**: Optional integration with LLMs for enhanced classification accuracy
+4. **Topic Relevance**: Scores manuscripts based on topic relevance to identify non relvant (off-topic) manuscripts
+5. **Batch Processing**: Efficiently processes large volumes of manuscripts with minimal manual intervention
+6. **Transparent Tagging**: Provides clear reasons for exclusions and maintains complete audit trails
+7. **AI-Assisted Analysis**: Optional integration with LLMs for enhanced classification accuracy
 
 The Screening tool bridges the gap between literature search and paper acquisition, ensuring that only relevant, unique manuscripts are downloaded and proceed to the full review phase.
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/screening-tools.png" alt="Tools Overview" style="width: 60%;">
+</div>
 
 ## Usage Methods
 
@@ -725,3 +730,7 @@ log_level = "high"  # Saves detailed log file
 ---
 
 For more information on systematic review workflows, see the [Review Tool](review-tool) documentation.
+
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

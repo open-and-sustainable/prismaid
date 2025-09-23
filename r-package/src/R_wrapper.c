@@ -60,3 +60,13 @@ SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats) {
     UNPROTECT(1);
     return result;
 }
+
+SEXP ScreeningR_wrap(SEXP input) {
+    const char *c_input = (const char*)input;
+    const char *c_result = ScreeningR((char *)c_input);
+    
+    SEXP result = Rf_mkString(c_result);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}

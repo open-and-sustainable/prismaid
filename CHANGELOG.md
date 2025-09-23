@@ -9,12 +9,13 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [Unreleased]
+## [0.9.0] - 2025-09-23
 ### Added
 - New Screening tool for filtering manuscripts before download
-  - Deduplication filter with exact, fuzzy, and semantic matching algorithms
+  - Deduplication filter with exact, and semantic matching algorithms
   - Language detection filter with rule-based and AI-assisted detection
-  - Article type classification filter (research articles, reviews, editorials, letters, etc.)
+  - Article type classification filter (research articles, reviews, editorials, letters, etc. -- based on rules or AI)
+  - Off-topic manuscripts detection filter (scores on keywords, concepts, and field, or AI)
   - Support for CSV and TSV input/output formats
   - TOML-based configuration following project patterns
   - Integration with command-line interface via `-screening` flag

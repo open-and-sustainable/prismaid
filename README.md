@@ -59,7 +59,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
     3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), and Command A
     4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 sonnet, Claude 4.0 Sonnet, and Claude 4.0 Opus
     5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
-- **Screening capabilities**: Deduplication, language detection, article type classification
+- **Screening capabilities**: Deduplication, language filtering, article type classification, and off-topic detection
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required
 - **Programming Language**: Core implementation in Go with bindings for Python, R, and Julia
@@ -93,4 +93,4 @@ Contributions are welcome! Please follow guidelines at [open-and-sustainable.git
 ---
 
 ## Citation
-Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. [DOI: 10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796)
+Boero, R. (2025). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. [DOI: 10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796)
