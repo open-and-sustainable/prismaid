@@ -27,6 +27,7 @@ Security: For vulnerabilities.
 - Updated workflow order to: Search → Screen → Download → Convert → Review
 - Updated documentation to reflect correct systematic review workflow
 - Added Screening tool to navigation and all tool references
+- Restructured projects directory to properly separate templates, tests, and users' workspace
 
 ## [0.8.1] - 2025-05-30
 ### Changed

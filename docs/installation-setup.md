@@ -235,7 +235,9 @@ prismAId offers multiple ways to create review configuration files:
 
 1. **Web Initializer**: Use the browser-based tool on the [Review Configurator](review-configurator) page to create TOML configuration files through a user-friendly interface.
 
-2. **Command Line Initializer**: Use the binary with the -init flag to create a configuration file through an interactive terminal:
+2. **Template Files**: Ready-to-use configuration templates are available in the [projects/templates](https://github.com/open-and-sustainable/prismaid/tree/main/projects/templates) directory for review, screening, and Zotero download tools.
+
+3. **Command Line Initializer**: Use the binary with the -init flag to create a configuration file through an interactive terminal:
 ```bash
 ./prismaid -init
 ```
