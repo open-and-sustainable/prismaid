@@ -43,11 +43,10 @@ func DownloadZoteroPDFs(username, apiKey, collectionName, parentDir string) erro
 // per line. Each URL will be downloaded to the current directory, preserving the
 // filename from the URL.
 //
-// This function does not return any value. Download failures for individual URLs
-// are logged but do not stop the overall process.
-func DownloadURLList(path string) {
-	list.DownloadURLList(path)
-	return
+// Returns an error if the function fails to open or read the input file,
+// but continues processing even if individual URLs fail to download.
+func DownloadURLList(path string) error {
+	return list.DownloadURLList(path)
 }
 
 // Convert processes files in the specified directory and converts them to plain text format.
@@ -76,6 +75,7 @@ func Convert(inputDir, selectedFormats string) error {
 //   - Deduplication: Identifies duplicate manuscripts using exact, fuzzy, or semantic matching
 //   - Language detection: Filters manuscripts based on detected language
 //   - Article type classification: Identifies and filters based on article types (reviews, editorials, etc.)
+//   - Topic relevance: Scores manuscripts based on relevance to specified topics using keyword, concept, and field matching
 //
 // Returns an error if the screening process fails for any reason, such as invalid configuration,
 // inaccessible files, or processing errors.

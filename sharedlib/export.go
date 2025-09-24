@@ -35,9 +35,9 @@ func runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir *C.char) 
 	return prismaid.DownloadZoteroPDFs(goUsername, goApiKey, goCollectionName, goParentDir)
 }
 
-func runDownloadURLList(path *C.char) {
+func runDownloadURLList(path *C.char) error {
 	goPath := C.GoString(path)
-	prismaid.DownloadURLList(goPath)
+	return prismaid.DownloadURLList(goPath)
 }
 
 func runConvert(inputDir, selectedFormats *C.char) error {
@@ -72,9 +72,12 @@ func DownloadZoteroPDFsPython(username, apiKey, collectionName, parentDir *C.cha
 }
 
 //export DownloadURLListPython
-func DownloadURLListPython(path *C.char) {
+func DownloadURLListPython(path *C.char) *C.char {
 	defer handlePanic()
-	runDownloadURLList(path)
+	if err := runDownloadURLList(path); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
 }
 
 //export ConvertPython
@@ -118,7 +121,9 @@ func DownloadZoteroPDFsR(username, apiKey, collectionName, parentDir *C.char) *C
 //export DownloadURLListR
 func DownloadURLListR(path *C.char) *C.char {
 	defer handlePanic()
-	runDownloadURLList(path)
+	if err := runDownloadURLList(path); err != nil {
+		return C.CString(err.Error())
+	}
 	return C.CString("URL list download completed")
 }
 

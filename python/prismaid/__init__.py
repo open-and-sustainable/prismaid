@@ -40,7 +40,7 @@ _DownloadZoteroPDFsPython.restype = c_char_p
 
 _DownloadURLListPython = lib.DownloadURLListPython
 _DownloadURLListPython.argtypes = [c_char_p]
-_DownloadURLListPython.restype = None  # This function returns void
+_DownloadURLListPython.restype = c_char_p
 
 _ConvertPython = lib.ConvertPython
 _ConvertPython.argtypes = [c_char_p, c_char_p]
@@ -102,8 +102,15 @@ def download_url_list(path: str) -> None:
 
     Args:
         path (str): Path to the file containing URLs
+
+    Raises:
+        Exception: If the file cannot be opened or read
     """
-    _DownloadURLListPython(path.encode('utf-8'))
+    result = cast(bytes | None, _DownloadURLListPython(path.encode('utf-8')))
+    if result:
+        error_message = ctypes.string_at(result).decode('utf-8')
+        _FreeCString(result)
+        raise Exception(error_message)
 
 def convert(input_dir: str, selected_formats: str) -> None:
     """
