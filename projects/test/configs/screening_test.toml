@@ -1,0 +1,76 @@
+### Test Configuration for Screening Tool
+
+[project]
+name = "Automated Screening Test"
+author = "Test Suite"
+version = "1.0"
+input_file = "./projects/test/inputs/screening/screening_test_input.csv"
+output_file = "./projects/test/outputs/screening/test_screening_output"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "low"  # Keep low for automated tests
+
+[filters]
+
+### Deduplication filter - test exact matching
+[filters.deduplication]
+enabled = true
+use_ai = false
+compare_fields = ["title", "authors", "abstract", "doi"]
+
+### Language detection filter - test English detection
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+
+### Article type classification filter - test classification
+### Note: Articles can have multiple overlapping types
+[filters.article_type]
+enabled = true
+use_ai = false
+
+# Traditional publication type exclusions
+exclude_reviews = true              # Excludes review, systematic_review, meta_analysis
+exclude_editorials = true
+exclude_letters = true
+exclude_case_reports = false
+exclude_commentary = false
+exclude_perspectives = false
+
+# Methodological type exclusions
+exclude_theoretical = false
+exclude_empirical = false
+exclude_methods = false
+
+# Study scope exclusions
+exclude_single_case = false
+exclude_sample = false
+
+include_types = []                  # Empty for test - accepts all non-excluded types
+
+### Topic relevance filter - test relevance scoring
+[filters.topic_relevance]
+enabled = true
+use_ai = false
+topics = [
+    "machine learning in climate applications",
+    "artificial intelligence for climate predictions",
+    "deep learning models for extreme events"
+]
+min_score = 0.4
+
+[filters.topic_relevance.score_weights]
+keyword_match = 0.4
+concept_match = 0.4
+field_relevance = 0.2
+
+### LLM configuration for automated tests
+[[filters.llm]]
+provider = "DeepSeek"
+api_key = ""
+model = "deepseek-chat"
+temperature = 0.001
+tpm_limit = 0
+rpm_limit = 0

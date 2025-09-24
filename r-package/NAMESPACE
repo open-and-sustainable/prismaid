@@ -3,9 +3,11 @@ export(RunReview)
 export(DownloadZoteroPDFs)
 export(DownloadURLList)
 export(Convert)
+export(Screening)
 
 # Register the C functions from the shared object
 useDynLib(prismaid, RunReviewR_wrap)
 useDynLib(prismaid, DownloadZoteroPDFsR_wrap)
 useDynLib(prismaid, DownloadURLListR_wrap)
 useDynLib(prismaid, ConvertR_wrap)
+useDynLib(prismaid, ScreeningR_wrap)

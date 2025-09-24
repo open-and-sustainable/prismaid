@@ -31,16 +31,16 @@ import (
 // Parameters:
 //   - path: The path to a text file containing a list of URLs to process
 //
-// The function logs errors and successes but does not return any values.
-func DownloadURLList(path string) {
+// Returns an error if the function fails to open or read the input file,
+// but continues processing even if individual URLs fail to download.
+func DownloadURLList(path string) error {
 	// Extract the directory from the input file path
 	dirPath := filepath.Dir(path)
 
 	// Open the file at the given path
 	file, err := os.Open(path)
 	if err != nil {
-		logger.Error("Error opening file:", err)
-		return
+		return err
 	}
 	defer file.Close()
 
@@ -59,8 +59,7 @@ func DownloadURLList(path string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		logger.Error("Error reading file:", err)
-		return
+		return err
 	}
 
 	// Process each URL
@@ -84,6 +83,8 @@ func DownloadURLList(path string) {
 			logger.Info("No PDF found for", url)
 		}
 	}
+
+	return nil
 }
 
 // findPDFLink searches a webpage for a link to a PDF file using multiple detection strategies.

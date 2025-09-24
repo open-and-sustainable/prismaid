@@ -35,15 +35,20 @@ func runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir *C.char) 
 	return prismaid.DownloadZoteroPDFs(goUsername, goApiKey, goCollectionName, goParentDir)
 }
 
-func runDownloadURLList(path *C.char) {
+func runDownloadURLList(path *C.char) error {
 	goPath := C.GoString(path)
-	prismaid.DownloadURLList(goPath)
+	return prismaid.DownloadURLList(goPath)
 }
 
 func runConvert(inputDir, selectedFormats *C.char) error {
 	goInputDir := C.GoString(inputDir)
 	goSelectedFormats := C.GoString(selectedFormats)
 	return prismaid.Convert(goInputDir, goSelectedFormats)
+}
+
+func runScreening(input *C.char) error {
+	goInput := C.GoString(input)
+	return prismaid.Screening(goInput)
 }
 
 // Python-specific function
@@ -67,15 +72,27 @@ func DownloadZoteroPDFsPython(username, apiKey, collectionName, parentDir *C.cha
 }
 
 //export DownloadURLListPython
-func DownloadURLListPython(path *C.char) {
+func DownloadURLListPython(path *C.char) *C.char {
 	defer handlePanic()
-	runDownloadURLList(path)
+	if err := runDownloadURLList(path); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
 }
 
 //export ConvertPython
 func ConvertPython(inputDir, selectedFormats *C.char) *C.char {
 	defer handlePanic()
 	if err := runConvert(inputDir, selectedFormats); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
+}
+
+//export ScreeningPython
+func ScreeningPython(input *C.char) *C.char {
+	defer handlePanic()
+	if err := runScreening(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -104,7 +121,9 @@ func DownloadZoteroPDFsR(username, apiKey, collectionName, parentDir *C.char) *C
 //export DownloadURLListR
 func DownloadURLListR(path *C.char) *C.char {
 	defer handlePanic()
-	runDownloadURLList(path)
+	if err := runDownloadURLList(path); err != nil {
+		return C.CString(err.Error())
+	}
 	return C.CString("URL list download completed")
 }
 
@@ -115,6 +134,15 @@ func ConvertR(inputDir, selectedFormats *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString("Conversion completed successfully")
+}
+
+//export ScreeningR
+func ScreeningR(input *C.char) *C.char {
+	defer handlePanic()
+	if err := runScreening(input); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("Screening completed successfully")
 }
 
 // Free memory function used by both interfaces

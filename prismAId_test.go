@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -101,5 +102,84 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	// Clean up the output file if it was created
 	if err := os.Remove(outputFilePath); err != nil {
 		t.Fatalf("Failed to clean up the output file: %v", err)
+	}
+}
+
+func TestScreeningWithTempFiles(t *testing.T) {
+	// Create a temporary directory for test files
+	tmpDir := t.TempDir()
+
+	// Create a test input CSV file
+	inputFile := filepath.Join(tmpDir, "test_manuscripts.csv")
+	inputContent := `id,title,abstract
+1,"Climate Study","This research examines climate change effects using empirical data."
+2,"Climate Study","This research examines climate change effects using empirical data."
+3,"Review of Climate","This systematic review analyzes climate literature."
+4,"Estudio del Clima","Este estudio examina los efectos del cambio climático."`
+
+	if err := os.WriteFile(inputFile, []byte(inputContent), 0644); err != nil {
+		t.Fatalf("Failed to create input file: %v", err)
+	}
+
+	// Create screening configuration
+	outputFile := filepath.Join(tmpDir, "screening_output")
+	screeningConfig := fmt.Sprintf(`
+[project]
+name = "Test Screening"
+author = "Test Author"
+version = "1.0"
+input_file = "%s"
+output_file = "%s"
+text_column = "abstract"
+identifier_column = "id"
+output_format = "csv"
+log_level = "low"
+
+[filters]
+[filters.deduplication]
+enabled = true
+method = "exact"
+compare_fields = ["title", "abstract"]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = false
+
+[filters.article_type]
+enabled = true
+exclude_reviews = true
+exclude_editorials = false
+exclude_letters = false
+`, inputFile, outputFile)
+
+	// Run the screening
+	err := Screening(screeningConfig)
+	if err != nil {
+		t.Fatalf("Screening failed: %v", err)
+	}
+
+	// Check that the output file was created
+	outputCSV := outputFile + ".csv"
+	if _, err := os.Stat(outputCSV); os.IsNotExist(err) {
+		t.Fatalf("Output file was not created: %s", outputCSV)
+	}
+
+	// Read and verify output
+	content, err := os.ReadFile(outputCSV)
+	if err != nil {
+		t.Fatalf("Failed to read output file: %v", err)
+	}
+
+	// Check that output contains expected columns
+	outputStr := string(content)
+	if !strings.Contains(outputStr, "tag_detected_language") {
+		t.Error("Output should contain language detection tag")
+	}
+	if !strings.Contains(outputStr, "include") {
+		t.Error("Output should contain include column")
+	}
+	if !strings.Contains(outputStr, "exclusion_reason") {
+		t.Error("Output should contain exclusion_reason column")
 	}
 }

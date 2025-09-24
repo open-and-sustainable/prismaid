@@ -13,6 +13,8 @@ favicon: "assets/images/prismaid-favicon.ico"
 nav_links:
     - name: "Installation<br>& Setup"
       url: "/installation-setup.html"
+    - name: "Screening<br>Tool"
+      url: "/screening-tool.html"
     - name: "Download<br>Tool"
       url: "/download-tool.html"
     - name: "Convert<br>Tool"

@@ -35,6 +35,11 @@ If you need assistance with any prismAId tool, you can:
 - **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
 - **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
+### Screening Tool Issues
+- **False Positives in Deduplication**: Adjust the similarity threshold (increase from 0.85 to 0.95 for stricter matching).
+- **Language Detection Errors**: Enable AI-based detection for mixed-language documents or check text encoding.
+- **Article Type Misclassification**: Review classification rules or use AI-based classification for ambiguous cases.
+
 ### Download Tool Issues
 - **Zotero Authentication Errors**: Verify your user ID and API key, ensuring the API key has appropriate permissions.
 - **Collection Not Found**: Check that the collection/group path uses the correct format and exists in your Zotero library.
@@ -70,7 +75,7 @@ prismAId is developed in Go, selected for its simplicity and efficiency with con
 prismAId leverages the [`alembica`](https://github.com/open-and-sustainable/alembica) pure Go package to manage interactions with Large Language Models. This foundation allows us to concentrate on developing robust protocol-based information extraction tools while `alembica` handles the standardized communication with various LLMs through consistent JSON data schemas, ensuring reliability and interoperability across different AI services.
 
 ### Toolkit Architecture
-The prismAId toolkit is structured as a set of modular tools (Download, Convert, Review) that can be used together or independently:
+The prismAId toolkit is structured as a set of modular tools (Screening, Download, Convert, Review) that can be used together or independently:
 
 - **Go Module**: Core logic and API access for all tools are implemented in Go.
 - **Cross-Language Support**: Each tool is accessible through:
@@ -81,7 +86,7 @@ The prismAId toolkit is structured as a set of modular tools (Download, Convert,
 - **Cross-Platform Compatibility**: Fully operational across Windows, macOS, and Linux.
 
 ### Development Philosophy
-- **Modularity**: Tools that work together but can be used independently.
+- **Modularity**: Tools that work together but can be used independently following the workflow: Search → Screen → Download → Convert → Review.
 - **Open Source**: We value community contributions and transparency.
 - **CI/CD Pipelines**: Automated testing and deployment maintain quality and reliability.
 

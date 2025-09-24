@@ -1,0 +1,233 @@
+### Screening Tool Configuration Template
+### This template provides all available options for manuscript screening
+
+### The [project] section contains basic information and paths
+[project]
+name = "Manuscript Screening Example"           # Project title
+author = "John Doe"                            # Project author
+version = "1.0"                                # Configuration version
+input_file = "/path/to/manuscripts.csv"        # Input CSV or TXT file with manuscript data
+output_file = "/path/to/screening_results"     # Output file path (without extension)
+text_column = "abstract"                       # Column name containing text or path to text files
+identifier_column = "doi"                      # Column name for unique identifiers (optional, auto-generated if empty)
+output_format = "csv"                          # Output format: "csv" or "json"
+log_level = "medium"                          # Log level: "low", "medium", or "high"
+
+### The [filters] section configures which screening filters to apply
+[filters]
+
+### Deduplication filter - identifies duplicate manuscripts
+[filters.deduplication]
+enabled = false
+use_ai = false                              # Use AI model for similarity detection
+compare_fields = ["title", "abstract"]     # Fields to compare for duplication
+
+### Language detection filter - screens by language
+[filters.language]
+enabled = true                                 # Enable language filter
+accepted_languages = ["en", "es", "fr"]       # ISO language codes to accept
+use_ai = false                                # Use AI for detection (requires LLM config)
+
+### Article type classification filter
+### Note: Articles can have multiple overlapping types (e.g., a paper can be both "research_article" AND "empirical_study" AND "sample_study")
+[filters.article_type]
+enabled = true                                 # Enable article type filter
+use_ai = false                                 # Use AI for classification (requires LLM config)
+
+# Traditional publication type exclusions
+exclude_reviews = true                        # Exclude all review types (review, systematic_review, meta_analysis)
+exclude_editorials = true                     # Exclude editorials
+exclude_letters = true                        # Exclude letters to editor
+exclude_case_reports = false                  # Exclude case reports
+exclude_commentary = false                    # Exclude commentary articles
+exclude_perspectives = false                  # Exclude perspective articles
+
+# Methodological type exclusions (can overlap with publication types)
+exclude_theoretical = false                   # Exclude theoretical/conceptual papers
+exclude_empirical = false                     # Exclude empirical studies with data
+exclude_methods = false                       # Exclude methods/methodology papers
+
+# Study scope exclusions (applies to empirical studies)
+exclude_single_case = false                   # Exclude single case studies (n=1, individual cases)
+exclude_sample = false                        # Exclude sample studies (cohorts, cross-sectional, multiple subjects)
+
+include_types = []                            # If specified, ONLY include these types
+                                             # Available types: "research_article", "review", "systematic_review",
+                                             # "meta_analysis", "editorial", "letter", "case_report", "commentary",
+                                             # "perspective", "empirical_study", "theoretical_paper", "methods_paper",
+                                             # "single_case_study", "sample_study"
+
+### Topic relevance filter - screens manuscripts based on topic relevance
+[filters.topic_relevance]
+enabled = false                               # Enable topic relevance filter
+use_ai = false                                # Use AI for relevance scoring (requires LLM config)
+topics = []                                   # List of topic descriptions to match against
+                                             # Example: ["machine learning in healthcare",
+                                             #           "artificial intelligence applications in medical diagnosis",
+                                             #           "deep learning for clinical decision support"]
+min_score = 0.5                              # Minimum relevance score (0.0-1.0) to include manuscript
+
+# Weights for different scoring components (should sum to a positive value)
+[filters.topic_relevance.score_weights]
+keyword_match = 0.4                          # Weight for direct keyword matches
+concept_match = 0.4                          # Weight for conceptual/phrase matches
+field_relevance = 0.2                        # Weight for journal/field relevance
+
+### LLM configuration for AI-assisted screening (optional)
+### Multiple LLMs can be configured for ensemble processing
+[filters.llm]
+
+### First LLM configuration
+[filters.llm.1]
+provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", or "DeepSeek"
+api_key = ""                                  # API key (uses environment variable if empty)
+model = "gpt-4o-mini"                         # Model name (provider-specific)
+temperature = 0.01                            # Temperature (0-1 for most providers, 0-2 for GoogleAI)
+tpm_limit = 0                                 # Tokens per minute limit (0 = unlimited)
+rpm_limit = 0                                 # Requests per minute limit (0 = unlimited)
+
+### Additional LLM configurations (optional)
+# [filters.llm.2]
+# provider = "GoogleAI"
+# api_key = ""
+# model = "gemini-1.5-flash"
+# temperature = 0.01
+# tpm_limit = 0
+# rpm_limit = 0
+
+### Example configurations for different scenarios:
+
+### Scenario 1: Simple deduplication only
+# [project]
+# name = "Deduplication Only"
+# input_file = "manuscripts.csv"
+# output_file = "deduplicated"
+# text_column = "content"
+# identifier_column = "id"
+# output_format = "csv"
+# log_level = "low"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = true
+# method = "exact"
+# compare_fields = ["title", "doi"]
+#
+# [filters.language]
+# enabled = false
+#
+# [filters.article_type]
+# enabled = false
+
+### Scenario 2: Language filtering for English-only manuscripts
+# [project]
+# name = "English Only Filter"
+# input_file = "manuscripts.csv"
+# output_file = "english_only"
+# text_column = "abstract"
+# identifier_column = "pmid"
+# output_format = "json"
+# log_level = "medium"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = false
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = false
+
+### Scenario 3: Exclude reviews and editorials, keep only research articles
+# [project]
+# name = "Research Articles Only"
+# input_file = "all_papers.csv"
+# output_file = "research_only"
+# text_column = "full_text_path"  # Can be a path to text files
+# identifier_column = "paper_id"
+# output_format = "csv"
+# log_level = "high"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = true
+# method = "fuzzy"
+# threshold = 0.9
+# compare_fields = ["title", "abstract"]
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = true
+# use_ai = false
+# exclude_reviews = true           # Excludes review, systematic_review, meta_analysis
+# exclude_editorials = true
+# exclude_letters = true
+# exclude_case_reports = true
+# exclude_commentary = true
+# exclude_perspectives = false
+# exclude_theoretical = true       # Focus on empirical work
+# exclude_single_case = true       # Exclude single cases (n=1)
+# include_types = ["empirical_study", "sample_study"]  # Only include papers that are BOTH empirical AND multi-subject
+
+### Scenario 4: Topic-based filtering for specific research area
+# [project]
+# name = "AI in Healthcare Papers"
+# input_file = "manuscripts.csv"
+# output_file = "ai_healthcare_papers"
+# text_column = "abstract"
+# identifier_column = "doi"
+# output_format = "json"
+# log_level = "medium"
+#
+# [filters]
+# [filters.deduplication]
+# enabled = false
+#
+# [filters.language]
+# enabled = true
+# accepted_languages = ["en"]
+# use_ai = false
+#
+# [filters.article_type]
+# enabled = false
+#
+# [filters.topic_relevance]
+# enabled = true
+# use_ai = false
+# topics = [
+#     "artificial intelligence in healthcare and medicine",
+#     "machine learning for medical diagnosis and treatment",
+#     "deep learning applications in clinical settings",
+#     "AI-powered medical imaging and radiology",
+#     "predictive analytics for patient outcomes",
+#     "natural language processing for electronic health records"
+# ]
+# min_score = 0.6     # Require 60% relevance score
+# [filters.topic_relevance.score_weights]
+# keyword_match = 0.4
+# concept_match = 0.4
+# field_relevance = 0.2
+
+### Notes:
+# 1. The input file should have column headers in the first row
+# 2. The text_column can contain either:
+#    - Actual text content (abstracts, full text)
+#    - Paths to text files that will be read
+# 3. If identifier_column is not specified or doesn't exist, auto-generated IDs will be used
+# 4. The output file will include all original columns plus new tag columns
+# 5. Excluded manuscripts will have "include" = false and an "exclusion_reason"
+# 6. When using AI features, ensure API keys are configured
+# 7. Filters are applied in order: deduplication -> language -> article_type -> topic_relevance
+# 8. Article types are not mutually exclusive - a paper can be classified as multiple types
+#    For example: a paper can be "research_article" + "empirical_study" + "sample_study"
+# 9. Exclusion criteria check ALL assigned types (e.g., if a paper is both "review" and "systematic_review",
+#    it will be excluded if exclude_reviews=true)
+# 10. Topic relevance scoring assigns a score from 0.0 to 1.0 based on how well the manuscript matches the specified topics
+# 11. Topic descriptions should be detailed phrases rather than simple keywords for better matching

@@ -7,6 +7,7 @@ import (
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
 	"github.com/open-and-sustainable/prismaid/review/logic"
+	screening "github.com/open-and-sustainable/prismaid/screening/logic"
 )
 
 // Review processes a systematic literature review based on the provided TOML configuration.
@@ -42,11 +43,10 @@ func DownloadZoteroPDFs(username, apiKey, collectionName, parentDir string) erro
 // per line. Each URL will be downloaded to the current directory, preserving the
 // filename from the URL.
 //
-// This function does not return any value. Download failures for individual URLs
-// are logged but do not stop the overall process.
-func DownloadURLList(path string) {
-	list.DownloadURLList(path)
-	return
+// Returns an error if the function fails to open or read the input file,
+// but continues processing even if individual URLs fail to download.
+func DownloadURLList(path string) error {
+	return list.DownloadURLList(path)
 }
 
 // Convert processes files in the specified directory and converts them to plain text format.
@@ -63,4 +63,22 @@ func DownloadURLList(path string) {
 // files, unsupported formats, or file system permission issues.
 func Convert(inputDir, selectedFormats string) error {
 	return conversion.Convert(inputDir, selectedFormats)
+}
+
+// Screening processes a list of manuscripts to identify items for exclusion based on various criteria.
+//
+// The tomlConfiguration parameter should contain a valid TOML string with all the necessary
+// settings for the screening process, including input/output files, filter configurations,
+// and optional LLM settings for AI-assisted screening.
+//
+// The screening tool can apply multiple filters:
+//   - Deduplication: Identifies duplicate manuscripts using exact, fuzzy, or semantic matching
+//   - Language detection: Filters manuscripts based on detected language
+//   - Article type classification: Identifies and filters based on article types (reviews, editorials, etc.)
+//   - Topic relevance: Scores manuscripts based on relevance to specified topics using keyword, concept, and field matching
+//
+// Returns an error if the screening process fails for any reason, such as invalid configuration,
+// inaccessible files, or processing errors.
+func Screening(tomlConfiguration string) error {
+	return screening.Screen(tomlConfiguration)
 }

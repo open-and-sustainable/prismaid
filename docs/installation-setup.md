@@ -30,22 +30,27 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 4. **R Package** on R-universe: Compatible with R and RStudio environments.
 
-5. **Julia Package** from the Github repo: For integration in Julia workflows and Jupyter notebooks.
+5. **Julia Package** from the Julia official package registry: For integration in Julia workflows and Jupyter notebooks.
 
 ## Toolkit Overview
 
 prismAId offers several specialized tools to support systematic reviews:
 
-1. **Review Tool**: Process systematic literature reviews based on TOML configurations
+1. **Screening Tool**: Filter manuscripts to identify items for exclusion
+   - Remove duplicates using exact or fuzzy matching
+   - Filter by language detection
+   - Classify and filter by article type (research, review, editorial, etc.)
+
+2. **Review Tool**: Process systematic literature reviews based on TOML configurations
    - Configure review criteria, AI model settings, and output formats
    - Extract structured information from scientific papers
    - Generate comprehensive review summaries
 
-2. **Download Tool**: Acquire papers for your review
+3. **Download Tool**: Acquire papers for your review
    - Download PDFs directly from Zotero collections
    - Download files from URL lists
 
-3. **Convert Tool**: Transform documents into analyzable text
+4. **Convert Tool**: Transform documents into analyzable text
    - Convert PDFs, DOCX, and HTML files to plain text
    - Prepare documents for AI processing
 
@@ -78,14 +83,17 @@ go get "github.com/open-and-sustainable/prismaid"
 ```go
 import "github.com/open-and-sustainable/prismaid"
 
-// Run a systematic review
-err := prismaid.Review(tomlConfigString)
+// Run screening on manuscripts
+err := prismaid.Screening(tomlConfigString)
 
 // Download papers from Zotero
 err := prismaid.DownloadZoteroPDFs(username, apiKey, collectionName, parentDir)
 
 // Convert files to text
 err := prismaid.Convert(inputDir, "pdf,docx,html")
+
+// Run a systematic review
+err := prismaid.Review(tomlConfigString)
 ```
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
@@ -99,8 +107,8 @@ Download the appropriate executable for your OS from our [GitHub Releases](https
 Use the command line interface to access all tools:
 
 ```bash
-# Run a systematic review
-./prismaid -project your_project.toml
+# Screen manuscripts to filter out duplicates and irrelevant papers
+./prismaid -screening screening_config.toml
 
 # Download papers from Zotero (requires a TOML config file)
 # First create a file zotero_config.toml with:
@@ -119,6 +127,9 @@ Use the command line interface to access all tools:
 
 # Initialize a new project configuration interactively
 ./prismaid -init
+
+# Run a systematic review
+./prismaid -project your_project.toml
 ```
 
 ### Option 3. Python Package
@@ -134,10 +145,10 @@ This Python package provides access to all prismAId tools:
 ```python
 import prismaid
 
-# Run a systematic review
-with open("project.toml", "r") as file:
-    toml_config = file.read()
-prismaid.review(toml_config)
+# Run screening on manuscripts
+with open("screening.toml", "r") as file:
+    screening_config = file.read()
+prismaid.screening(screening_config)
 
 # Download papers from Zotero
 prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
@@ -147,6 +158,11 @@ prismaid.download_url_list("urls.txt")
 
 # Convert files to text
 prismaid.convert("./papers", "pdf,docx,html")
+
+# Run a systematic review
+with open("project.toml", "r") as file:
+    toml_config = file.read()
+prismaid.review(toml_config)
 ```
 
 ### Option 4. R Package
@@ -162,9 +178,10 @@ Access all prismAId tools from R:
 ```r
 library(prismaid)
 
-# Run a systematic review
-toml_content <- paste(readLines("project.toml"), collapse = "\n")
-RunReview(toml_content)  # Note the capitalization
+# Run screening on manuscripts
+screening_content <- paste(readLines("screening.toml"), collapse = "\n")
+Screening(screening_content)  # Note the capitalization
+
 
 # Download papers from Zotero
 DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")  # Full name
@@ -174,6 +191,10 @@ DownloadURLList("urls.txt")
 
 # Convert files to text
 Convert("./papers", "pdf,docx,html")  # Note the capitalization
+
+# Run a systematic review
+toml_content <- paste(readLines("project.toml"), collapse = "\n")
+RunReview(toml_content)  # Note the capitalization
 ```
 
 ### Option 5. Julia Package
@@ -190,9 +211,9 @@ Access all prismAId tools from Julia:
 ```julia
 using PrismAId
 
-# Run a systematic review
-toml_config = read("project.toml", String)
-PrismAId.run_review(toml_config)  # Correct function name
+# Run screening on manuscripts
+screening_config = read("screening.toml", String)
+PrismAId.screening(screening_config)
 
 # Download papers from Zotero
 PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
@@ -202,6 +223,10 @@ PrismAId.download_url_list("urls.txt")
 
 # Convert files to text
 PrismAId.convert("./papers", "pdf,docx,html")
+
+# Run a systematic review
+toml_config = read("project.toml", String)
+PrismAId.run_review(toml_config)  # Correct function name
 ```
 
 ## Additional Setup Information
@@ -211,7 +236,9 @@ prismAId offers multiple ways to create review configuration files:
 
 1. **Web Initializer**: Use the browser-based tool on the [Review Configurator](review-configurator) page to create TOML configuration files through a user-friendly interface.
 
-2. **Command Line Initializer**: Use the binary with the -init flag to create a configuration file through an interactive terminal:
+2. **Template Files**: Ready-to-use configuration templates are available in the [projects/templates](https://github.com/open-and-sustainable/prismaid/tree/main/projects/templates) directory for review, screening, and Zotero download tools.
+
+3. **Command Line Initializer**: Use the binary with the -init flag to create a configuration file through an interactive terminal:
 ```bash
 ./prismaid -init
 ```

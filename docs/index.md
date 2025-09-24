@@ -6,7 +6,7 @@ layout: default
 # Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
 ## Purpose and Benefits
-prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it provides a comprehensive toolkit that simplifies the extraction and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
+prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it provides a comprehensive toolkit that simplifies the screening, extraction, and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
 
 ### Key Advantages
 
@@ -22,13 +22,14 @@ prismAId changes the way researchers conduct systematic reviews using generative
 prismAId offers a suite of tools to support every stage of your systematic review:
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 40%;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 600px;">
 </div>
 
 ### Core Tools
-1. **Download** - Acquire papers from Zotero collections or from URL lists
-2. **Convert** - Transform files (PDF, DOCX, HTML) to plain text for analysis
-3. **Review** - Process systematic literature reviews based on TOML configurations
+1. **Screening** - Filter and tag manuscripts to identify items for exclusion
+2. **Download** - Acquire papers from Zotero collections or from URL lists
+3. **Convert** - Transform files (PDF, DOCX, HTML) to plain text for analysis
+4. **Review** - Process systematic literature reviews based on TOML configurations
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows
@@ -40,7 +41,7 @@ prismAId offers a suite of tools to support every stage of your systematic revie
   - Julia package
 
 ## Workflow
-Our tools support a comprehensive review workflow:
+Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
@@ -49,12 +50,17 @@ Our tools support a comprehensive review workflow:
 ## Table of Contents
 Explore this website for comprehensive guidance on using the prismAId toolkit:
 1. [Installation & Setup](installation-setup): Learn how to install prismAId tools and configure them for different environments.
-2. [Download Tool](download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
-3. [Convert Tool](convert-tool): Learn to transform documents from various formats into plain text for analysis.
-4. [Review Tool](review-tool): Master the core systematic review functionality for extracting structured information.
-5. [Review Support](review-support): Learn about methodologies and best practices for systematic reviews with prismAId.
-6. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
-7. [Help & Development](help-development): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
+2. [Screening Tool](screening-tool): Filter manuscripts with multiple screening filters:
+   - [Deduplication](filters/deduplication) - Identify and remove duplicate manuscripts
+   - [Language Detection](filters/language) - Filter by manuscript language
+   - [Article Type](filters/article-type) - Classify publication types
+   - [Topic Relevance](filters/topic-relevance) - Score relevance to research topics
+3. [Download Tool](download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
+4. [Convert Tool](convert-tool): Learn to transform documents from various formats into plain text for analysis.
+5. [Review Tool](review-tool): Master the core systematic review functionality for extracting structured information.
+6. [Review Support](review-support): Learn about methodologies and best practices for systematic reviews with prismAId.
+7. [Review Configurator](review-configurator): Quickly set up your review project with the web initializer tool.
+8. [Help & Development](help-development): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
 
 ## New Releases and Updates
 Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
@@ -72,7 +78,7 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 ![license](https://www.gnu.org/graphics/agplv3-155x51.png)
 
 ## Citation
-Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
+Boero, R. (2025). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796)
 

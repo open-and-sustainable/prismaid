@@ -38,7 +38,12 @@ Key capabilities include:
 6. **Chain-of-Thought Tracking**: Optional justification logs to track the AI's reasoning process
 7. **Cost Management**: Features for minimizing and tracking API usage costs
 
-The Review tool bridges the gap between traditional manual reviews and custom AI solutions, offering a powerful yet accessible approach to systematic reviews without requiring coding skills.
+The Review tool bridges the gap between traditional manual reviews and custom AI solutions, offering a powerful yet accessible approach to systematic reviews without requiring coding skills. It is accompanied by the [Download Tool](download-tool) and the [Convert Tool](convert-tool) to streamline workflows and assist users throughout the review process.
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/info_extract_tools.png" alt="Tools Overview" style="width: 60%;">
+</div>
+
 
 ## Usage Methods
 
@@ -423,24 +428,29 @@ rpm_limit = 0
 
 The Review tool is the culmination of the systematic review workflow:
 
-1. **Literature Identification**:
-   - Search databases and identify relevant papers
+1. **Literature Search**:
+   - Search databases and identify potentially relevant papers
+   - Export search results to CSV or reference manager
 
-2. **Literature Acquisition** ([Download Tool](download-tool)):
-   - Download papers from Zotero collections or URL lists
+2. **Screening** ([Screening Tool](screening-tool)):
+   - Filter out duplicates, wrong languages, and irrelevant article types
+   - Create a refined list of papers to acquire
 
-3. **Format Conversion** ([Convert Tool](convert-tool)):
+3. **Literature Acquisition** ([Download Tool](download-tool)):
+   - Download only the screened papers from Zotero collections or URL lists
+
+4. **Format Conversion** ([Convert Tool](convert-tool)):
    - Convert downloaded papers to text format for analysis
 
-4. **Review Configuration**:
+5. **Review Configuration**:
    - Set up your review project configuration using the [Review Configurator](review-configurator) or the `-init` flag
    - Define your information extraction protocol through prompt and review sections
 
-5. **Systematic Review** (Review Tool):
+6. **Systematic Review** (Review Tool):
    - Process the converted text files to extract structured information
    - Analyze results for patterns, trends, and insights
 
-6. **Results Analysis**:
+7. **Results Analysis**:
    - Use the structured CSV or JSON outputs for further analysis
    - Integrate with other tools like R, Python, or spreadsheet applications
 

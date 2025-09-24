@@ -28,11 +28,6 @@ This function interfaces with a shared library to perform a review process on th
 \strong{[project.configuration]}
 \itemize{
 \item \code{input_directory}: The file path to the directory containing manuscripts to be reviewed. Example: "/path/to/txt/files".
-\item \code{input_conversion}: Specifies manuscript conversion formats:
-\itemize{
-\item \code{""}: Default, non-active conversion.
-\item \code{"pdf"}, \code{"docx"}, \code{"html"}, or combinations like \code{"pdf,docx"}.
-}
 \item \code{results_file_name}: The path and base name for saving results (file extension will be added automatically). Example: "/path/to/save/results".
 \item \code{output_format}: The format for output results. Options: "csv" (default) or "json".
 \item \code{log_level}: Determines logging verbosity:
@@ -46,28 +41,21 @@ This function interfaces with a shared library to perform a review process on th
 \item \code{summary}: Generates and saves summaries of manuscripts. Options: "yes" or "no" (default).
 }
 
-\strong{[project.zotero]}
-\itemize{
-\item \code{user}: Your Zotero user ID, which can be found by visiting [Zotero Settings](https://www.zotero.org/settings).
-\item \code{api_key}: API key for Zotero.
-\item \code{group}: This is the name of the collection or group containing the document to review, with nesting represented as a path, e.g. "parent/collection".
-}
-
 \strong{[project.llm]}
 \itemize{
-\item Configuration for LLMs, supporting multiple providers for ensemble reviews.
-\item Parameters include:
+\item Configuration for LLMs, supporting multiple instances (llm.1, llm.2, etc.) for ensemble reviews.
+\item Parameters for each LLM include:
 \itemize{
 \item \code{provider}: The LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
 \item \code{api_key}: API key for the provider. If empty, environment variables will be checked.
 \item \code{model}: Model name. Options vary by provider:
 \itemize{
-\item OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", or "" (default).
-\item GoogleAI: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", or "" (default).
-\item Cohere: "command-r7b-12-2024", "command-r-plus", "command-r", "command-light", "command", or "" (default).
-\item Anthropic: "claude-3-5-sonnet", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default).
+\item OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", or "" (default for cost optimization).
+\item GoogleAI: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", or "" (default for cost optimization).
+\item Cohere: "command-r7b-12-2024", "command-r-plus", "command-r", "command-light", "command", or "" (default for cost optimization).
+\item Anthropic: "claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default for cost optimization).
 }
-\item \code{temperature}: Controls model randomness. Range: 0 to 1 (or 0 to 2 for GoogleAI). Lower values reduce randomness.
+\item \code{temperature}: Controls model randomness. Range: 0 to 1 (0 to 2 for GoogleAI). Lower values reduce randomness.
 \item \code{tpm_limit}: Tokens per minute limit before delaying prompts. Default: 0 (no delay).
 \item \code{rpm_limit}: Requests per minute limit before delaying prompts. Default: 0 (no delay).
 }

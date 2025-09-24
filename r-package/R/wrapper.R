@@ -170,3 +170,107 @@ Convert <- function(input_dir, selected_formats) {
     result <- .Call("ConvertR_wrap", input_dir, selected_formats, PACKAGE = "prismaid")
     return(result)
 }
+
+#' Screen Manuscripts for Systematic Review
+#'
+#' This function screens manuscripts to identify items for exclusion based on various criteria.
+#'
+#' @description
+#' Processes a list of manuscripts applying multiple filters to identify which should be
+#' excluded from a systematic review. Supports both rule-based and AI-assisted screening.
+#'
+#' @details
+#' The input data must be structured in a TOML format with the following sections:
+#'
+#' **\[project\]**
+#' - `name`: Project title. Example: "Screening for climate change literature".
+#' - `author`: Name of the project author. Example: "Jane Smith".
+#' - `version`: Version number for the configuration. Example: "1.0".
+#' - `input_file`: Path to CSV/JSON file containing manuscripts to screen. Example: "/path/to/manuscripts.csv".
+#' - `output_file`: Path where screening results will be saved. Example: "/path/to/screening_results".
+#' - `text_column`: Name of column containing text or path to text files. Example: "abstract" or "text_file_path".
+#' - `identifier_column`: Column name for unique manuscript identifiers. Example: "doi" or "id".
+#' - `output_format`: Format for results. Options: "csv" or "json".
+#' - `log_level`: Logging verbosity. Options: "low", "medium", or "high".
+#'
+#' **\[filters.deduplication\]**
+#' - `enabled`: Whether to apply deduplication. Options: true or false.
+#' - `use_ai`: Use AI for semantic similarity detection. Options: true or false.
+#' - `compare_fields`: List of fields to compare. Example: ["title", "abstract", "doi"].
+#'
+#' **\[filters.language\]**
+#' - `enabled`: Whether to filter by language. Options: true or false.
+#' - `accepted_languages`: List of accepted language codes. Example: ["en", "es", "fr"].
+#' - `use_ai`: Use AI for language detection. Options: true or false.
+#'
+#' **\[filters.article_type\]**
+#' - `enabled`: Whether to filter by article type. Options: true or false.
+#' - `use_ai`: Use AI for article classification. Options: true or false.
+#' - `exclude_reviews`: Exclude review articles. Options: true or false.
+#' - `exclude_editorials`: Exclude editorial articles. Options: true or false.
+#' - `exclude_letters`: Exclude letters to editor. Options: true or false.
+#' - `exclude_theoretical`: Exclude theoretical papers. Options: true or false.
+#' - `exclude_empirical`: Exclude empirical studies. Options: true or false.
+#' - `exclude_methods`: Exclude methodology papers. Options: true or false.
+#' - `exclude_single_case`: Exclude single case studies. Options: true or false.
+#' - `exclude_sample`: Exclude sample-based studies. Options: true or false.
+#' - `include_types`: Specific article types to include. Example: ["research", "case_study"].
+#'
+#' **\[filters.topic_relevance\]**
+#' - `enabled`: Whether to filter by topic relevance. Options: true or false.
+#' - `use_ai`: Use AI for relevance scoring. Options: true or false.
+#' - `topics`: List of topic descriptions. Example: ["climate change impacts", "adaptation strategies"].
+#' - `min_score`: Minimum relevance score (0-1) to include. Example: 0.7.
+#' - `score_weights.keyword_match`: Weight for keyword matching (0-1). Example: 0.3.
+#' - `score_weights.concept_match`: Weight for concept matching (0-1). Example: 0.4.
+#' - `score_weights.field_relevance`: Weight for field relevance (0-1). Example: 0.3.
+#'
+#' **\[filters.llm\]** (Optional, required if any filter has `use_ai = true`)
+#' - Configuration for AI models, supporting multiple instances (llm.1, llm.2, etc.).
+#' - Parameters for each LLM:
+#'   - `provider`: LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
+#'   - `api_key`: API key for the provider. If empty, environment variables will be checked.
+#'   - `model`: Model name (see RunReview documentation for available models per provider).
+#'   - `temperature`: Controls randomness (0-1, or 0-2 for GoogleAI).
+#'   - `tpm_limit`: Tokens per minute limit. Default: 0 (no limit).
+#'   - `rpm_limit`: Requests per minute limit. Default: 0 (no limit).
+#'
+#' @param input_string A string containing the TOML configuration for screening.
+#' @return A string indicating the result of the screening process.
+#' @export
+#' @examples
+#' \dontrun{
+#' config <- '
+#' [project]
+#' name = "Climate Literature Screening"
+#' author = "Research Team"
+#' version = "1.0"
+#' input_file = "/data/manuscripts.csv"
+#' output_file = "/results/screening"
+#' text_column = "abstract"
+#' identifier_column = "doi"
+#' output_format = "csv"
+#' log_level = "medium"
+#'
+#' [filters.deduplication]
+#' enabled = true
+#' use_ai = false
+#' compare_fields = ["title", "doi"]
+#'
+#' [filters.language]
+#' enabled = true
+#' accepted_languages = ["en"]
+#' use_ai = false
+#'
+#' [filters.article_type]
+#' enabled = true
+#' use_ai = false
+#' exclude_reviews = true
+#' exclude_editorials = true
+#' '
+#' Screening(config)
+#' }
+Screening <- function(input_string) {
+    result <- .Call("ScreeningR_wrap", input_string, PACKAGE = "prismaid")
+    return(result)
+}

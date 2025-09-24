@@ -9,6 +9,26 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.0] - 2025-09-24
+### Added
+- New Screening tool for filtering manuscripts before download
+  - Deduplication filter with exact, and semantic matching algorithms
+  - Language detection filter with rule-based and AI-assisted detection
+  - Article type classification filter (research articles, reviews, editorials, letters, etc. -- based on rules or AI)
+  - Off-topic manuscripts detection filter (scores on keywords, concepts, and field, or AI)
+  - Support for CSV and TSV input/output formats
+  - TOML-based configuration following project patterns
+  - Integration with command-line interface via `-screening` flag
+  - Full API access through Go, Python, R, and Julia bindings
+- Comprehensive documentation for the Screening tool
+- Test coverage for screening functionality
+
+### Changed
+- Updated workflow order to: Search → Screen → Download → Convert → Review
+- Updated documentation to reflect correct systematic review workflow
+- Added Screening tool to navigation and all tool references
+- Restructured projects directory to properly separate templates, tests, and users' workspace
+
 ## [0.8.1] - 2025-05-30
 ### Changed
 - Updated dependencies, including alembica with support for multiple new models

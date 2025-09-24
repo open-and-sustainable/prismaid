@@ -208,7 +208,8 @@ Follow these methodologies for effective systematic reviews:
 
 5. **Learn From Examples**:
    - Review the [JOSS paper](https://doi.org/10.21105/joss.07616) and [extended introduction](https://doi.org/10.31222/osf.io/wh8qn)
-   - Examine the [example project](https://github.com/open-and-sustainable/prismaid/blob/main/projects/test.toml) with sample [inputs](https://github.com/open-and-sustainable/prismaid/tree/main/projects/input/test) and [outputs](https://github.com/open-and-sustainable/prismaid/tree/main/projects/output/test)
+   - Examine the [example configurations](https://github.com/open-and-sustainable/prismaid/tree/main/projects/test/configs) with sample [inputs](https://github.com/open-and-sustainable/prismaid/tree/main/projects/test/inputs) and [outputs](https://github.com/open-and-sustainable/prismaid/tree/main/projects/test/outputs)
+   - Review [configuration templates](https://github.com/open-and-sustainable/prismaid/tree/main/projects/templates) for review, screening, and Zotero tools
 
 ## Technical FAQs
 

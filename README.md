@@ -21,17 +21,25 @@ It provides simple-to-use, efficient, and replicable methods for analyzing resea
 
 ---
 
-## Tools Overview
+## Toolkit Overview
 prismAId offers a comprehensive set of tools for systematic literature reviews:
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 40%;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 600px;">
 </div>
 
 ### Core Tools
-1. **Download** - Download papers from Zotero collections or from URL lists
-2. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
-3. **Review** - Process systematic literature reviews based on TOML configurations
+1. **Screening** - Filter and tag manuscripts to identify items for exclusion
+2. **Download** - Download papers from Zotero collections or from URL lists
+3. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
+4. **Review** - Process systematic literature reviews based on TOML configurations
+
+### Workflow
+Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review
+
+<div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
+</div>
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows
@@ -58,6 +66,7 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
     3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), and Command A
     4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 sonnet, Claude 4.0 Sonnet, and Claude 4.0 Opus
     5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
+- **Screening capabilities**: Deduplication, language filtering, article type classification, and off-topic detection
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required
 - **Programming Language**: Core implementation in Go with bindings for Python, R, and Julia
@@ -91,4 +100,4 @@ Contributions are welcome! Please follow guidelines at [open-and-sustainable.git
 ---
 
 ## Citation
-Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. [DOI: 10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796)
+Boero, R. (2025). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. [DOI: 10.5281/zenodo.11210796](https://doi.org/10.5281/zenodo.11210796)

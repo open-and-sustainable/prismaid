@@ -67,10 +67,20 @@ function download_url_list(path::String)
         throw(ArgumentError("Path cannot be empty"))
     end
 
-    # Call the C function - this one doesn't return anything
-    ccall((:DownloadURLListPython, library_path), Cvoid, (Cstring,), path)
+    # Call the C function
+    c_output = ccall((:DownloadURLListPython, library_path), Cstring, (Cstring,), path)
 
-    return nothing
+    if c_output == C_NULL
+        return nothing  # Success case returns NULL/nil in Python interface
+    end
+
+    # If we got here, it's an error message
+    result = unsafe_string(c_output)
+
+    # Free the C string
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+
+    throw(ErrorException(result))
 end
 
 function convert(input_dir::String, selected_formats::String)
@@ -101,7 +111,29 @@ function convert(input_dir::String, selected_formats::String)
     throw(ErrorException(result))
 end
 
+function screening(input::String)
+    # Validate input
+    if isempty(input)
+        throw(ArgumentError("Input cannot be empty"))
+    end
+
+    # Call the C function
+    c_output = ccall((:ScreeningPython, library_path), Cstring, (Cstring,), input)
+
+    if c_output == C_NULL
+        return nothing  # Success case returns NULL/nil in Python interface
+    end
+
+    # If we got here, it's an error message
+    result = unsafe_string(c_output)
+
+    # Free the C string
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+
+    throw(ErrorException(result))
+end
+
 # Export public functions
-export run_review, download_zotero_pdfs, download_url_list, convert
+export run_review, download_zotero_pdfs, download_url_list, convert, screening
 
 end # module PrismAId

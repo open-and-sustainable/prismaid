@@ -44,6 +44,8 @@ func main() {
 	convertDOCXDir := flag.String("convert-docx", "", "Directory containing DOCX files to convert")
 	convertHTMLDir := flag.String("convert-html", "", "Directory containing HTML files to convert")
 
+	screeningConfigPath := flag.String("screening", "", "Path to the screening configuration TOML file")
+
 	flag.Parse()
 
 	if flag.Arg(0) == "-help" || flag.Arg(0) == "--help" {
@@ -81,8 +83,24 @@ func main() {
 		prismaid.DownloadURLList(*downloadURLPath)
 	}
 
+	// Screening process
+	if *screeningConfigPath != "" {
+		logger.SetupLogging(logger.Stdout, "")
+		data, err := os.ReadFile(*screeningConfigPath)
+		if err != nil {
+			logger.Error("Error reading Screening configuration:", err)
+			os.Exit(1)
+		}
+		err = prismaid.Screening(string(data))
+		if err != nil {
+			logger.Error("Error running Screening logic:", err)
+			os.Exit(1)
+		}
+	}
+
 	// Review project
 	if *projectConfigPath != "" {
+		logger.SetupLogging(logger.Stdout, "")
 		data, err := os.ReadFile(*projectConfigPath)
 		if err != nil {
 			logger.Error("Error reading Review configuration:", err)
@@ -100,7 +118,7 @@ func main() {
 		terminal.RunInteractiveConfigCreation()
 	}
 
-	if *projectConfigPath == "" && !*initFlag && *downloadURLPath == "" && *downloadZoteroPath == "" && *convertPDFDir == "" && *convertDOCXDir == "" && *convertHTMLDir == "" {
+	if *projectConfigPath == "" && !*initFlag && *downloadURLPath == "" && *downloadZoteroPath == "" && *convertPDFDir == "" && *convertDOCXDir == "" && *convertHTMLDir == "" && *screeningConfigPath == "" {
 		logger.Error("No valid options provided. Use -help for usage information.")
 		os.Exit(1)
 	}
