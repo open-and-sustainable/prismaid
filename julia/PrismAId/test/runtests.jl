@@ -9,12 +9,14 @@ using PrismAId
     @test hasmethod(PrismAId.download_zotero_pdfs, (String, String, String, String))
     @test hasmethod(PrismAId.download_url_list, (String,))
     @test hasmethod(PrismAId.convert, (String, String))
+    @test hasmethod(PrismAId.screening, (String,))
 
     # Try to call with empty strings - should either throw an error or handle gracefully
     try
         PrismAId.download_zotero_pdfs("", "", "", "")
         PrismAId.download_url_list("")
         PrismAId.convert("", "")
+        PrismAId.screening("")
         # If we reach here without error, that's also acceptable
         @test true
     catch e
