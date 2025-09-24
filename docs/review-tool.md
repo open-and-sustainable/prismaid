@@ -41,7 +41,7 @@ Key capabilities include:
 The Review tool bridges the gap between traditional manual reviews and custom AI solutions, offering a powerful yet accessible approach to systematic reviews without requiring coding skills. It is accompanied by the [Download Tool](download-tool) and the [Convert Tool](convert-tool) to streamline workflows and assist users throughout the review process.
 
 <div style="text-align: left;">
-    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/info_extract_tools.png" alt="Tools Overview" style="width: 400px;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/info_extract_tools.png" alt="Tools Overview" style="width: 600px;">
 </div>
 
 
