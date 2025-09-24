@@ -47,34 +47,65 @@ This workflow integrates with established protocols like [PRISMA 2020](https://d
 
 ## Using prismAId Tools
 
-prismAId offers specialized tools to support your systematic review:
+### 1. Screening Tool
 
-### 1. Download Tool
-
-The Download tool helps you acquire papers for review from multiple sources:
-
-#### From URL Lists:
-Create a text file with one URL per line, then use:
+The Screening tool filters manuscripts after initial search but before full-text download, saving time and resources:
 
 ```bash
 # Using the binary
-./prismaid -download-URL path/to/urls.txt
+./prismaid --screening screening_config.toml
 
 # Using Go
 import "github.com/open-and-sustainable/prismaid"
-prismaid.DownloadURLList("path/to/urls.txt")
+prismaid.Screening(tomlConfigString)
 
 # Using Python
 import prismaid
-prismaid.download_url_list("path/to/urls.txt")
+with open("screening.toml", "r") as file:
+    toml_config = file.read()
+prismaid.screening(toml_config)
 
 # Using R
 library(prismaid)
-DownloadURLList("path/to/urls.txt")
+toml_content <- paste(readLines("screening.toml"), collapse = "\n")
+Screening(toml_content)
 
 # Using Julia
 using PrismAId
-PrismAId.download_url_list("path/to/urls.txt")
+toml_config = read("screening.toml", String)
+PrismAId.screening(toml_config)
+```
+
+The Screening tool applies multiple filters:
+- **Deduplication**: Removes duplicate manuscripts
+- **Language**: Filters by accepted languages
+- **Article Type**: Excludes reviews, editorials, letters, etc.
+- **Topic Relevance**: Scores manuscripts for relevance to your research topic
+
+### 2. Download Tool
+
+The Download tool acquires full-text papers for manuscripts that passed screening:
+
+#### From URL List:
+```bash
+# Using the binary
+./prismaid -download-URL list_of_urls.txt
+
+# Using Go
+import "github.com/open-and-sustainable/prismaid"
+prismaid.DownloadURLList("list_of_urls.txt")
+
+# Using Python
+import prismaid
+prismaid.download_url_list("list_of_urls.txt")
+
+# Using R
+library(prismaid)
+DownloadURLList("list_of_urls.txt")
+
+# Using Julia
+using PrismAId
+PrismAId.download_url_list("list_of_urls.txt")
 ```
 
 #### From Zotero:
@@ -105,9 +136,9 @@ using PrismAId
 PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
 ```
 
-### 2. Convert Tool
+### 3. Convert Tool
 
-The Convert tool transforms documents into analyzable text:
+The Convert tool transforms downloaded documents into analyzable text:
 
 ```bash
 # Using the binary (separate commands for each format)
@@ -134,7 +165,7 @@ PrismAId.convert("./papers", "pdf,docx,html")
 
 **<span style="color: red; font-weight: bold;">IMPORTANT:</span>** Due to limitations in the PDF format, conversions might be imperfect. Always manually check converted manuscripts for completeness before further processing.
 
-### 3. Review Tool
+### 4. Review Tool
 
 The Review tool processes systematic literature reviews based on TOML configurations:
 

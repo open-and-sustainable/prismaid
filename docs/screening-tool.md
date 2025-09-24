@@ -729,7 +729,7 @@ log_level = "high"  # Saves detailed log file
 
 ---
 
-For more information on systematic review workflows, see the [Review Tool](review-tool) documentation.
+For more information on systematic review workflows, see the [Review Support](review-support) documentation.
 
 
 <div id="wcb" class="carbonbadge"></div>

@@ -21,7 +21,7 @@ prismAId changes the way researchers conduct systematic reviews using generative
 
 prismAId offers a suite of tools to support every stage of your systematic review:
 
-<div style="text-align: center;">
+<div style="text-align: left;">
     <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 600px;">
 </div>
 
@@ -43,7 +43,7 @@ prismAId offers a suite of tools to support every stage of your systematic revie
 ## Workflow
 Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review
 
-<div style="text-align: center;">
+<div style="text-align: left;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
 </div>
 
