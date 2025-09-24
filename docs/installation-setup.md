@@ -30,7 +30,7 @@ prismAId is accessible across multiple platforms, offering flexibility based on 
 
 4. **R Package** on R-universe: Compatible with R and RStudio environments.
 
-5. **Julia Package** from the Github repo: For integration in Julia workflows and Jupyter notebooks.
+5. **Julia Package** from the Julia official package registry: For integration in Julia workflows and Jupyter notebooks.
 
 ## Toolkit Overview
 

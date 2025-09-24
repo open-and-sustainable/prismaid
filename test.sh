@@ -220,7 +220,6 @@ else
     echo "    Check /tmp/screening_output.log for details"
 fi
 
-: <<'COMMENT'
 echo "###### Testing DOWNLOAD-URL ######"
 echo "==> Testing URL downloads..."
 # Create a temporary directory for downloads to avoid polluting test inputs
@@ -278,7 +277,6 @@ else
     echo "    ✗ Review test failed"
 fi
 
-COMMENT
 # Final cleanup
 echo ""
 echo "###### Final cleanup ######"
