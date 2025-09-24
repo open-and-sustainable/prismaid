@@ -110,9 +110,6 @@ Use the command line interface to access all tools:
 # Screen manuscripts to filter out duplicates and irrelevant papers
 ./prismaid -screening screening_config.toml
 
-# Run a systematic review
-./prismaid -project your_project.toml
-
 # Download papers from Zotero (requires a TOML config file)
 # First create a file zotero_config.toml with:
 #   user = "your_username"
@@ -130,6 +127,9 @@ Use the command line interface to access all tools:
 
 # Initialize a new project configuration interactively
 ./prismaid -init
+
+# Run a systematic review
+./prismaid -project your_project.toml
 ```
 
 ### Option 3. Python Package
@@ -150,11 +150,6 @@ with open("screening.toml", "r") as file:
     screening_config = file.read()
 prismaid.screening(screening_config)
 
-# Run a systematic review
-with open("project.toml", "r") as file:
-    toml_config = file.read()
-prismaid.review(toml_config)
-
 # Download papers from Zotero
 prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
 
@@ -163,6 +158,11 @@ prismaid.download_url_list("urls.txt")
 
 # Convert files to text
 prismaid.convert("./papers", "pdf,docx,html")
+
+# Run a systematic review
+with open("project.toml", "r") as file:
+    toml_config = file.read()
+prismaid.review(toml_config)
 ```
 
 ### Option 4. R Package
@@ -182,9 +182,6 @@ library(prismaid)
 screening_content <- paste(readLines("screening.toml"), collapse = "\n")
 Screening(screening_content)  # Note the capitalization
 
-# Run a systematic review
-toml_content <- paste(readLines("project.toml"), collapse = "\n")
-RunReview(toml_content)  # Note the capitalization
 
 # Download papers from Zotero
 DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")  # Full name
@@ -194,6 +191,10 @@ DownloadURLList("urls.txt")
 
 # Convert files to text
 Convert("./papers", "pdf,docx,html")  # Note the capitalization
+
+# Run a systematic review
+toml_content <- paste(readLines("project.toml"), collapse = "\n")
+RunReview(toml_content)  # Note the capitalization
 ```
 
 ### Option 5. Julia Package
@@ -214,10 +215,6 @@ using PrismAId
 screening_config = read("screening.toml", String)
 PrismAId.screening(screening_config)
 
-# Run a systematic review
-toml_config = read("project.toml", String)
-PrismAId.run_review(toml_config)  # Correct function name
-
 # Download papers from Zotero
 PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
 
@@ -226,6 +223,10 @@ PrismAId.download_url_list("urls.txt")
 
 # Convert files to text
 PrismAId.convert("./papers", "pdf,docx,html")
+
+# Run a systematic review
+toml_config = read("project.toml", String)
+PrismAId.run_review(toml_config)  # Correct function name
 ```
 
 ## Additional Setup Information
