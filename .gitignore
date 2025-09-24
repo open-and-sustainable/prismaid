@@ -15,4 +15,3 @@ projects/workspace/**
 
 # Ignore any log files
 *.log
-screening_log.txt
