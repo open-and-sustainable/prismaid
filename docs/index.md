@@ -22,7 +22,7 @@ prismAId changes the way researchers conduct systematic reviews using generative
 prismAId offers a suite of tools to support every stage of your systematic review:
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 60%;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/tools.png" alt="Tools Overview" style="width: 600px;">
 </div>
 
 ### Core Tools

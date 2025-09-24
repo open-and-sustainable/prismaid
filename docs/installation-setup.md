@@ -86,14 +86,14 @@ import "github.com/open-and-sustainable/prismaid"
 // Run screening on manuscripts
 err := prismaid.Screening(tomlConfigString)
 
-// Run a systematic review
-err := prismaid.Review(tomlConfigString)
-
 // Download papers from Zotero
 err := prismaid.DownloadZoteroPDFs(username, apiKey, collectionName, parentDir)
 
 // Convert files to text
 err := prismaid.Convert(inputDir, "pdf,docx,html")
+
+// Run a systematic review
+err := prismaid.Review(tomlConfigString)
 ```
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
