@@ -75,10 +75,8 @@ field_relevance = 0.2                        # Weight for journal/field relevanc
 
 ### LLM configuration for AI-assisted screening (optional)
 ### Multiple LLMs can be configured for ensemble processing
-[filters.llm]
-
 ### First LLM configuration
-[filters.llm.1]
+[[filters.llm]]
 provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", or "DeepSeek"
 api_key = ""                                  # API key (uses environment variable if empty)
 model = "gpt-4o-mini"                         # Model name (provider-specific)
@@ -87,7 +85,7 @@ tpm_limit = 0                                 # Tokens per minute limit (0 = unl
 rpm_limit = 0                                 # Requests per minute limit (0 = unlimited)
 
 ### Additional LLM configurations (optional)
-# [filters.llm.2]
+# [[filters.llm]]
 # provider = "GoogleAI"
 # api_key = ""
 # model = "gemini-1.5-flash"
