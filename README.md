@@ -3,7 +3,7 @@
 
 prismAId offers a suite of tools using generative AI models to streamline systematic reviews of scientific literature.
 
-It provides simple-to-use, efficient, and replicable methods for analyzing research papers with no coding skills required.
+It provides simple-to-use, efficient, and replicable methods for screening and analyzing research papers with no coding skills required.
 
 ---
 
