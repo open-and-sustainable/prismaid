@@ -9,6 +9,17 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.1] - 2025-09-26
+### Fixed
+- AI-assisted screening filters now properly respect rate limits by batching all prompts into single API calls
+  - Deduplication filter: All manuscript comparisons processed in one batch instead of individual calls
+  - Language detection filter: All manuscripts analyzed together instead of sequentially
+  - Article type filter: All classifications performed in one batch request
+  - Topic relevance filter: All relevance assessments bundled into single API call
+- Added 30-second delay between consecutive AI-assisted filters to prevent rate limit breaches
+### Changed
+- Replaced `interface{}` with `any` throughout screening codebase for modern Go compatibility
+
 ## [0.9.0] - 2025-09-24
 ### Added
 - New Screening tool for filtering manuscripts before download
