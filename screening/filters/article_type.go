@@ -55,7 +55,7 @@ type ArticleTypeScore struct {
 
 // ClassifyArticleType determines all applicable types for an article
 // Returns a JSON string representing the classification for backward compatibility
-func ClassifyArticleType(text string, llmConfigs []interface{}) (string, error) {
+func ClassifyArticleType(text string, llmConfigs []any) (string, error) {
 	if text == "" {
 		return string(Unknown), fmt.Errorf("empty text provided")
 	}
@@ -78,8 +78,218 @@ func ClassifyArticleType(text string, llmConfigs []interface{}) (string, error) 
 	return string(jsonData), nil
 }
 
+// BatchClassifyArticleTypesWithAI processes multiple manuscripts in a single AI call
+func BatchClassifyArticleTypesWithAI(manuscriptsData []map[string]string, llmConfigs []any) map[string]*ArticleClassification {
+	results := make(map[string]*ArticleClassification)
+
+	// Initialize all results with Unknown
+	for i := range manuscriptsData {
+		results[fmt.Sprintf("%d", i)] = &ArticleClassification{
+			PrimaryType: Unknown,
+			AllTypes:    []ArticleType{Unknown},
+		}
+	}
+
+	// Prepare AI model configurations
+	var models []definitions.Model
+	for _, llmConfig := range llmConfigs {
+		if llm, ok := llmConfig.(map[string]any); ok {
+			model := definitions.Model{
+				Provider:    getStringValue(llm, "provider"),
+				APIKey:      getStringValue(llm, "api_key"),
+				Model:       getStringValue(llm, "model"),
+				Temperature: getFloatValue(llm, "temperature"),
+				TPMLimit:    getIntValue(llm, "tpm_limit"),
+				RPMLimit:    getIntValue(llm, "rpm_limit"),
+			}
+			models = append(models, model)
+		}
+	}
+
+	if len(models) == 0 {
+		logger.Info("No valid AI models configured for article type classification")
+		return results
+	}
+
+	// Build all prompts
+	var prompts []definitions.Prompt
+	validIndices := []int{}
+
+	for idx, manuscriptData := range manuscriptsData {
+		// Extract relevant fields
+		title := ""
+		abstract := ""
+
+		for field, value := range manuscriptData {
+			fieldLower := strings.ToLower(field)
+			switch fieldLower {
+			case "title":
+				title = value
+			case "abstract":
+				abstract = value
+			}
+		}
+
+		// Skip if no text to analyze
+		if title == "" && abstract == "" {
+			continue
+		}
+
+		// Create the prompt (same as in classifyWithAIComprehensive)
+		prompt := fmt.Sprintf(`You are a scientific manuscript classification expert. Analyze this manuscript and provide a comprehensive type classification.
+
+CONTEXT:
+A manuscript can have MULTIPLE overlapping classifications. For example:
+- A paper can be both "research_article" AND "empirical_study" AND "sample_study"
+- A review can be both "review" AND "systematic_review"
+- A methods paper can be both "research_article" AND "methods_paper"
+
+CLASSIFICATION DIMENSIONS:
+
+1. TRADITIONAL PUBLICATION TYPES (what editors would call it):
+   - research_article: Original research with methods, results, and conclusions
+   - review: Literature review without systematic methodology (narrative review, scoping review)
+   - systematic_review: Following structured review protocol (PRISMA, etc.)
+   - meta_analysis: Statistical synthesis of multiple studies
+   - editorial: Opinion piece by editors
+   - letter: Brief correspondence to editors
+   - case_report: Single patient/case/instance report
+   - commentary: Comments on published work
+   - perspective: Author viewpoints and opinions
+
+2. METHODOLOGICAL TYPES (how research is conducted):
+   - empirical_study: Based on observation/experimentation with data collection
+   - theoretical_paper: Conceptual work without empirical data
+   - methods_paper: Presenting new methods, techniques, or protocols
+
+3. STUDY SCOPE (for empirical studies):
+   - single_case_study: In-depth analysis of ONE case/patient/organization (n=1)
+   - sample_study: Multiple subjects (cohort studies, surveys, cross-sectional, etc.)
+
+IMPORTANT RULES:
+- A paper can have types from ALL three dimensions
+- Single case ≠ case report (case report is a publication type, single case is a scope)
+- If empirical, MUST be either single_case_study OR sample_study
+- Default to "research_article" for traditional type if unclear
+- Be specific - don't just say "unknown"
+
+MANUSCRIPT:
+Title: %s
+Abstract: %s
+
+Provide classification as JSON:
+{
+  "primary_type": "most_specific_type",
+  "all_types": ["type1", "type2", ...],
+  "methodological_types": ["empirical_study" | "theoretical_paper" | "methods_paper"],
+  "scope_types": ["single_case_study" | "sample_study"] (only if empirical),
+  "type_scores": {"type1": 0.95, "type2": 0.80, ...}
+}`, title, abstract)
+
+		prompts = append(prompts, definitions.Prompt{
+			PromptContent:  prompt,
+			SequenceID:     fmt.Sprintf("%d", idx+1),
+			SequenceNumber: idx + 1,
+		})
+		validIndices = append(validIndices, idx)
+	}
+
+	if len(prompts) == 0 {
+		logger.Info("No valid manuscripts for article type classification")
+		return results
+	}
+
+	logger.Info("Prepared %d manuscripts for batch article type classification", len(prompts))
+
+	// Prepare the input for alembica with all prompts
+	input := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       "1.0",
+			SchemaVersion: "1.0",
+		},
+		Models:  models,
+		Prompts: prompts,
+	}
+
+	// Convert to JSON
+	jsonInput, err := json.Marshal(input)
+	if err != nil {
+		logger.Error("Failed to marshal input for AI: %v", err)
+		return results
+	}
+
+	// Call alembica once with all prompts
+	logger.Info("Calling AI model with batch of %d article type classification requests", len(prompts))
+	result, err := extraction.Extract(string(jsonInput))
+	if err != nil {
+		logger.Error("AI extraction failed: %v", err)
+		return results
+	}
+
+	// Parse the response
+	var output definitions.Output
+	if err := json.Unmarshal([]byte(result), &output); err != nil {
+		logger.Error("Failed to parse AI response: %v", err)
+		return results
+	}
+
+	// Process responses
+	for respIdx, manuscriptIdx := range validIndices {
+		if respIdx < len(output.Responses) && len(output.Responses[respIdx].ModelResponses) > 0 {
+			response := output.Responses[respIdx].ModelResponses[0]
+
+			// Parse the AI response
+			var aiResult struct {
+				PrimaryType         string             `json:"primary_type"`
+				AllTypes            []string           `json:"all_types"`
+				MethodologicalTypes []string           `json:"methodological_types"`
+				ScopeTypes          []string           `json:"scope_types"`
+				TypeScores          map[string]float64 `json:"type_scores"`
+			}
+
+			if err := json.Unmarshal([]byte(response), &aiResult); err != nil {
+				logger.Error("Failed to parse AI classification for manuscript %d: %v", manuscriptIdx, err)
+				continue
+			}
+
+			// Convert string types to ArticleType enum
+			classification := &ArticleClassification{
+				PrimaryType:         parseArticleType(aiResult.PrimaryType),
+				AllTypes:            []ArticleType{},
+				MethodologicalTypes: []ArticleType{},
+				ScopeTypes:          []ArticleType{},
+				TypeScores:          make(map[ArticleType]float64),
+			}
+
+			// Convert all types
+			for _, typeStr := range aiResult.AllTypes {
+				classification.AllTypes = append(classification.AllTypes, parseArticleType(typeStr))
+			}
+
+			// Convert methodological types
+			for _, typeStr := range aiResult.MethodologicalTypes {
+				classification.MethodologicalTypes = append(classification.MethodologicalTypes, parseArticleType(typeStr))
+			}
+
+			// Convert scope types
+			for _, typeStr := range aiResult.ScopeTypes {
+				classification.ScopeTypes = append(classification.ScopeTypes, parseArticleType(typeStr))
+			}
+
+			// Convert type scores
+			for typeStr, score := range aiResult.TypeScores {
+				classification.TypeScores[parseArticleType(typeStr)] = score
+			}
+
+			results[fmt.Sprintf("%d", manuscriptIdx)] = classification
+		}
+	}
+
+	return results
+}
+
 // ClassifyArticleTypeWithAI uses AI to classify article type
-func ClassifyArticleTypeWithAI(manuscriptData map[string]string, useAI bool, llmConfigs []interface{}) (*ArticleClassification, error) {
+func ClassifyArticleTypeWithAI(manuscriptData map[string]string, useAI bool, llmConfigs []any) (*ArticleClassification, error) {
 	// Extract relevant fields
 	title := ""
 	abstract := ""
@@ -111,7 +321,7 @@ func ClassifyArticleTypeWithAI(manuscriptData map[string]string, useAI bool, llm
 }
 
 // ClassifyArticleTypes returns multiple applicable article types
-func ClassifyArticleTypes(text string, llmConfigs []interface{}) (*ArticleClassification, error) {
+func ClassifyArticleTypes(text string, llmConfigs []any) (*ArticleClassification, error) {
 	if text == "" {
 		return &ArticleClassification{PrimaryType: Unknown}, fmt.Errorf("empty text provided")
 	}
@@ -886,8 +1096,44 @@ func classifyWithAI(text string, llmConfig interface{}) (string, error) {
 	return string(Unknown), nil
 }
 
+// parseArticleType converts string to ArticleType enum
+func parseArticleType(typeStr string) ArticleType {
+	switch strings.ToLower(strings.TrimSpace(typeStr)) {
+	case "research_article":
+		return ResearchArticle
+	case "review":
+		return ReviewArticle
+	case "editorial":
+		return Editorial
+	case "letter":
+		return Letter
+	case "case_report":
+		return CaseReport
+	case "commentary":
+		return Commentary
+	case "perspective":
+		return Perspective
+	case "meta_analysis":
+		return MetaAnalysis
+	case "systematic_review":
+		return SystematicReview
+	case "empirical_study":
+		return EmpiricalStudy
+	case "theoretical_paper":
+		return TheoreticalPaper
+	case "methods_paper":
+		return MethodsPaper
+	case "single_case_study":
+		return SingleCaseStudy
+	case "sample_study":
+		return SampleStudy
+	default:
+		return Unknown
+	}
+}
+
 // classifyWithAIComprehensive performs AI-based article type classification
-func classifyWithAIComprehensive(title, abstract string, llmConfigs []interface{}) (*ArticleClassification, error) {
+func classifyWithAIComprehensive(title, abstract string, llmConfigs []any) (*ArticleClassification, error) {
 	// Prepare AI model configurations
 	var models []definitions.Model
 	for _, llmConfig := range llmConfigs {
@@ -1114,7 +1360,7 @@ func ClassifyArticleTypeWithScores(text string) ([]ArticleTypeScore, error) {
 }
 
 // BatchClassifyArticleTypes classifies multiple articles
-func BatchClassifyArticleTypes(texts []string, llmConfigs []interface{}) ([]string, error) {
+func BatchClassifyArticleTypes(texts []string, llmConfigs []any) ([]string, error) {
 	results := make([]string, len(texts))
 
 	for i, text := range texts {

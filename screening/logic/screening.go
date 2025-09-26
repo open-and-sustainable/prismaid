@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
@@ -161,25 +162,60 @@ func Screen(tomlConfiguration string) error {
 	}
 
 	// Apply filters
+	previousFilterUsedAI := false
+
 	if config.Filters.Deduplication.Enabled {
+		// Check if we need to wait before this AI filter
+		if previousFilterUsedAI && config.Filters.Deduplication.UseAI && len(config.Filters.LLM) > 0 {
+			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
+			time.Sleep(30 * time.Second)
+		}
+
 		if err := applyDeduplicationFilter(result, config.Filters.Deduplication); err != nil {
 			return fmt.Errorf("deduplication filter error: %v", err)
 		}
+
+		// Update flag for next filter
+		previousFilterUsedAI = config.Filters.Deduplication.UseAI && len(config.Filters.LLM) > 0
 	}
 
 	if config.Filters.Language.Enabled {
+		// Check if we need to wait before this AI filter
+		if previousFilterUsedAI && config.Filters.Language.UseAI && len(config.Filters.LLM) > 0 {
+			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
+			time.Sleep(30 * time.Second)
+		}
+
 		if err := applyLanguageFilter(result, config.Filters.Language, config.Filters.LLM); err != nil {
 			return fmt.Errorf("language filter error: %v", err)
 		}
+
+		// Update flag for next filter
+		previousFilterUsedAI = config.Filters.Language.UseAI && len(config.Filters.LLM) > 0
 	}
 
 	if config.Filters.ArticleType.Enabled {
+		// Check if we need to wait before this AI filter
+		if previousFilterUsedAI && config.Filters.ArticleType.UseAI && len(config.Filters.LLM) > 0 {
+			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
+			time.Sleep(30 * time.Second)
+		}
+
 		if err := applyArticleTypeFilter(result, config.Filters.ArticleType, config.Filters.LLM); err != nil {
 			return fmt.Errorf("article type filter error: %v", err)
 		}
+
+		// Update flag for next filter
+		previousFilterUsedAI = config.Filters.ArticleType.UseAI && len(config.Filters.LLM) > 0
 	}
 
 	if config.Filters.TopicRelevance.Enabled {
+		// Check if we need to wait before this AI filter
+		if previousFilterUsedAI && config.Filters.TopicRelevance.UseAI && len(config.Filters.LLM) > 0 {
+			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
+			time.Sleep(30 * time.Second)
+		}
+
 		if err := applyTopicRelevanceFilter(result, config.Filters.TopicRelevance, config.Filters.LLM); err != nil {
 			return fmt.Errorf("topic relevance filter error: %v", err)
 		}
@@ -435,26 +471,62 @@ func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfi
 func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConfigs []LLMConfig) error {
 	excludedCount := 0
 
-	for i := range result.Records {
-		if !result.Records[i].Include {
-			continue // Skip already excluded records
+	if config.UseAI && len(llmConfigs) > 0 {
+		// Batch AI processing for all included records
+		var manuscriptsToProcess []map[string]string
+		var recordIndices []int
+
+		// Collect all included records for batch processing
+		for i := range result.Records {
+			if result.Records[i].Include {
+				manuscriptsToProcess = append(manuscriptsToProcess, result.Records[i].OriginalData)
+				recordIndices = append(recordIndices, i)
+			}
 		}
 
-		var language string
-		var err error
-
-		if config.UseAI && len(llmConfigs) > 0 {
-			// For AI, pass the entire manuscript data for comprehensive analysis
+		if len(manuscriptsToProcess) > 0 {
 			// Convert LLMConfig to interface{} for filter function
 			llmInterfaces := convertLLMConfigs(llmConfigs)
-			language, err = filters.DetectLanguageWithAI(result.Records[i].OriginalData, llmInterfaces)
 
-			// Also store AI detection result
-			if language != "" && language != "unknown" {
-				result.Records[i].Tags["ai_detected_language"] = language
+			// Batch process all manuscripts
+			logger.Info("Processing %d manuscripts for language detection with AI", len(manuscriptsToProcess))
+			languages := filters.BatchDetectLanguagesWithAI(manuscriptsToProcess, llmInterfaces)
+
+			// Apply results
+			for idx, recordIdx := range recordIndices {
+				language := languages[fmt.Sprintf("%d", idx)]
+
+				// Store AI detection result
+				if language != "" && language != "unknown" {
+					result.Records[recordIdx].Tags["ai_detected_language"] = language
+				}
+				result.Records[recordIdx].Tags["detected_language"] = language
+
+				// Check if language is accepted
+				isAccepted := false
+				for _, acceptedLang := range config.AcceptedLanguages {
+					if strings.EqualFold(language, acceptedLang) {
+						isAccepted = true
+						break
+					}
+				}
+
+				if !isAccepted && language != "unknown" {
+					result.Records[recordIdx].Include = false
+					result.Records[recordIdx].ExclusionReason = fmt.Sprintf("Language not accepted: %s", language)
+					excludedCount++
+				}
 			}
-		} else {
-			// Non-AI: Detect language from both title and abstract
+		}
+	} else {
+		// Non-AI: Process each record individually
+		for i := range result.Records {
+			if !result.Records[i].Include {
+				continue // Skip already excluded records
+			}
+
+			var language string
+
 			// Try to get title from original data
 			titleText := ""
 			for field, value := range result.Records[i].OriginalData {
@@ -495,28 +567,24 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 			if abstractLang != "" {
 				result.Records[i].Tags["abstract_language"] = abstractLang
 			}
-		}
 
-		if err != nil {
-			logger.Error("Language detection failed for %s: %v", result.Records[i].ID, err)
-			continue
-		}
+			// Store detected language
+			result.Records[i].Tags["detected_language"] = language
 
-		result.Records[i].Tags["detected_language"] = language
-
-		// Check if language is accepted
-		languageAccepted := false
-		for _, acceptedLang := range config.AcceptedLanguages {
-			if strings.EqualFold(language, acceptedLang) {
-				languageAccepted = true
-				break
+			// Check if language is accepted
+			isAccepted := false
+			for _, acceptedLang := range config.AcceptedLanguages {
+				if strings.EqualFold(language, acceptedLang) {
+					isAccepted = true
+					break
+				}
 			}
-		}
 
-		if !languageAccepted {
-			result.Records[i].Include = false
-			result.Records[i].ExclusionReason = fmt.Sprintf("Language not accepted: %s", language)
-			excludedCount++
+			if !isAccepted && language != "unknown" {
+				result.Records[i].Include = false
+				result.Records[i].ExclusionReason = fmt.Sprintf("Language not accepted: %s", language)
+				excludedCount++
+			}
 		}
 	}
 
@@ -528,138 +596,77 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, llmConfigs []LLMConfig) error {
 	excludedCount := 0
 
-	for i := range result.Records {
-		if !result.Records[i].Include {
-			continue // Skip already excluded records
-		}
+	if config.UseAI && len(llmConfigs) > 0 {
+		// Batch AI processing for all included records
+		var manuscriptsToProcess []map[string]string
+		var recordIndices []int
 
-		// Convert LLMConfig slice to []interface{} for filter function
-		var llmInterfaces []interface{}
-		for _, llm := range llmConfigs {
-			// Convert to map for the filter functions
-			llmMap := map[string]interface{}{
-				"provider":    llm.Provider,
-				"api_key":     llm.APIKey,
-				"model":       llm.Model,
-				"temperature": llm.Temperature,
-				"tpm_limit":   llm.TPMLimit,
-				"rpm_limit":   llm.RPMLimit,
+		// Collect all included records for batch processing
+		for i := range result.Records {
+			if result.Records[i].Include {
+				manuscriptsToProcess = append(manuscriptsToProcess, result.Records[i].OriginalData)
+				recordIndices = append(recordIndices, i)
 			}
-			llmInterfaces = append(llmInterfaces, llmMap)
 		}
 
-		// Get comprehensive article classification
-		var classification *filters.ArticleClassification
-		var err error
+		if len(manuscriptsToProcess) > 0 {
+			// Convert LLMConfig to interface{} for filter function
+			llmInterfaces := convertLLMConfigs(llmConfigs)
 
-		if config.UseAI && len(llmConfigs) > 0 {
-			// Use AI-based classification with manuscript data
-			classification, err = filters.ClassifyArticleTypeWithAI(result.Records[i].OriginalData, true, llmInterfaces)
-		} else {
+			// Batch process all manuscripts
+			logger.Info("Processing %d manuscripts for article type classification with AI", len(manuscriptsToProcess))
+			classifications := filters.BatchClassifyArticleTypesWithAI(manuscriptsToProcess, llmInterfaces)
+
+			// Apply results
+			for idx, recordIdx := range recordIndices {
+				classification := classifications[fmt.Sprintf("%d", idx)]
+
+				// Store complete classification in tags
+				result.Records[recordIdx].Tags["article_type"] = classification.PrimaryType
+				result.Records[recordIdx].Tags["all_article_types"] = classification.AllTypes
+				result.Records[recordIdx].Tags["methodological_types"] = classification.MethodologicalTypes
+				result.Records[recordIdx].Tags["scope_types"] = classification.ScopeTypes
+				result.Records[recordIdx].Tags["type_scores"] = classification.TypeScores
+
+				// Check exclusion rules against all classified types
+				shouldExclude, excludedTypes := checkArticleTypeExclusion(classification, config)
+
+				if shouldExclude {
+					result.Records[recordIdx].Include = false
+					result.Records[recordIdx].ExclusionReason = fmt.Sprintf("Article type excluded: %s", strings.Join(excludedTypes, ", "))
+					excludedCount++
+				}
+			}
+		}
+	} else {
+		// Non-AI: Process each record individually
+		for i := range result.Records {
+			if !result.Records[i].Include {
+				continue // Skip already excluded records
+			}
+
 			// Use rule-based classification with text
-			classification, err = filters.ClassifyArticleTypes(result.Records[i].Text, nil)
-		}
-
-		if err != nil {
-			logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
-			continue
-		}
-
-		// Store complete classification in tags
-		result.Records[i].Tags["article_type"] = classification.PrimaryType
-		result.Records[i].Tags["all_article_types"] = classification.AllTypes
-		result.Records[i].Tags["methodological_types"] = classification.MethodologicalTypes
-		result.Records[i].Tags["scope_types"] = classification.ScopeTypes
-		result.Records[i].Tags["type_scores"] = classification.TypeScores
-
-		// Check exclusion rules against all classified types
-		shouldExclude := false
-		exclusionReason := ""
-		excludedTypes := []string{}
-
-		// Check traditional publication type exclusions
-		if config.ExcludeReviews {
-			if filters.HasAnyArticleType(classification, filters.ReviewArticle, filters.SystematicReview, filters.MetaAnalysis) {
-				shouldExclude = true
-				excludedTypes = append(excludedTypes, "review")
-			}
-		}
-
-		if config.ExcludeEditorials && filters.HasArticleType(classification, filters.Editorial) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "editorial")
-		}
-
-		if config.ExcludeLetters && filters.HasArticleType(classification, filters.Letter) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "letter")
-		}
-
-		// Check methodological type exclusions
-		if config.ExcludeTheoretical && filters.HasArticleType(classification, filters.TheoreticalPaper) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "theoretical")
-		}
-
-		if config.ExcludeEmpirical && filters.HasArticleType(classification, filters.EmpiricalStudy) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "empirical")
-		}
-
-		if config.ExcludeMethods && filters.HasArticleType(classification, filters.MethodsPaper) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "methods")
-		}
-
-		// Check study scope exclusions
-		if config.ExcludeSingleCase && filters.HasArticleType(classification, filters.SingleCaseStudy) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "single case")
-		}
-
-		if config.ExcludeSample && filters.HasArticleType(classification, filters.SampleStudy) {
-			shouldExclude = true
-			excludedTypes = append(excludedTypes, "sample study")
-		}
-
-		// Build exclusion reason from all excluded types
-		if len(excludedTypes) > 0 {
-			exclusionReason = fmt.Sprintf("Excluded article types: %s", strings.Join(excludedTypes, ", "))
-		}
-
-		// Check include types if specified (only checks primary type for backward compatibility)
-		if len(config.IncludeTypes) > 0 && !shouldExclude {
-			typeIncluded := false
-			primaryTypeStr := string(classification.PrimaryType)
-
-			for _, includeType := range config.IncludeTypes {
-				if strings.EqualFold(primaryTypeStr, includeType) {
-					typeIncluded = true
-					break
-				}
-				// Also check against all types for more flexible matching
-				for _, classType := range classification.AllTypes {
-					if strings.EqualFold(string(classType), includeType) {
-						typeIncluded = true
-						break
-					}
-				}
-				if typeIncluded {
-					break
-				}
+			classification, err := filters.ClassifyArticleTypes(result.Records[i].Text, nil)
+			if err != nil {
+				logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
+				continue
 			}
 
-			if !typeIncluded {
-				shouldExclude = true
-				exclusionReason = fmt.Sprintf("Article types not in include list. Primary: %s, All: %v",
-					classification.PrimaryType, classification.AllTypes)
-			}
-		}
+			// Store complete classification in tags
+			result.Records[i].Tags["article_type"] = classification.PrimaryType
+			result.Records[i].Tags["all_article_types"] = classification.AllTypes
+			result.Records[i].Tags["methodological_types"] = classification.MethodologicalTypes
+			result.Records[i].Tags["scope_types"] = classification.ScopeTypes
+			result.Records[i].Tags["type_scores"] = classification.TypeScores
 
-		if shouldExclude {
-			result.Records[i].Include = false
-			result.Records[i].ExclusionReason = exclusionReason
-			excludedCount++
+			// Check exclusion rules against all classified types
+			shouldExclude, excludedTypes := checkArticleTypeExclusion(classification, config)
+
+			if shouldExclude {
+				result.Records[i].Include = false
+				result.Records[i].ExclusionReason = fmt.Sprintf("Article type excluded: %s", strings.Join(excludedTypes, ", "))
+				excludedCount++
+			}
 		}
 	}
 
@@ -667,41 +674,123 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 	return nil
 }
 
+// checkArticleTypeExclusion checks if an article should be excluded based on its types
+func checkArticleTypeExclusion(classification *filters.ArticleClassification, config ArticleTypeConfig) (bool, []string) {
+	shouldExclude := false
+	excludedTypes := []string{}
+
+	// Check traditional publication type exclusions
+	if config.ExcludeReviews {
+		if filters.HasAnyArticleType(classification, filters.ReviewArticle, filters.SystematicReview, filters.MetaAnalysis) {
+			shouldExclude = true
+			excludedTypes = append(excludedTypes, "review")
+		}
+	}
+
+	if config.ExcludeEditorials && filters.HasArticleType(classification, filters.Editorial) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "editorial")
+	}
+
+	if config.ExcludeLetters && filters.HasArticleType(classification, filters.Letter) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "letter")
+	}
+
+	// Check methodological type exclusions
+	if config.ExcludeTheoretical && filters.HasArticleType(classification, filters.TheoreticalPaper) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "theoretical")
+	}
+
+	if config.ExcludeEmpirical && filters.HasArticleType(classification, filters.EmpiricalStudy) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "empirical")
+	}
+
+	if config.ExcludeMethods && filters.HasArticleType(classification, filters.MethodsPaper) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "methods")
+	}
+
+	// Check study scope exclusions
+	if config.ExcludeSingleCase && filters.HasArticleType(classification, filters.SingleCaseStudy) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "single_case")
+	}
+
+	if config.ExcludeSample && filters.HasArticleType(classification, filters.SampleStudy) {
+		shouldExclude = true
+		excludedTypes = append(excludedTypes, "sample_study")
+	}
+
+	return shouldExclude, excludedTypes
+}
+
 // applyTopicRelevanceFilter applies topic relevance scoring to filter off-topic manuscripts
 func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceConfig, llmConfigs []LLMConfig) error {
 	logger.Info("Applying topic relevance filter...")
 	excludedCount := 0
 
-	// Convert LLM configs to interface{} for the filter functions
-	var llmConfigInterfaces []interface{}
-	for _, cfg := range llmConfigs {
-		llmConfigInterfaces = append(llmConfigInterfaces, map[string]interface{}{
-			"provider":    cfg.Provider,
-			"api_key":     cfg.APIKey,
-			"model":       cfg.Model,
-			"temperature": cfg.Temperature,
-			"tpm_limit":   cfg.TPMLimit,
-			"rpm_limit":   cfg.RPMLimit,
-		})
-	}
+	if config.UseAI && len(llmConfigs) > 0 {
+		// Batch AI processing for all included records
+		var manuscriptsToProcess []map[string]string
+		var recordIndices []int
 
-	for i, record := range result.Records {
-		// Skip if already excluded by previous filters
-		if !record.Include {
-			continue
+		// Collect all included records for batch processing
+		for i := range result.Records {
+			if result.Records[i].Include {
+				manuscriptsToProcess = append(manuscriptsToProcess, result.Records[i].OriginalData)
+				recordIndices = append(recordIndices, i)
+			}
 		}
 
-		// Calculate topic relevance score
-		var relevanceScore *filters.TopicRelevanceScore
-		var err error
+		if len(manuscriptsToProcess) > 0 {
+			// Convert LLMConfig to interface{} for filter function
+			llmInterfaces := convertLLMConfigs(llmConfigs)
 
-		if config.UseAI && len(llmConfigInterfaces) > 0 {
-			relevanceScore, err = filters.CalculateTopicRelevanceWithAI(
-				record.OriginalData,
-				config.Topics,
-				llmConfigInterfaces,
-			)
-		} else {
+			// Batch process all manuscripts
+			logger.Info("Processing %d manuscripts for topic relevance with AI", len(manuscriptsToProcess))
+			relevanceScores := filters.BatchCalculateTopicRelevanceWithAI(manuscriptsToProcess, config.Topics, config.MinScore, llmInterfaces)
+
+			// Apply results
+			for idx, recordIdx := range recordIndices {
+				relevanceScore := relevanceScores[fmt.Sprintf("%d", idx)]
+
+				// Store relevance score in tags
+				if result.Records[recordIdx].Tags == nil {
+					result.Records[recordIdx].Tags = make(map[string]any)
+				}
+				result.Records[recordIdx].Tags["topic_relevance_score"] = relevanceScore.OverallScore
+				result.Records[recordIdx].Tags["topic_relevance_confidence"] = relevanceScore.Confidence
+				result.Records[recordIdx].Tags["matched_keywords"] = relevanceScore.MatchedKeywords
+				result.Records[recordIdx].Tags["matched_concepts"] = relevanceScore.MatchedConcepts
+
+				// Apply minimum score threshold
+				if relevanceScore.OverallScore < config.MinScore {
+					result.Records[recordIdx].Include = false
+					result.Records[recordIdx].ExclusionReason = fmt.Sprintf(
+						"Topic relevance score (%.2f) below minimum threshold (%.2f)",
+						relevanceScore.OverallScore,
+						config.MinScore,
+					)
+					excludedCount++
+
+					logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+						result.Records[recordIdx].ID,
+						relevanceScore.OverallScore,
+						config.MinScore,
+					)
+				}
+			}
+		}
+	} else {
+		// Non-AI: Process each record individually
+		for i := range result.Records {
+			if !result.Records[i].Include {
+				continue // Skip already excluded records
+			}
+
 			// Convert score weights
 			weights := filters.ScoreWeights{
 				KeywordMatch:   config.ScoreWeights.KeywordMatch,
@@ -709,43 +798,43 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 				FieldRelevance: config.ScoreWeights.FieldRelevance,
 			}
 
-			relevanceScore, err = filters.CalculateTopicRelevance(
-				record.OriginalData,
+			relevanceScore, err := filters.CalculateTopicRelevance(
+				result.Records[i].OriginalData,
 				config.Topics,
 				weights,
 			)
-		}
 
-		if err != nil {
-			logger.Error("Failed to calculate topic relevance for record %s: %v", record.ID, err)
-			// Don't exclude on error, just log and continue
-			continue
-		}
+			if err != nil {
+				logger.Error("Failed to calculate topic relevance for record %s: %v", result.Records[i].ID, err)
+				// Don't exclude on error, just log and continue
+				continue
+			}
 
-		// Store relevance score in tags
-		if result.Records[i].Tags == nil {
-			result.Records[i].Tags = make(map[string]interface{})
-		}
-		result.Records[i].Tags["topic_relevance_score"] = relevanceScore.OverallScore
-		result.Records[i].Tags["topic_relevance_confidence"] = relevanceScore.Confidence
-		result.Records[i].Tags["matched_keywords"] = relevanceScore.MatchedKeywords
-		result.Records[i].Tags["matched_concepts"] = relevanceScore.MatchedConcepts
+			// Store relevance score in tags
+			if result.Records[i].Tags == nil {
+				result.Records[i].Tags = make(map[string]any)
+			}
+			result.Records[i].Tags["topic_relevance_score"] = relevanceScore.OverallScore
+			result.Records[i].Tags["topic_relevance_confidence"] = relevanceScore.Confidence
+			result.Records[i].Tags["matched_keywords"] = relevanceScore.MatchedKeywords
+			result.Records[i].Tags["matched_concepts"] = relevanceScore.MatchedConcepts
 
-		// Apply minimum score threshold
-		if relevanceScore.OverallScore < config.MinScore {
-			result.Records[i].Include = false
-			result.Records[i].ExclusionReason = fmt.Sprintf(
-				"Topic relevance score (%.2f) below minimum threshold (%.2f)",
-				relevanceScore.OverallScore,
-				config.MinScore,
-			)
-			excludedCount++
+			// Apply minimum score threshold
+			if relevanceScore.OverallScore < config.MinScore {
+				result.Records[i].Include = false
+				result.Records[i].ExclusionReason = fmt.Sprintf(
+					"Topic relevance score (%.2f) below minimum threshold (%.2f)",
+					relevanceScore.OverallScore,
+					config.MinScore,
+				)
+				excludedCount++
 
-			logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
-				record.ID,
-				relevanceScore.OverallScore,
-				config.MinScore,
-			)
+				logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+					result.Records[i].ID,
+					relevanceScore.OverallScore,
+					config.MinScore,
+				)
+			}
 		}
 	}
 
@@ -924,10 +1013,10 @@ func fileExists(path string) bool {
 }
 
 // convertLLMConfigs converts LLMConfig to interface{} for filter usage
-func convertLLMConfigs(configs []LLMConfig) []interface{} {
-	result := make([]interface{}, len(configs))
+func convertLLMConfigs(configs []LLMConfig) []any {
+	result := make([]any, len(configs))
 	for i, config := range configs {
-		result[i] = map[string]interface{}{
+		result[i] = map[string]any{
 			"provider":    config.Provider,
 			"api_key":     config.APIKey,
 			"model":       config.Model,
