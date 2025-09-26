@@ -22,7 +22,7 @@ type ManuscriptData struct {
 type DeduplicationConfig struct {
 	UseAI         bool
 	CompareFields []string
-	LLMConfigs    []interface{} // LLM configurations for AI-based deduplication
+	LLMConfigs    []any // LLM configurations for AI-based deduplication
 }
 
 // FindDuplicates identifies duplicate manuscripts based on the configuration
@@ -327,7 +327,18 @@ func findAIMatches(manuscripts []ManuscriptData, config DeduplicationConfig) map
 
 	logger.Info("Configured %d AI models for deduplication", len(models))
 
-	// Compare each manuscript pair using AI
+	// Build all comparison prompts
+	type ComparisonPair struct {
+		Index1 int
+		Index2 int
+		Prompt definitions.Prompt
+	}
+	var comparisons []ComparisonPair
+	promptID := 1
+
+	// Build field names list for context
+	fieldsList := strings.Join(config.CompareFields, ", ")
+
 	for i := 0; i < len(manuscripts); i++ {
 		if duplicates[manuscripts[i].ID][0].(bool) {
 			continue // Skip if already marked as duplicate
@@ -338,30 +349,12 @@ func findAIMatches(manuscripts []ManuscriptData, config DeduplicationConfig) map
 				continue // Skip if already marked as duplicate
 			}
 
-			// Check if they are duplicates using AI
-			logger.Info("Comparing manuscripts %s and %s with AI", manuscripts[i].ID, manuscripts[j].ID)
-			isDuplicate := checkDuplicateWithAI(manuscripts[i], manuscripts[j], config.CompareFields, models)
-			if isDuplicate {
-				logger.Info("AI detected duplicate: %s is duplicate of %s", manuscripts[j].ID, manuscripts[i].ID)
-				duplicates[manuscripts[j].ID] = [2]interface{}{true, manuscripts[i].ID}
-			}
-		}
-	}
+			// Build the comparison data
+			comparison1 := buildComparisonData(manuscripts[i], config.CompareFields)
+			comparison2 := buildComparisonData(manuscripts[j], config.CompareFields)
 
-	return duplicates
-}
-
-// checkDuplicateWithAI uses AI to determine if two manuscripts are duplicates
-func checkDuplicateWithAI(m1, m2 ManuscriptData, compareFields []string, models []definitions.Model) bool {
-	// Build the comparison data
-	comparison1 := buildComparisonData(m1, compareFields)
-	comparison2 := buildComparisonData(m2, compareFields)
-
-	// Build field names list for context
-	fieldsList := strings.Join(compareFields, ", ")
-
-	// Create the prompt
-	prompt := fmt.Sprintf(`You are a scientific reviewer tasked with identifying duplicate manuscripts in a research database. You are provided with specific fields from two different records to compare.
+			// Create the prompt
+			prompt := fmt.Sprintf(`You are a scientific reviewer tasked with identifying duplicate manuscripts in a research database. You are provided with specific fields from two different records to compare.
 
 CONTEXT:
 - You are comparing the following fields: %s
@@ -392,56 +385,79 @@ MANUSCRIPT 2:
 TASK: Determine if these represent the same publication.
 Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}`, fieldsList, comparison1, comparison2)
 
-	// Prepare the input for alembica
+			comparisons = append(comparisons, ComparisonPair{
+				Index1: i,
+				Index2: j,
+				Prompt: definitions.Prompt{
+					PromptContent:  prompt,
+					SequenceID:     fmt.Sprintf("%d", promptID),
+					SequenceNumber: promptID,
+				},
+			})
+			promptID++
+		}
+	}
+
+	if len(comparisons) == 0 {
+		logger.Info("No comparisons needed")
+		return duplicates
+	}
+
+	logger.Info("Prepared %d comparison prompts for batch processing", len(comparisons))
+
+	// Create all prompts for batch processing
+	var prompts []definitions.Prompt
+	for _, comp := range comparisons {
+		prompts = append(prompts, comp.Prompt)
+	}
+
+	// Prepare the input for alembica with all prompts
 	input := definitions.Input{
 		Metadata: definitions.InputMetadata{
 			Version:       "1.0",
 			SchemaVersion: "1.0",
 		},
-		Models: models,
-		Prompts: []definitions.Prompt{
-			{
-				PromptContent:  prompt,
-				SequenceID:     "1",
-				SequenceNumber: 1,
-			},
-		},
+		Models:  models,
+		Prompts: prompts,
 	}
 
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		return false
+		logger.Error("Failed to marshal input for AI: %v", err)
+		return duplicates
 	}
 
-	// Call alembica
-	logger.Info("Calling AI model for duplicate detection")
+	// Call alembica once with all prompts
+	logger.Info("Calling AI model with batch of %d comparisons", len(comparisons))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
 		logger.Error("AI extraction failed: %v", err)
-		return false
+		return duplicates
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
 		logger.Error("Failed to parse AI response: %v", err)
-		return false
+		return duplicates
 	}
 
-	// Check the first response
-	if len(output.Responses) > 0 && len(output.Responses[0].ModelResponses) > 0 {
-		var response map[string]interface{}
-		if err := json.Unmarshal([]byte(output.Responses[0].ModelResponses[0]), &response); err == nil {
-			if duplicate, ok := response["duplicate"].(bool); ok {
-				logger.Info("AI response: duplicate=%v", duplicate)
-				return duplicate
+	// Process responses and update duplicates map
+	for idx, comp := range comparisons {
+		if idx < len(output.Responses) && len(output.Responses[idx].ModelResponses) > 0 {
+			var response map[string]interface{}
+			if err := json.Unmarshal([]byte(output.Responses[idx].ModelResponses[0]), &response); err == nil {
+				if duplicate, ok := response["duplicate"].(bool); ok && duplicate {
+					logger.Info("AI detected duplicate: manuscript %s is duplicate of %s",
+						manuscripts[comp.Index2].ID, manuscripts[comp.Index1].ID)
+					duplicates[manuscripts[comp.Index2].ID] = [2]interface{}{true, manuscripts[comp.Index1].ID}
+				}
 			}
-			logger.Info("AI response did not contain expected 'duplicate' field")
 		}
 	}
 
-	return false
+	return duplicates
 }
 
 // buildComparisonData builds a string representation of manuscript data for comparison

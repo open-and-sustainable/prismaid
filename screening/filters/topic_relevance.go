@@ -101,8 +101,166 @@ func CalculateTopicRelevance(manuscriptData map[string]string, topics []string, 
 	}, nil
 }
 
+// BatchCalculateTopicRelevanceWithAI processes multiple manuscripts in a single AI call
+func BatchCalculateTopicRelevanceWithAI(manuscriptsData []map[string]string, topics []string, minScore float64, llmConfigs []any) map[string]*TopicRelevanceScore {
+	results := make(map[string]*TopicRelevanceScore)
+
+	// Initialize all results with zero scores
+	for i := range manuscriptsData {
+		results[fmt.Sprintf("%d", i)] = &TopicRelevanceScore{
+			OverallScore:    0.0,
+			ComponentScores: make(map[string]float64),
+			MatchedKeywords: []string{},
+			MatchedConcepts: []string{},
+			Confidence:      0.0,
+			IsRelevant:      false,
+		}
+	}
+
+	if len(topics) == 0 {
+		logger.Info("No topics provided for relevance calculation")
+		return results
+	}
+
+	// Prepare AI model configurations
+	var models []definitions.Model
+	for _, llmConfig := range llmConfigs {
+		if llm, ok := llmConfig.(map[string]any); ok {
+			model := definitions.Model{
+				Provider:    getStringValue(llm, "provider"),
+				APIKey:      getStringValue(llm, "api_key"),
+				Model:       getStringValue(llm, "model"),
+				Temperature: getFloatValue(llm, "temperature"),
+				TPMLimit:    getIntValue(llm, "tpm_limit"),
+				RPMLimit:    getIntValue(llm, "rpm_limit"),
+			}
+			models = append(models, model)
+		}
+	}
+
+	if len(models) == 0 {
+		logger.Info("No valid AI models configured for topic relevance")
+		return results
+	}
+
+	// Build all prompts
+	var prompts []definitions.Prompt
+	validIndices := []int{}
+	topicsStr := strings.Join(topics, "\n- ")
+
+	for idx, manuscriptData := range manuscriptsData {
+		// Build the data string for AI analysis
+		dataStr := buildTopicRelevanceData(manuscriptData)
+
+		// Skip if no data to analyze
+		if dataStr == "" || dataStr == "[No relevant data available]" {
+			continue
+		}
+
+		// Create the prompt
+		prompt := fmt.Sprintf(`You are an expert in academic manuscript screening. Your task is to evaluate whether a manuscript is relevant to specific research topics.
+
+TOPICS OF INTEREST:
+- %s
+
+MANUSCRIPT DATA:
+%s
+
+TASK: Evaluate the relevance of this manuscript to the specified topics.
+
+Analyze the manuscript considering:
+1. Direct keyword matches with the topics
+2. Conceptual alignment with the research areas
+3. Field/domain relevance
+4. Methodological relevance
+5. Research questions and objectives alignment
+
+Respond with a JSON object containing:
+{
+  "overall_score": 0.75,  // Score from 0.0 to 1.0
+  "component_scores": {
+    "keyword_match": 0.8,
+    "concept_match": 0.7,
+    "field_relevance": 0.75
+  },
+  "matched_keywords": ["keyword1", "keyword2"],
+  "matched_concepts": ["concept1", "concept2"],
+  "confidence": 0.85,  // Confidence in the assessment (0-1)
+  "is_relevant": true,  // Boolean decision
+  "reasoning": "Brief explanation of the relevance assessment"
+}`, topicsStr, dataStr)
+
+		prompts = append(prompts, definitions.Prompt{
+			PromptContent:  prompt,
+			SequenceID:     fmt.Sprintf("%d", idx+1),
+			SequenceNumber: idx + 1,
+		})
+		validIndices = append(validIndices, idx)
+	}
+
+	if len(prompts) == 0 {
+		logger.Info("No valid manuscripts for topic relevance assessment")
+		return results
+	}
+
+	logger.Info("Prepared %d manuscripts for batch topic relevance assessment", len(prompts))
+
+	// Prepare the input for alembica with all prompts
+	input := definitions.Input{
+		Metadata: definitions.InputMetadata{
+			Version:       "1.0",
+			SchemaVersion: "1.0",
+		},
+		Models:  models,
+		Prompts: prompts,
+	}
+
+	// Convert to JSON
+	jsonInput, err := json.Marshal(input)
+	if err != nil {
+		logger.Error("Failed to marshal input for AI: %v", err)
+		return results
+	}
+
+	// Call alembica once with all prompts
+	logger.Info("Calling AI model with batch of %d topic relevance requests", len(prompts))
+	result, err := extraction.Extract(string(jsonInput))
+	if err != nil {
+		logger.Error("AI extraction failed: %v", err)
+		return results
+	}
+
+	// Parse the response
+	var output definitions.Output
+	if err := json.Unmarshal([]byte(result), &output); err != nil {
+		logger.Error("Failed to parse AI response: %v", err)
+		return results
+	}
+
+	// Process responses
+	for respIdx, manuscriptIdx := range validIndices {
+		if respIdx < len(output.Responses) && len(output.Responses[respIdx].ModelResponses) > 0 {
+			response := output.Responses[respIdx].ModelResponses[0]
+
+			// Try to parse JSON response
+			var relevanceResponse TopicRelevanceScore
+			if err := json.Unmarshal([]byte(response), &relevanceResponse); err != nil {
+				logger.Error("Failed to parse relevance response for manuscript %d: %v", manuscriptIdx, err)
+				continue
+			}
+
+			// Update IsRelevant based on minScore
+			relevanceResponse.IsRelevant = relevanceResponse.OverallScore >= minScore
+
+			results[fmt.Sprintf("%d", manuscriptIdx)] = &relevanceResponse
+		}
+	}
+
+	return results
+}
+
 // CalculateTopicRelevanceWithAI uses AI to calculate topic relevance
-func CalculateTopicRelevanceWithAI(manuscriptData map[string]string, topics []string, llmConfigs []interface{}) (*TopicRelevanceScore, error) {
+func CalculateTopicRelevanceWithAI(manuscriptData map[string]string, topics []string, llmConfigs []any) (*TopicRelevanceScore, error) {
 	if len(topics) == 0 {
 		return nil, fmt.Errorf("no topics provided for relevance calculation")
 	}
@@ -539,7 +697,7 @@ func removeDuplicates(items []string) []string {
 }
 
 // BatchCalculateTopicRelevance processes multiple manuscripts for topic relevance
-func BatchCalculateTopicRelevance(manuscripts []map[string]string, config TopicRelevanceConfig, llmConfigs []interface{}) ([]TopicRelevanceScore, error) {
+func BatchCalculateTopicRelevance(manuscripts []map[string]string, config TopicRelevanceConfig, llmConfigs []any) ([]TopicRelevanceScore, error) {
 	var scores []TopicRelevanceScore
 
 	for _, manuscript := range manuscripts {

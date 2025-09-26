@@ -51,32 +51,16 @@ func DetectLanguage(text string) (string, error) {
 // LanguageDetectionConfig represents configuration for AI-based language detection
 type LanguageDetectionConfig struct {
 	UseAI      bool
-	LLMConfigs []interface{} // LLM configurations for AI-based detection
+	LLMConfigs []any // LLM configurations for AI-based detection
 }
 
-// DetectLanguageWithAI uses an LLM to detect language
-func DetectLanguageWithAI(manuscriptData map[string]string, llmConfigs []interface{}) (string, error) {
-	// Extract relevant fields
-	title := ""
-	abstract := ""
-	journal := ""
+// BatchDetectLanguagesWithAI processes multiple manuscripts in a single AI call
+func BatchDetectLanguagesWithAI(manuscriptsData []map[string]string, llmConfigs []any) map[string]string {
+	results := make(map[string]string)
 
-	// Try to get fields with case-insensitive lookup
-	for field, value := range manuscriptData {
-		fieldLower := strings.ToLower(field)
-		switch fieldLower {
-		case "title":
-			title = value
-		case "abstract":
-			abstract = value
-		case "journal", "journal_name", "publication":
-			journal = value
-		}
-	}
-
-	// If no text to analyze, return unknown
-	if title == "" && abstract == "" && journal == "" {
-		return "unknown", fmt.Errorf("no text fields available for language detection")
+	// Initialize all results as "unknown"
+	for i := range manuscriptsData {
+		results[fmt.Sprintf("%d", i)] = "unknown"
 	}
 
 	// Prepare AI model configurations
@@ -96,17 +80,42 @@ func DetectLanguageWithAI(manuscriptData map[string]string, llmConfigs []interfa
 	}
 
 	if len(models) == 0 {
-		logger.Info("No valid AI models configured for language detection, falling back to rule-based")
-		// Fall back to rule-based detection on combined text
-		combinedText := title + " " + abstract
-		return DetectLanguage(combinedText)
+		logger.Info("No valid AI models configured for language detection")
+		return results
 	}
 
-	// Build the data string for AI analysis
-	dataStr := buildLanguageDetectionData(title, abstract, journal)
+	// Build all prompts
+	var prompts []definitions.Prompt
+	validIndices := []int{} // Track which manuscripts have valid data
 
-	// Create the prompt
-	prompt := fmt.Sprintf(`You are a language detection expert analyzing scientific manuscripts. You need to identify the primary language of a manuscript based on the provided fields.
+	for idx, manuscriptData := range manuscriptsData {
+		// Extract relevant fields
+		title := ""
+		abstract := ""
+		journal := ""
+
+		for field, value := range manuscriptData {
+			fieldLower := strings.ToLower(field)
+			switch fieldLower {
+			case "title":
+				title = value
+			case "abstract":
+				abstract = value
+			case "journal", "journal_name", "publication":
+				journal = value
+			}
+		}
+
+		// Skip if no text to analyze
+		if title == "" && abstract == "" && journal == "" {
+			continue
+		}
+
+		// Build the data string for AI analysis
+		dataStr := buildLanguageDetectionData(title, abstract, journal)
+
+		// Create the prompt
+		prompt := fmt.Sprintf(`You are a language detection expert analyzing scientific manuscripts. You need to identify the primary language of a manuscript based on the provided fields.
 
 CONTEXT:
 - You are analyzing: title, abstract, and journal information
@@ -127,76 +136,81 @@ TASK: Identify the primary language of this manuscript.
 Respond with ONLY a JSON object with the ISO 639-1 language code: {"language": "en"} or {"language": "es"} or {"language": "fr"} etc.
 Common codes: en (English), es (Spanish), fr (French), de (German), it (Italian), pt (Portuguese), ru (Russian), zh (Chinese), ja (Japanese), ar (Arabic)`, dataStr)
 
-	// Prepare the input for alembica
+		prompts = append(prompts, definitions.Prompt{
+			PromptContent:  prompt,
+			SequenceID:     fmt.Sprintf("%d", idx+1),
+			SequenceNumber: idx + 1,
+		})
+		validIndices = append(validIndices, idx)
+	}
+
+	if len(prompts) == 0 {
+		logger.Info("No valid manuscripts for language detection")
+		return results
+	}
+
+	logger.Info("Prepared %d manuscripts for batch language detection", len(prompts))
+
+	// Prepare the input for alembica with all prompts
 	input := definitions.Input{
 		Metadata: definitions.InputMetadata{
 			Version:       "1.0",
 			SchemaVersion: "1.0",
 		},
-		Models: models,
-		Prompts: []definitions.Prompt{
-			{
-				PromptContent:  prompt,
-				SequenceID:     "1",
-				SequenceNumber: 1,
-			},
-		},
+		Models:  models,
+		Prompts: prompts,
 	}
 
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
 		logger.Error("Failed to marshal input for AI: %v", err)
-		return "unknown", err
+		return results
 	}
 
-	// Call alembica
-	logger.Info("Calling AI model for language detection")
+	// Call alembica once with all prompts
+	logger.Info("Calling AI model with batch of %d language detection requests", len(prompts))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
 		logger.Error("AI extraction failed: %v", err)
-		// Fall back to rule-based
-		combinedText := title + " " + abstract
-		return DetectLanguage(combinedText)
+		return results
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
 		logger.Error("Failed to parse AI response: %v", err)
-		// Fall back to rule-based
-		combinedText := title + " " + abstract
-		return DetectLanguage(combinedText)
+		return results
 	}
 
-	// Extract language from the response
-	if len(output.Responses) > 0 && len(output.Responses[0].ModelResponses) > 0 {
-		response := output.Responses[0].ModelResponses[0]
+	// Process responses
+	for respIdx, manuscriptIdx := range validIndices {
+		if respIdx < len(output.Responses) && len(output.Responses[respIdx].ModelResponses) > 0 {
+			response := output.Responses[respIdx].ModelResponses[0]
 
-		// Try to parse JSON response
-		var langResponse map[string]string
-		if err := json.Unmarshal([]byte(response), &langResponse); err != nil {
-			// Try to extract language code from plain text
-			logger.Info("Failed to parse JSON response, attempting text extraction")
-			response = strings.ToLower(response)
-			// Look for common language codes in the response
-			languageCodes := []string{"en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ar", "nl", "sv", "no", "da", "fi", "pl", "cs", "hu", "ro", "el", "tr", "he", "ko"}
-			for _, code := range languageCodes {
-				if strings.Contains(response, `"`+code+`"`) || strings.Contains(response, "'"+code+"'") || strings.Contains(response, " "+code+" ") {
-					return code, nil
+			// Try to parse JSON response
+			var langResponse map[string]string
+			if err := json.Unmarshal([]byte(response), &langResponse); err != nil {
+				// Try to extract language code from plain text
+				logger.Info("Failed to parse JSON response for manuscript %d, attempting text extraction", manuscriptIdx)
+				response = strings.ToLower(response)
+				// Look for common language codes in the response
+				languageCodes := []string{"en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ar", "nl", "sv", "no", "da", "fi", "pl", "cs", "hu", "ro", "el", "tr", "he", "ko"}
+				for _, code := range languageCodes {
+					if strings.Contains(response, `"`+code+`"`) || strings.Contains(response, "'"+code+"'") || strings.Contains(response, " "+code+" ") {
+						results[fmt.Sprintf("%d", manuscriptIdx)] = code
+						break
+					}
 				}
-			}
-		} else {
-			if lang, ok := langResponse["language"]; ok && lang != "" {
-				return lang, nil
+			} else {
+				if lang, ok := langResponse["language"]; ok && lang != "" {
+					results[fmt.Sprintf("%d", manuscriptIdx)] = lang
+				}
 			}
 		}
 	}
 
-	// If we couldn't get a valid response, fall back to rule-based
-	logger.Info("Could not extract valid language from AI response, falling back to rule-based detection")
-	combinedText := title + " " + abstract
-	return DetectLanguage(combinedText)
+	return results
 }
 
 // buildLanguageDetectionData builds a formatted string with manuscript data for language detection

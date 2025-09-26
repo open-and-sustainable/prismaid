@@ -1,6 +1,6 @@
 Package: prismaid
 Title: Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
-Version: 0.9.0
+Version: 0.9.1
 Authors@R:
     person("Riccardo", "Boero", , "ribo@nilu.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-7468-9096"))
