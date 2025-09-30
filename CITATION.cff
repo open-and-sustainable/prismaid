@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.9.1 - Fixed rate limits bug in screening filters.
-  Screening filters fully respect rate limits when using AI assistance.
+  v0.9.2 - Improved download tool.
+  Multiple bugs fixed to effectively download PDF form reference lists.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
