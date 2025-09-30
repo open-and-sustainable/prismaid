@@ -7,3 +7,4 @@
 
 https://doi.org/10.21105/joss.07616
 https://doi.org/10.3390/cli12080116
+https://link.springer.com/content/pdf/10.1007/s10098-018-1644-x.pdf

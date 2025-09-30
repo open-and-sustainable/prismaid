@@ -99,6 +99,58 @@ PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./paper
 
 ## Downloading from URL Lists
 
+The Download tool supports three input formats for batch downloading:
+
+1. **Plain text files** (.txt): Simple list with one URL per line
+2. **CSV files** (.csv): Comma-separated values with automatic column detection
+3. **TSV files** (.tsv): Tab-separated values with automatic column detection
+
+### Plain Text Format
+
+Create a simple text file with one URL per line:
+
+```
+https://example.com/paper1.pdf
+https://doi.org/10.1234/example
+https://arxiv.org/pdf/2301.12345.pdf
+# This is a comment (ignored)
+```
+
+### CSV/TSV Format with Metadata
+
+For CSV or TSV files, the tool automatically detects columns for:
+- **URL/Link**: BestLink, BestURL, URL, Link, href (prioritizes "best" variants)
+- **DOI**: Automatically converts DOIs to resolvable URLs if no direct URL is found
+- **Title**: ArticleTitle, Article_Title, Paper_Title, Title
+- **Authors**: Authors, Creator, Contributor
+- **Year**: PublicationYear, Publication_Year, Year
+- **Journal**: SourceTitle, Source_Title, Journal, Source, Publication
+- **Abstract**: Abstract (preserved for future use)
+
+Example CSV file:
+```csv
+ArticleTitle,Authors,PublicationYear,BestLink,DOI,SourceTitle
+"Climate Change Impacts","Smith, J.; Jones, M.",2023,https://example.com/paper1.pdf,10.1234/abc,Nature
+"Machine Learning Review","Brown, A.",2024,,10.5678/def,Science
+```
+
+### Intelligent File Naming
+
+When using CSV/TSV files, the tool generates meaningful filenames using available metadata:
+- Format: `[Year]_[FirstAuthorLastName]_[TruncatedTitle].pdf`
+- Example: `2023_Smith_Climate_Change_Impacts.pdf`
+- Falls back to row ID if metadata is insufficient
+
+### Download Report
+
+For CSV/TSV inputs, the tool generates a comprehensive download report (`[filename]_report.csv`) containing:
+- All original metadata
+- Download success/failure status
+- Generated filename for each paper
+- Error messages for failed downloads
+
+This report helps you track which papers were successfully downloaded and troubleshoot any issues.
+
 The URL list download feature allows you to batch download papers from a text file containing URLs, one per line.
 
 ### Creating Your URL List
