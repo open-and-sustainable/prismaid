@@ -9,6 +9,17 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.2] - 2025-09-30
+### Fixed
+- Improved download tool features:
+  - better format names of downloaded files when possible
+  - avoid overwriting existing pdfs
+  - direct links download
+  - search for DOI in case of JavaScript pages reached form URLs in multiple column lists
+  - better report of successes and failures in output list
+- Updated documentation and testing accordingly
+
+
 ## [0.9.1] - 2025-09-26
 ### Fixed
 - AI-assisted screening filters now properly respect rate limits by batching all prompts into single API calls

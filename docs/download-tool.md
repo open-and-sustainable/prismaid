@@ -99,6 +99,140 @@ PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./paper
 
 ## Downloading from URL Lists
 
+The Download tool supports three input formats for batch downloading:
+
+1. **Plain text files** (.txt): Simple list with one URL per line
+2. **CSV files** (.csv): Comma-separated values with automatic column detection
+3. **TSV files** (.tsv): Tab-separated values with automatic column detection
+
+### Plain Text Format
+
+Create a simple text file with one URL per line:
+
+```
+https://example.com/paper1.pdf
+https://doi.org/10.1234/example
+https://arxiv.org/pdf/2301.12345.pdf
+# This is a comment (ignored)
+```
+
+### CSV/TSV Format with Metadata
+
+For CSV or TSV files, the tool automatically detects columns for:
+- **URL/Link**: BestLink, BestURL, URL, Link, href (prioritizes "best" variants)
+- **DOI**: Automatically converts DOIs to resolvable URLs if no direct URL is found
+- **Title**: ArticleTitle, Article_Title, Paper_Title, Title
+- **Authors**: Authors, Creator, Contributor
+- **Year**: PublicationYear, Publication_Year, Year
+- **Journal**: SourceTitle, Source_Title, Journal, Source, Publication
+- **Abstract**: Abstract (preserved for future use)
+
+Example CSV file:
+```csv
+ArticleTitle,Authors,PublicationYear,BestLink,DOI,SourceTitle
+"Climate Change Impacts","Smith, J.; Jones, M.",2023,https://example.com/paper1.pdf,10.1234/abc,Nature
+"Machine Learning Review","Brown, A.",2024,,10.5678/def,Science
+```
+
+### Intelligent Problematic URL Detection
+
+When using CSV/TSV files, the tool automatically detects URLs from platforms that require JavaScript rendering or API tokens to access content. These "problematic URLs" cannot be processed without a browser or authentication, so the tool employs an intelligent fallback strategy:
+
+**Detected Problematic Platforms:**
+- **Dimensions.ai** (`app.dimensions.ai`)
+- **ResearchGate** (`researchgate.net`)
+- **Academia.edu** (`academia.edu`)
+- **Semantic Scholar Web UI** (`semanticscholar.org/paper/`)
+
+**Fallback Strategy:**
+
+When a problematic URL is detected, the tool automatically:
+
+1. **First Priority - Use DOI from CSV**: If a DOI is available in your CSV file, it will use that instead of the problematic URL
+   ```
+   Original URL: https://app.dimensions.ai/details/publication/pub.123456
+   Available DOI: 10.1234/journal.2023.456
+   → Uses: https://doi.org/10.1234/journal.2023.456
+   ```
+
+2. **Second Priority - Query Crossref API**: If no DOI is available in the CSV, the tool searches the Crossref API using the paper's title, authors, and year to find the correct DOI
+   ```
+   Original URL: https://www.researchgate.net/publication/123456789
+   No DOI in CSV
+   → Searches Crossref with: "Paper Title", "Smith, J.; Jones, M.", "2023"
+   → Finds DOI: 10.1234/journal.2023.456
+   → Uses: https://doi.org/10.1234/journal.2023.456
+   ```
+
+3. **Fallback - Attempt Original URL**: If both strategies fail, the tool will still attempt to download from the original URL (though this will likely fail for JavaScript-dependent sites)
+
+**Example Log Output:**
+```
+Row 4: Detected problematic URL (requires browser/API): https://app.dimensions.ai/...
+Row 4: No DOI available, searching Crossref...
+Crossref match score: 76.51, Title: [Environmental and social life cycle...]
+Row 4: Found DOI via Crossref: 10.1016/j.scitotenv.2019.07.270
+```
+
+This intelligent detection saves you from manually replacing problematic URLs and ensures maximum success in downloading papers from your CSV files.
+
+### Intelligent File Naming
+
+When using CSV/TSV files, the tool generates meaningful filenames using available metadata:
+- Format: `[Year]_[FirstAuthorLastName]_[TruncatedTitle].pdf`
+- Example: `2023_Smith_Climate_Change_Impacts.pdf`
+- Falls back to row ID if metadata is insufficient
+
+### Download Output Files
+
+The Download tool generates different output files depending on the input format:
+
+#### For Plain Text Files (.txt)
+
+When downloading from a plain text URL list, the tool generates:
+- **Downloaded PDFs**: Saved to the same directory as the input file
+- **Failed URLs Log** (`[filename]_failed.txt`): A text file listing all URLs that failed to download, one per line, with header comments
+
+Example failed URLs log:
+```
+# Failed Downloads - URLs that could not be retrieved
+# One URL per line
+
+https://example.com/inaccessible-paper.pdf
+https://invalid-domain.com/paper.pdf
+```
+
+#### For CSV/TSV Files (.csv, .tsv)
+
+When downloading from CSV/TSV files, the tool generates:
+
+1. **Downloaded PDFs**: Saved to the same directory as the input file with intelligent metadata-based naming
+
+2. **Download Report** (`[filename]_report.csv`): A summary report containing:
+   - All extracted metadata (ID, Title, Authors, Year, Journal)
+   - Final URL used (including resolved DOIs)
+   - DOI information
+   - Download success/failure status
+   - Generated filename for successful downloads
+   - Error messages for failed downloads
+
+3. **Enhanced CSV/TSV with Status** (`[filename]_with_status.csv` or `.tsv`): A copy of the original input file with all original columns preserved, plus a new `downloaded` column indicating `true` or `false` for each row
+
+   This file is particularly useful for:
+   - Tracking download progress across multiple sessions
+   - Re-attempting failed downloads
+   - Integration with other tools in your workflow
+   - Maintaining a complete record of your literature acquisition process
+
+Example enhanced CSV structure:
+```csv
+Title,Authors,Year,URL,DOI,OtherColumns...,downloaded
+"Paper One","Smith, J.",2023,https://example.com/1.pdf,10.1234/abc,...,true
+"Paper Two","Jones, M.",2024,https://dimensions.ai/...,,...,false
+```
+
+These comprehensive output files help you track which papers were successfully downloaded, which URLs were resolved via Crossref, and troubleshoot any issues efficiently.
+
 The URL list download feature allows you to batch download papers from a text file containing URLs, one per line.
 
 ### Creating Your URL List
@@ -190,20 +324,26 @@ To get the most out of the Download tool:
 1. **Organize before downloading**:
    - When using Zotero, organize papers into collections based on their relevance to your review
    - For URL lists, verify all URLs are accessible before batch downloading
+   - Use the generated output files (failed URLs log, enhanced CSV) to track and retry failed downloads
 
-2. **Check for duplicates**:
+2. **Use CSV/TSV format for problematic URLs**:
+   - If your URL list contains links from Dimensions.ai, ResearchGate, Academia.edu, or Semantic Scholar, use CSV/TSV format instead of plain text
+   - Include metadata columns (Title, Authors, Year, DOI) to enable automatic Crossref resolution
+   - The tool will intelligently detect and resolve problematic URLs, significantly improving download success rates
+
+3. **Check for duplicates**:
    - Zotero can help identify duplicate entries before downloading
    - Use consistent file naming in URL lists to avoid duplicate downloads
 
-3. **Verify accessibility**:
+4. **Verify accessibility**:
    - Ensure you have access rights to all papers before downloading
    - Some journals may require institutional access or subscriptions
 
-4. **Structure your downloads**:
+5. **Structure your downloads**:
    - Use separate output directories for different paper categories
    - Consider naming conventions that will help with the next workflow steps
 
-5. **Batch processing**:
+6. **Batch processing**:
    - For large reviews, consider downloading in batches to manage resources
    - This approach also allows for quality checks along the way
 
@@ -215,6 +355,8 @@ To get the most out of the Download tool:
 - **Access Restrictions**: Some papers may require login credentials or institutional access
 - **Network Issues**: Check your internet connection if downloads fail consistently
 - **Timeout Errors**: Large files may cause timeout issues; try increasing timeout settings if available
+- **JavaScript-dependent URLs**: URLs from Dimensions.ai, ResearchGate, Academia.edu, or Semantic Scholar web UI cannot be accessed without a browser. Solution: Use CSV/TSV format with metadata to enable automatic DOI resolution via Crossref
+- **Crossref API Limitations**: The Crossref API may occasionally be slow or return no results for obscure papers. The tool will fall back to attempting the original URL in such cases
 
 ### Common Issues with Zotero Integration
 
@@ -250,7 +392,10 @@ The Download tool is designed to fit seamlessly into your systematic review work
 
 3. **Literature Acquisition** (Download Tool):
    - Download only the screened papers from Zotero collections or URL lists
-   - Organize papers in a structured directory
+   - If using CSV/TSV exports from databases, benefit from automatic problematic URL detection and DOI resolution
+   - Use the enhanced CSV with download status to track acquisition progress
+   - Retry failed downloads using the failed URLs log or enhanced CSV
+   - Organize papers in a structured directory with intelligent metadata-based naming
 
 4. **Format Conversion** ([Convert Tool](convert-tool)):
    - Convert downloaded papers to text format for analysis
