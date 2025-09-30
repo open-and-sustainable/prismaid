@@ -3,6 +3,7 @@ package list
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,17 +21,18 @@ import (
 
 // PaperMetadata holds information about a paper to be downloaded
 type PaperMetadata struct {
-	ID         string // Row index or identifier
-	URL        string // Best URL or resolved DOI
-	DOI        string // Digital Object Identifier
-	Title      string // Article title
-	Authors    string // Authors list
-	Year       string // Publication year
-	Journal    string // Source/Journal title
-	Abstract   string // Abstract text (for future use)
-	Downloaded bool   // Whether the file was successfully downloaded
-	Filename   string // Generated filename for the download
-	ErrorMsg   string // Error message if download failed
+	ID             string   // Row index or identifier
+	URL            string   // Best URL or resolved DOI
+	DOI            string   // Digital Object Identifier
+	Title          string   // Article title
+	Authors        string   // Authors list
+	Year           string   // Publication year
+	Journal        string   // Source/Journal title
+	Abstract       string   // Abstract text (for future use)
+	Downloaded     bool     // Whether the file was successfully downloaded
+	Filename       string   // Generated filename for the download
+	ErrorMsg       string   // Error message if download failed
+	OriginalRecord []string // Original CSV/TSV row data for preserving all columns
 }
 
 // ColumnMapping holds the detected column indices for relevant fields
@@ -146,11 +148,15 @@ func processTextFile(path, dirPath string) error {
 		return err
 	}
 
+	// Track failed URLs
+	var failedURLs []string
+
 	// Process each URL
 	for _, url := range urls {
 		pdfURL, filename, err := extractPDF(url)
 		if err != nil {
 			logger.Error("Error processing URL", url, ":", err)
+			failedURLs = append(failedURLs, url)
 			continue
 		}
 
@@ -161,11 +167,23 @@ func processTextFile(path, dirPath string) error {
 
 			if err := downloadPDF(pdfURL, fullPath); err != nil {
 				logger.Error("Download failed for", url, ":", err)
+				failedURLs = append(failedURLs, url)
 			} else {
 				logger.Info("PDF downloaded successfully as", fullPath)
 			}
 		} else {
 			logger.Info("No PDF found for", url)
+			failedURLs = append(failedURLs, url)
+		}
+	}
+
+	// Write failed URLs log if there are any failures
+	if len(failedURLs) > 0 {
+		failedLogPath := strings.TrimSuffix(path, filepath.Ext(path)) + "_failed.txt"
+		if err := writeFailedURLsLog(failedURLs, failedLogPath); err != nil {
+			logger.Error(fmt.Sprintf("Failed to write failed URLs log: %v", err))
+		} else {
+			logger.Info(fmt.Sprintf("Failed URLs log saved to: %s", failedLogPath))
 		}
 	}
 
@@ -175,7 +193,7 @@ func processTextFile(path, dirPath string) error {
 // processCSVFile handles CSV/TSV files with metadata
 func processCSVFile(path, dirPath string, delimiter rune) error {
 	// Parse the CSV/TSV file
-	papers, err := parseCSVFile(path, delimiter)
+	papers, headers, err := parseCSVFile(path, delimiter)
 	if err != nil {
 		return fmt.Errorf("failed to parse CSV/TSV file: %w", err)
 	}
@@ -238,12 +256,21 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 		}
 	}
 
-	// Generate download report
+	// Generate download report (original format for backward compatibility)
 	reportPath := strings.TrimSuffix(path, filepath.Ext(path)) + "_report.csv"
 	if err := writeDownloadReport(papers, reportPath); err != nil {
 		logger.Error(fmt.Sprintf("Failed to write download report: %v", err))
 	} else {
 		logger.Info(fmt.Sprintf("Download report saved to: %s", reportPath))
+	}
+
+	// Generate enhanced CSV/TSV with original columns + downloaded status
+	ext := filepath.Ext(path)
+	enhancedPath := strings.TrimSuffix(path, ext) + "_with_status" + ext
+	if err := writeEnhancedCSV(papers, headers, enhancedPath, delimiter); err != nil {
+		logger.Error(fmt.Sprintf("Failed to write enhanced CSV: %v", err))
+	} else {
+		logger.Info(fmt.Sprintf("Enhanced CSV with download status saved to: %s", enhancedPath))
 	}
 
 	// Log summary
@@ -254,10 +281,10 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 }
 
 // parseCSVFile reads a CSV/TSV file and extracts paper metadata with intelligent column detection
-func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, error) {
+func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, []string, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open file: %w", err)
+		return nil, nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
@@ -269,13 +296,13 @@ func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, error) {
 	// Read header row
 	headers, err := reader.Read()
 	if err != nil {
-		return nil, fmt.Errorf("failed to read header row: %w", err)
+		return nil, nil, fmt.Errorf("failed to read header row: %w", err)
 	}
 
 	// Detect column mappings
 	mapping := detectColumns(headers)
 	if mapping.URL == -1 && mapping.DOI == -1 {
-		return nil, fmt.Errorf("no URL or DOI column found in CSV/TSV file")
+		return nil, nil, fmt.Errorf("no URL or DOI column found in CSV/TSV file")
 	}
 
 	// Log detected columns for debugging
@@ -295,12 +322,15 @@ func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, error) {
 		}
 
 		paper := extractPaperMetadata(record, mapping, rowIndex)
+		// Store the original record for later export
+		paper.OriginalRecord = make([]string, len(record))
+		copy(paper.OriginalRecord, record)
 		// Include all papers, even those without URLs/DOIs, so we can report them
 		papers = append(papers, paper)
 		rowIndex++
 	}
 
-	return papers, nil
+	return papers, headers, nil
 }
 
 // detectColumns intelligently identifies column indices based on header names
@@ -406,6 +436,28 @@ func extractPaperMetadata(record []string, mapping ColumnMapping, rowIndex int) 
 
 	if mapping.Abstract >= 0 && mapping.Abstract < len(record) {
 		paper.Abstract = strings.TrimSpace(record[mapping.Abstract])
+	}
+
+	// Check if URL is problematic (requires JavaScript/browser or API token)
+	if paper.URL != "" && isProblematicURL(paper.URL) {
+		logger.Info(fmt.Sprintf("Row %s: Detected problematic URL (requires browser/API): %s", paper.ID, paper.URL))
+
+		// First, try to use the DOI if available
+		if paper.DOI != "" {
+			logger.Info(fmt.Sprintf("Row %s: Using DOI instead: %s", paper.ID, paper.DOI))
+			paper.URL = convertDOIToURL(paper.DOI)
+		} else {
+			// No DOI available, try to find one via Crossref
+			logger.Info(fmt.Sprintf("Row %s: No DOI available, searching Crossref...", paper.ID))
+			doi := searchCrossrefForDOI(paper.Title, paper.Authors, paper.Year)
+			if doi != "" {
+				logger.Info(fmt.Sprintf("Row %s: Found DOI via Crossref: %s", paper.ID, doi))
+				paper.DOI = doi
+				paper.URL = convertDOIToURL(doi)
+			} else {
+				logger.Info(fmt.Sprintf("Row %s: Could not find DOI via Crossref, will attempt original URL", paper.ID))
+			}
+		}
 	}
 
 	// If no URL but DOI exists, convert DOI to URL
@@ -679,6 +731,74 @@ func writeDownloadReport(papers []*PaperMetadata, outputPath string) error {
 			paper.Filename,
 			paper.ErrorMsg,
 		}
+		if err := writer.Write(record); err != nil {
+			return fmt.Errorf("failed to write record: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// writeFailedURLsLog writes a list of failed URLs to a text file
+func writeFailedURLsLog(failedURLs []string, outputPath string) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create failed URLs log: %w", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	defer writer.Flush()
+
+	// Write header comment
+	if _, err := writer.WriteString("# Failed Downloads - URLs that could not be retrieved\n"); err != nil {
+		return fmt.Errorf("failed to write header: %w", err)
+	}
+	if _, err := writer.WriteString("# One URL per line\n\n"); err != nil {
+		return fmt.Errorf("failed to write header: %w", err)
+	}
+
+	// Write each failed URL
+	for _, url := range failedURLs {
+		if _, err := writer.WriteString(url + "\n"); err != nil {
+			return fmt.Errorf("failed to write URL: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// writeEnhancedCSV writes a CSV/TSV file with all original columns plus a 'downloaded' column
+func writeEnhancedCSV(papers []*PaperMetadata, headers []string, outputPath string, delimiter rune) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("failed to create enhanced CSV file: %w", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	writer.Comma = delimiter
+	defer writer.Flush()
+
+	// Write header with additional 'downloaded' column
+	enhancedHeaders := append(headers, "downloaded")
+	if err := writer.Write(enhancedHeaders); err != nil {
+		return fmt.Errorf("failed to write header: %w", err)
+	}
+
+	// Write data rows with download status
+	for _, paper := range papers {
+		// Start with the original record
+		record := make([]string, len(paper.OriginalRecord))
+		copy(record, paper.OriginalRecord)
+
+		// Append download status
+		downloadedStatus := "false"
+		if paper.Downloaded {
+			downloadedStatus = "true"
+		}
+		record = append(record, downloadedStatus)
+
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("failed to write record: %w", err)
 		}
@@ -1156,6 +1276,125 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// isProblematicURL checks if a URL is from a platform that requires JavaScript/browser rendering
+// or API tokens to access content (Dimensions.app, ResearchGate, Academia.edu, Semantic Scholar web UI)
+func isProblematicURL(urlStr string) bool {
+	urlLower := strings.ToLower(urlStr)
+
+	problematicDomains := []string{
+		"dimensions.ai",
+		"app.dimensions.ai",
+		"researchgate.net",
+		"www.researchgate.net",
+		"academia.edu",
+		"www.academia.edu",
+		"semanticscholar.org/paper/",
+		"www.semanticscholar.org/paper/",
+	}
+
+	for _, domain := range problematicDomains {
+		if strings.Contains(urlLower, domain) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// searchCrossrefForDOI queries the Crossref API to find a DOI based on paper metadata
+// Returns empty string if no DOI is found
+func searchCrossrefForDOI(title, authors, year string) string {
+	// Need at least a title to search
+	if title == "" {
+		return ""
+	}
+
+	// Build the query URL for Crossref API
+	// API documentation: https://github.com/CrossRef/rest-api-doc
+	baseURL := "https://api.crossref.org/works"
+
+	// Construct query parameters
+	params := url.Values{}
+
+	// Use bibliographic query which searches across multiple fields
+	queryParts := []string{}
+	if title != "" {
+		queryParts = append(queryParts, title)
+	}
+	if authors != "" {
+		queryParts = append(queryParts, authors)
+	}
+
+	query := strings.Join(queryParts, " ")
+	params.Add("query.bibliographic", query)
+
+	// Add rows limit (we only need the top result)
+	params.Add("rows", "1")
+
+	// Construct full URL
+	searchURL := baseURL + "?" + params.Encode()
+
+	// Make the request with proper User-Agent
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", searchURL, nil)
+	if err != nil {
+		logger.Info(fmt.Sprintf("Error creating Crossref request: %v", err))
+		return ""
+	}
+
+	// Crossref requests a polite User-Agent
+	req.Header.Set("User-Agent", "PrismAID/1.0 (https://github.com/open-and-sustainable/prismaid; mailto:info@example.com)")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Info(fmt.Sprintf("Error querying Crossref API: %v", err))
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		logger.Info(fmt.Sprintf("Crossref API returned status: %d", resp.StatusCode))
+		return ""
+	}
+
+	// Parse the JSON response
+	var result struct {
+		Message struct {
+			Items []struct {
+				DOI   string   `json:"DOI"`
+				Title []string `json:"title"`
+				Score float64  `json:"score"`
+			} `json:"items"`
+		} `json:"message"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		logger.Info(fmt.Sprintf("Error parsing Crossref response: %v", err))
+		return ""
+	}
+
+	// Check if we got any results
+	if len(result.Message.Items) == 0 {
+		logger.Info("No results found in Crossref")
+		return ""
+	}
+
+	// Get the first (best) result
+	item := result.Message.Items[0]
+
+	// Log the match score for debugging
+	logger.Info(fmt.Sprintf("Crossref match score: %.2f, Title: %v", item.Score, item.Title))
+
+	// Only accept results with a reasonable score (Crossref uses 0-100 scale typically)
+	// A score above 50 usually indicates a good match
+	if item.Score < 50 {
+		logger.Info(fmt.Sprintf("Crossref match score too low (%.2f), rejecting", item.Score))
+		return ""
+	}
+
+	return item.DOI
 }
 
 // handleDimensionsURL attempts to handle Dimensions.ai publication URLs

@@ -40,7 +40,7 @@ else
 fi
 
 echo "###### Testing DOWNLOAD-URL ######"
-echo "==> Testing URL downloads..."
+echo "==> Testing URL downloads from TXT file..."
 # Create a temporary directory for downloads to avoid polluting test inputs
 TEMP_DOWNLOAD_DIR=$(mktemp -d)
 cp projects/test/inputs/download/url_list_test.txt "$TEMP_DOWNLOAD_DIR/"
@@ -53,10 +53,87 @@ if go run cmd/main.go --download-URL "$TEMP_DOWNLOAD_DIR/url_list_test.txt"; the
     else
         echo "    ⚠ Warning: No PDF files were downloaded"
     fi
+
+    # Check if failed URLs log was generated
+    if [ -f "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" ]; then
+        echo "    ✓ Failed URLs log generated"
+        # Move failed URLs log to outputs for inspection
+        cp "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" projects/test/outputs/download/
+        FAILED_COUNT=$(grep -c "^https" "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" 2>/dev/null || echo "0")
+        if [ "$FAILED_COUNT" -gt 0 ]; then
+            echo "    ✓ Logged $FAILED_COUNT failed URLs"
+        fi
+    fi
 else
     echo "    ✗ URL download test failed"
 fi
 rm -rf "$TEMP_DOWNLOAD_DIR"
+
+echo "###### Testing DOWNLOAD-CSV ######"
+echo "==> Testing CSV downloads with problematic URL detection..."
+# Create a temporary directory for CSV downloads
+TEMP_CSV_DIR=$(mktemp -d)
+TEMP_CSV_LOG="$TEMP_CSV_DIR/download_log.txt"
+cp projects/test/inputs/download/csv_test.csv "$TEMP_CSV_DIR/"
+if go run cmd/main.go --download-URL "$TEMP_CSV_DIR/csv_test.csv" 2>&1 | tee "$TEMP_CSV_LOG"; then
+    echo "    ✓ CSV download command executed"
+
+    # Check if report was generated
+    if [ -f "$TEMP_CSV_DIR/csv_test_report.csv" ]; then
+        echo "    ✓ Download report generated"
+        # Move report to outputs for inspection
+        cp "$TEMP_CSV_DIR/csv_test_report.csv" projects/test/outputs/download/
+
+        # Count successful downloads in the report (excluding header)
+        SUCCESS_COUNT=$(grep -c ",true," "$TEMP_CSV_DIR/csv_test_report.csv" 2>/dev/null || echo "0")
+        TOTAL_COUNT=$(tail -n +2 "$TEMP_CSV_DIR/csv_test_report.csv" | wc -l 2>/dev/null || echo "0")
+        echo "    ✓ Downloaded $SUCCESS_COUNT out of $TOTAL_COUNT papers"
+
+        # Check for problematic URL detection in the log output
+        if [ -f "$TEMP_CSV_LOG" ]; then
+            PROBLEMATIC_COUNT=$(grep -c "Detected problematic URL" "$TEMP_CSV_LOG" 2>/dev/null || echo "0")
+            CROSSREF_COUNT=$(grep -c "Found DOI via Crossref" "$TEMP_CSV_LOG" 2>/dev/null || echo "0")
+            if [ "$PROBLEMATIC_COUNT" -gt 0 ]; then
+                echo "    ✓ Detected $PROBLEMATIC_COUNT problematic URLs (Dimensions/ResearchGate/Academia/SemanticScholar)"
+                if [ "$CROSSREF_COUNT" -gt 0 ]; then
+                    echo "    ✓ Resolved $CROSSREF_COUNT DOIs via Crossref API"
+                fi
+            fi
+        fi
+    else
+        echo "    ⚠ Warning: Download report not found"
+    fi
+
+    # Check if enhanced CSV with download status was generated
+    if [ -f "$TEMP_CSV_DIR/csv_test_with_status.csv" ]; then
+        echo "    ✓ Enhanced CSV with download status generated"
+        # Move enhanced CSV to outputs for inspection
+        cp "$TEMP_CSV_DIR/csv_test_with_status.csv" projects/test/outputs/download/
+    else
+        echo "    ⚠ Warning: Enhanced CSV with download status not found"
+    fi
+
+    # Move downloaded PDFs to test output
+    if ls "$TEMP_CSV_DIR"/*.pdf 2>/dev/null | head -1 > /dev/null; then
+        PDF_COUNT=$(ls "$TEMP_CSV_DIR"/*.pdf 2>/dev/null | wc -l)
+        mv "$TEMP_CSV_DIR"/*.pdf projects/test/outputs/download/ 2>/dev/null
+        echo "    ✓ $PDF_COUNT PDF files saved to output directory"
+
+        # Verify intelligent file naming (should contain year, author, title)
+        FIRST_PDF=$(ls projects/test/outputs/download/*.pdf 2>/dev/null | head -1)
+        if [ -n "$FIRST_PDF" ]; then
+            BASENAME=$(basename "$FIRST_PDF")
+            if [[ "$BASENAME" =~ [0-9]{4}_ ]]; then
+                echo "    ✓ Intelligent file naming working (detected year prefix)"
+            fi
+        fi
+    else
+        echo "    ⚠ Warning: No PDF files were downloaded from CSV"
+    fi
+else
+    echo "    ✗ CSV download test failed"
+fi
+rm -rf "$TEMP_CSV_DIR"
 
 echo "###### Testing DOWNLOAD-ZOTERO ######"
 echo "==> Testing Zotero downloads..."
