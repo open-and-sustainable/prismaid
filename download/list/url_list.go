@@ -2,22 +2,194 @@ package list
 
 import (
 	"bufio"
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
 
 	"github.com/PuerkitoBio/goquery"
+	"golang.org/x/sync/semaphore"
 )
+
+// Global HTTP client with optimized connection pooling and HTTP/2 support
+var httpClient *http.Client
+
+// ConcurrentDownloader manages concurrent downloads with per-host and global limits
+type ConcurrentDownloader struct {
+	globalSem  *semaphore.Weighted
+	hostSems   map[string]*semaphore.Weighted
+	hostMutex  sync.RWMutex
+	maxPerHost int64
+}
+
+// DownloadTask represents a download job
+type DownloadTask struct {
+	URL         string
+	PDFUrl      string
+	Filename    string
+	FullPath    string
+	Paper       *PaperMetadata
+	OriginalURL string
+}
+
+// DownloadResult represents the result of a download attempt
+type DownloadResult struct {
+	Task    *DownloadTask
+	Success bool
+	Error   error
+}
+
+// UnpaywallResponse represents the response from Unpaywall API
+type UnpaywallResponse struct {
+	DOI            string `json:"doi"`
+	IsOA           bool   `json:"is_oa"`
+	BestOALocation struct {
+		HostType  string `json:"host_type"`
+		URLForPDF string `json:"url_for_pdf"`
+	} `json:"best_oa_location"`
+	OALocations []struct {
+		HostType  string `json:"host_type"`
+		URLForPDF string `json:"url_for_pdf"`
+	} `json:"oa_locations"`
+}
+
+// RetryConfig holds retry policy configuration
+type RetryConfig struct {
+	MaxRetries int
+	BaseDelay  time.Duration
+	MaxDelay   time.Duration
+	Jitter     bool
+}
+
+// DefaultRetryConfig returns a sensible default retry configuration
+func DefaultRetryConfig() RetryConfig {
+	return RetryConfig{
+		MaxRetries: 3,
+		BaseDelay:  1 * time.Second,
+		MaxDelay:   30 * time.Second,
+		Jitter:     true,
+	}
+}
+
+func init() {
+	// Configure transport with connection pooling optimizations
+	transport := &http.Transport{
+		MaxIdleConns:          100,              // Maximum idle connections across all hosts
+		MaxIdleConnsPerHost:   10,               // Maximum idle connections per host
+		IdleConnTimeout:       90 * time.Second, // How long idle connections are kept alive
+		TLSHandshakeTimeout:   10 * time.Second, // TLS handshake timeout
+		ResponseHeaderTimeout: 30 * time.Second, // Response header timeout
+		DisableCompression:    false,            // Enable gzip compression
+		ForceAttemptHTTP2:     true,             // Force HTTP/2 where supported
+	}
+
+	// Create global HTTP client with optimized settings
+	httpClient = &http.Client{
+		Transport: transport,
+		Timeout:   60 * time.Second, // Overall request timeout
+	}
+
+	logger.Info("HTTP client initialized with connection pooling and HTTP/2 support")
+}
+
+// NewConcurrentDownloader creates a new concurrent downloader with specified limits
+func NewConcurrentDownloader(maxGlobal, maxPerHost int64) *ConcurrentDownloader {
+	return &ConcurrentDownloader{
+		globalSem:  semaphore.NewWeighted(maxGlobal),
+		hostSems:   make(map[string]*semaphore.Weighted),
+		maxPerHost: maxPerHost,
+	}
+}
+
+// getHostSemaphore returns a semaphore for the given host, creating it if necessary
+func (cd *ConcurrentDownloader) getHostSemaphore(host string) *semaphore.Weighted {
+	cd.hostMutex.RLock()
+	sem, exists := cd.hostSems[host]
+	cd.hostMutex.RUnlock()
+
+	if exists {
+		return sem
+	}
+
+	cd.hostMutex.Lock()
+	defer cd.hostMutex.Unlock()
+
+	// Double-check pattern in case another goroutine created it
+	if sem, exists := cd.hostSems[host]; exists {
+		return sem
+	}
+
+	sem = semaphore.NewWeighted(cd.maxPerHost)
+	cd.hostSems[host] = sem
+	return sem
+}
+
+// downloadConcurrently performs concurrent downloads with proper semaphore management
+func (cd *ConcurrentDownloader) downloadConcurrently(tasks []*DownloadTask) []DownloadResult {
+	ctx := context.Background()
+	results := make([]DownloadResult, len(tasks))
+	var wg sync.WaitGroup
+
+	for i, task := range tasks {
+		wg.Add(1)
+		go func(idx int, t *DownloadTask) {
+			defer wg.Done()
+
+			// Parse URL to get host for per-host limiting
+			parsedURL, err := url.Parse(t.PDFUrl)
+			if err != nil {
+				results[idx] = DownloadResult{Task: t, Success: false, Error: err}
+				return
+			}
+			host := parsedURL.Host
+
+			// Acquire global semaphore
+			if err := cd.globalSem.Acquire(ctx, 1); err != nil {
+				results[idx] = DownloadResult{Task: t, Success: false, Error: err}
+				return
+			}
+			defer cd.globalSem.Release(1)
+
+			// Acquire host-specific semaphore
+			hostSem := cd.getHostSemaphore(host)
+			if err := hostSem.Acquire(ctx, 1); err != nil {
+				results[idx] = DownloadResult{Task: t, Success: false, Error: err}
+				return
+			}
+			defer hostSem.Release(1)
+
+			// Perform the actual download with retry
+			err = downloadPDFWithRetry(t.PDFUrl, t.FullPath, DefaultRetryConfig())
+
+			// If download failed, try Unpaywall as a last resort
+			if err != nil {
+				logger.Info(fmt.Sprintf("Primary download failed for %s, trying Unpaywall fallback", t.OriginalURL))
+				if fallbackErr := tryUnpaywallFallback(t); fallbackErr == nil {
+					err = downloadPDFWithRetry(t.PDFUrl, t.FullPath, DefaultRetryConfig())
+				}
+			}
+
+			results[idx] = DownloadResult{Task: t, Success: err == nil, Error: err}
+		}(i, task)
+	}
+
+	wg.Wait()
+	return results
+}
 
 // PaperMetadata holds information about a paper to be downloaded
 type PaperMetadata struct {
@@ -148,10 +320,14 @@ func processTextFile(path, dirPath string) error {
 		return err
 	}
 
+	// Create concurrent downloader with reasonable limits
+	downloader := NewConcurrentDownloader(25, 4) // 25 global, 4 per host
+
 	// Track failed URLs
 	var failedURLs []string
+	var tasks []*DownloadTask
 
-	// Process each URL
+	// Prepare download tasks
 	for _, url := range urls {
 		pdfURL, filename, err := extractPDF(url)
 		if err != nil {
@@ -165,15 +341,33 @@ func processTextFile(path, dirPath string) error {
 			filename = findUniqueFilename(dirPath, filename)
 			fullPath := filepath.Join(dirPath, filename)
 
-			if err := downloadPDF(pdfURL, fullPath); err != nil {
-				logger.Error("Download failed for", url, ":", err)
-				failedURLs = append(failedURLs, url)
-			} else {
-				logger.Info("PDF downloaded successfully as", fullPath)
+			task := &DownloadTask{
+				URL:         url,
+				PDFUrl:      pdfURL,
+				Filename:    filename,
+				FullPath:    fullPath,
+				OriginalURL: url,
 			}
+			tasks = append(tasks, task)
 		} else {
 			logger.Info("No PDF found for", url)
 			failedURLs = append(failedURLs, url)
+		}
+	}
+
+	// Perform concurrent downloads
+	if len(tasks) > 0 {
+		logger.Info(fmt.Sprintf("Starting concurrent download of %d PDFs (max 25 global, 4 per host)", len(tasks)))
+		results := downloader.downloadConcurrently(tasks)
+
+		// Process results
+		for _, result := range results {
+			if result.Success {
+				logger.Info("PDF downloaded successfully as", result.Task.FullPath)
+			} else {
+				logger.Error("Download failed for", result.Task.OriginalURL, ":", result.Error)
+				failedURLs = append(failedURLs, result.Task.OriginalURL)
+			}
 		}
 	}
 
@@ -200,14 +394,18 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 
 	logger.Info(fmt.Sprintf("Found %d entries to process", len(papers)))
 
-	// Process each paper
+	// Create concurrent downloader with reasonable limits
+	downloader := NewConcurrentDownloader(25, 4) // 25 global, 4 per host
+
+	// Process each paper to prepare download tasks
 	successCount := 0
 	failCount := 0
+	var tasks []*DownloadTask
 
 	for i, paper := range papers {
-		// Log progress every 10 papers
+		// Log progress every 10 papers during preparation
 		if (i+1)%10 == 0 {
-			logger.Info(fmt.Sprintf("Processing paper %d of %d...", i+1, len(papers)))
+			logger.Info(fmt.Sprintf("Preparing paper %d of %d...", i+1, len(papers)))
 		}
 
 		// Skip if no URL available
@@ -244,15 +442,34 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 		paper.Filename = filename
 		fullPath := filepath.Join(dirPath, filename)
 
-		// Download the PDF
-		if err := downloadPDF(pdfURL, fullPath); err != nil {
-			logger.Error(fmt.Sprintf("Row %s: Download failed for %s: %v", paper.ID, paper.URL, err))
-			paper.ErrorMsg = fmt.Sprintf("Download failed: %v", err)
-			failCount++
-		} else {
-			logger.Info(fmt.Sprintf("Row %s: PDF downloaded successfully as %s", paper.ID, filename))
-			paper.Downloaded = true
-			successCount++
+		// Create download task
+		task := &DownloadTask{
+			URL:         paper.URL,
+			PDFUrl:      pdfURL,
+			Filename:    filename,
+			FullPath:    fullPath,
+			Paper:       paper,
+			OriginalURL: paper.URL,
+		}
+		tasks = append(tasks, task)
+	}
+
+	// Perform concurrent downloads
+	if len(tasks) > 0 {
+		logger.Info(fmt.Sprintf("Starting concurrent download of %d PDFs (max 25 global, 4 per host)", len(tasks)))
+		results := downloader.downloadConcurrently(tasks)
+
+		// Process results
+		for _, result := range results {
+			if result.Success {
+				logger.Info(fmt.Sprintf("Row %s: PDF downloaded successfully as %s", result.Task.Paper.ID, result.Task.Filename))
+				result.Task.Paper.Downloaded = true
+				successCount++
+			} else {
+				logger.Error(fmt.Sprintf("Row %s: Download failed for %s: %v", result.Task.Paper.ID, result.Task.Paper.URL, result.Error))
+				result.Task.Paper.ErrorMsg = fmt.Sprintf("Download failed: %v", result.Error)
+				failCount++
+			}
 		}
 	}
 
@@ -1021,8 +1238,7 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 		return pageURL, filename, nil
 	}
 
-	// Fetch the page to check content type with proper User-Agent
-	client := &http.Client{Timeout: 30 * time.Second}
+	// Fetch the page to check content type with proper User-Agent using global client
 	req, err := http.NewRequest("GET", pageURL, nil)
 	if err != nil {
 		return "", "", err
@@ -1030,7 +1246,7 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; PrismAID/1.0; +https://github.com/open-and-sustainable/prismaid)")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
@@ -1227,9 +1443,217 @@ func sanitizeFilename(name string) string {
 //
 // Returns:
 //   - error: nil if successful, otherwise an error describing what went wrong
+//
+// isRetryableError determines if an error is worth retrying
+func isRetryableError(err error, statusCode int) bool {
+	// Retry on server errors (5xx)
+	if statusCode >= 500 && statusCode < 600 {
+		return true
+	}
+
+	// Retry on timeout or connection errors
+	if strings.Contains(strings.ToLower(err.Error()), "timeout") ||
+		strings.Contains(strings.ToLower(err.Error()), "connection reset") ||
+		strings.Contains(strings.ToLower(err.Error()), "connection refused") ||
+		strings.Contains(strings.ToLower(err.Error()), "no such host") {
+		return true
+	}
+
+	return false
+}
+
+// parseRetryAfter parses the Retry-After header value
+func parseRetryAfter(retryAfter string) time.Duration {
+	if retryAfter == "" {
+		return 0
+	}
+
+	// Try parsing as seconds
+	if seconds, err := strconv.Atoi(retryAfter); err == nil {
+		return time.Duration(seconds) * time.Second
+	}
+
+	// Try parsing as HTTP date
+	if t, err := time.Parse(time.RFC1123, retryAfter); err == nil {
+		return time.Until(t)
+	}
+
+	return 0
+}
+
+// calculateBackoffDelay calculates the delay for exponential backoff with jitter
+func calculateBackoffDelay(attempt int, config RetryConfig) time.Duration {
+	delay := time.Duration(math.Pow(2, float64(attempt))) * config.BaseDelay
+
+	if delay > config.MaxDelay {
+		delay = config.MaxDelay
+	}
+
+	if config.Jitter {
+		// Add jitter: randomize between 50% and 100% of the calculated delay
+		jitterRange := delay / 2
+		jitter := time.Duration(rand.Int63n(int64(jitterRange)))
+		delay = delay/2 + jitter
+	}
+
+	return delay
+}
+
+// validatePDFResponse performs early validation of the response
+func validatePDFResponse(resp *http.Response) error {
+	// Check Content-Type header
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "" {
+		// Accept application/pdf, application/octet-stream, or missing content-type
+		if !strings.Contains(contentType, "pdf") &&
+			!strings.Contains(contentType, "octet-stream") &&
+			!strings.Contains(contentType, "binary") {
+			return fmt.Errorf("unexpected content type: %s (expected PDF)", contentType)
+		}
+	}
+
+	// Read first few bytes to check for PDF signature
+	buffer := make([]byte, 4)
+	n, err := resp.Body.Read(buffer)
+	if err != nil && err != io.EOF {
+		return fmt.Errorf("failed to read response body for validation: %w", err)
+	}
+
+	if n >= 4 && string(buffer) != "%PDF" {
+		return fmt.Errorf("response does not start with PDF signature, got: %q", string(buffer[:n]))
+	}
+
+	return nil
+}
+
+// downloadPDFWithRetry downloads a PDF with retry logic and early validation
+func downloadPDFWithRetry(pdfURL, fullPath string, config RetryConfig) error {
+	var lastErr error
+
+	for attempt := 0; attempt <= config.MaxRetries; attempt++ {
+		if attempt > 0 {
+			delay := calculateBackoffDelay(attempt-1, config)
+			logger.Info(fmt.Sprintf("Retrying download of %s (attempt %d/%d) after %v", pdfURL, attempt+1, config.MaxRetries+1, delay))
+			time.Sleep(delay)
+		}
+
+		err := downloadPDF(pdfURL, fullPath)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+
+		// Check if this is a retryable error
+		statusCode := 0
+		if strings.Contains(err.Error(), "bad status:") {
+			// Try to extract status code from error message
+			parts := strings.Split(err.Error(), " ")
+			if len(parts) > 2 {
+				if code, parseErr := strconv.Atoi(parts[2]); parseErr == nil {
+					statusCode = code
+				}
+			}
+		}
+
+		if !isRetryableError(err, statusCode) {
+			logger.Info(fmt.Sprintf("Non-retryable error for %s: %v", pdfURL, err))
+			break
+		}
+
+		if attempt < config.MaxRetries {
+			logger.Info(fmt.Sprintf("Retryable error for %s: %v", pdfURL, err))
+		}
+	}
+
+	return fmt.Errorf("download failed after %d attempts: %w", config.MaxRetries+1, lastErr)
+}
+
+// tryUnpaywallFallback attempts to find an open access version using Unpaywall API
+func tryUnpaywallFallback(task *DownloadTask) error {
+	// Extract or find DOI from the original URL/task
+	doi := extractDOIFromURL(task.OriginalURL)
+	if doi == "" && task.Paper != nil {
+		doi = task.Paper.DOI
+	}
+
+	if doi == "" {
+		return fmt.Errorf("no DOI available for Unpaywall lookup")
+	}
+
+	// Query Unpaywall API
+	unpaywallURL := fmt.Sprintf("https://api.unpaywall.org/v2/%s?email=prismaid@ourresearch.org", doi)
+
+	resp, err := httpClient.Get(unpaywallURL)
+	if err != nil {
+		return fmt.Errorf("Unpaywall API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("Unpaywall API returned status %d", resp.StatusCode)
+	}
+
+	var unpaywallResp UnpaywallResponse
+	if err := json.NewDecoder(resp.Body).Decode(&unpaywallResp); err != nil {
+		return fmt.Errorf("failed to decode Unpaywall response: %w", err)
+	}
+
+	if !unpaywallResp.IsOA {
+		return fmt.Errorf("no open access version available according to Unpaywall")
+	}
+
+	// Try the best OA location first
+	if unpaywallResp.BestOALocation.URLForPDF != "" {
+		logger.Info(fmt.Sprintf("Found open access PDF via Unpaywall: %s", unpaywallResp.BestOALocation.URLForPDF))
+		task.PDFUrl = unpaywallResp.BestOALocation.URLForPDF
+		return nil
+	}
+
+	// Try other OA locations
+	for _, location := range unpaywallResp.OALocations {
+		if location.URLForPDF != "" {
+			logger.Info(fmt.Sprintf("Found alternative open access PDF via Unpaywall: %s", location.URLForPDF))
+			task.PDFUrl = location.URLForPDF
+			return nil
+		}
+	}
+
+	return fmt.Errorf("Unpaywall found open access record but no PDF URLs available")
+}
+
+// extractDOIFromURL attempts to extract a DOI from a URL
+func extractDOIFromURL(url string) string {
+	// Try to extract DOI from common DOI URL patterns
+	doiPatterns := []string{
+		`^doi\.org/(.+)`,
+		`^dx\.doi\.org/(.+)`,
+		`^doi:(.+)`,
+		`^DOI:(.+)`,
+		`^/doi/(.+)`,
+	}
+
+	for _, pattern := range doiPatterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindStringSubmatch(url)
+		if len(matches) > 1 {
+			doi := strings.TrimSpace(matches[1])
+			// Clean up common suffixes that aren't part of the DOI
+			doi = strings.Split(doi, "?")[0]
+			doi = strings.Split(doi, "#")[0]
+			doi = strings.Split(doi, "&")[0]
+			return doi
+		}
+	}
+
+	return ""
+}
+
 func downloadPDF(pdfURL, fullPath string) error {
-	// Create a client that follows redirects
-	client := &http.Client{
+	// Use global client with optimized transport and extended timeout for large downloads
+	downloadClient := &http.Client{
+		Transport: httpClient.Transport, // Reuse the optimized transport with connection pooling
+		Timeout:   300 * time.Second,    // 5 minutes for large PDF files
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			// Allow up to 10 redirects
 			if len(via) >= 10 {
@@ -1239,7 +1663,15 @@ func downloadPDF(pdfURL, fullPath string) error {
 		},
 	}
 
-	resp, err := client.Get(pdfURL)
+	// Create request with proper headers
+	req, err := http.NewRequest("GET", pdfURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; PrismAID/1.0; +https://github.com/open-and-sustainable/prismaid)")
+	req.Header.Set("Accept", "application/pdf,application/octet-stream,*/*;q=0.8")
+
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -1247,17 +1679,22 @@ func downloadPDF(pdfURL, fullPath string) error {
 
 	// Check if we got a successful response
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bad status: %s", resp.Status)
+		// Check for Retry-After header on rate limiting
+		if resp.StatusCode == 429 || resp.StatusCode == 503 {
+			if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+				delay := parseRetryAfter(retryAfter)
+				if delay > 0 && delay < 5*time.Minute { // Cap at 5 minutes
+					logger.Info(fmt.Sprintf("Server requested retry after %v for %s", delay, pdfURL))
+					time.Sleep(delay)
+				}
+			}
+		}
+		return fmt.Errorf("bad status: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	// Verify we got a PDF or binary content
-	contentType := resp.Header.Get("Content-Type")
-	if contentType != "" &&
-		!strings.Contains(contentType, "pdf") &&
-		!strings.Contains(contentType, "octet-stream") &&
-		!strings.Contains(contentType, "binary") {
-		// Log warning but still try to download
-		logger.Info(fmt.Sprintf("Warning: Unexpected content type %s for %s", contentType, pdfURL))
+	// Early validation of response
+	if err := validatePDFResponse(resp); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	out, err := os.Create(fullPath)
@@ -1266,7 +1703,12 @@ func downloadPDF(pdfURL, fullPath string) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, resp.Body)
+	// Copy the response body (note: first 4 bytes were already read during validation)
+	// We need to create a multi-reader that includes those bytes
+	buffer := []byte("%PDF") // We know this is what we read during validation
+	combinedReader := io.MultiReader(strings.NewReader(string(buffer)), resp.Body)
+
+	_, err = io.Copy(out, combinedReader)
 	return err
 }
 
@@ -1336,8 +1778,7 @@ func searchCrossrefForDOI(title, authors, year string) string {
 	// Construct full URL
 	searchURL := baseURL + "?" + params.Encode()
 
-	// Make the request with proper User-Agent
-	client := &http.Client{Timeout: 10 * time.Second}
+	// Make the request with proper User-Agent using global client
 	req, err := http.NewRequest("GET", searchURL, nil)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Error creating Crossref request: %v", err))
@@ -1347,7 +1788,7 @@ func searchCrossrefForDOI(title, authors, year string) string {
 	// Crossref requests a polite User-Agent
 	req.Header.Set("User-Agent", "PrismAID/1.0 (https://github.com/open-and-sustainable/prismaid; mailto:info@example.com)")
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		logger.Info(fmt.Sprintf("Error querying Crossref API: %v", err))
 		return ""
@@ -1514,8 +1955,13 @@ func extractPDFDirectly(pageURL string) (pdfURL string, filename string, err err
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; PrismAID/1.0; +https://github.com/open-and-sustainable/prismaid)")
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// Use global client but with extended timeout for large PDF downloads
+	downloadClient := &http.Client{
+		Transport: httpClient.Transport, // Reuse the optimized transport
+		Timeout:   120 * time.Second,    // 2 minutes for large files
+	}
+
+	resp, err := downloadClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}

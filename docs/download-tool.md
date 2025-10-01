@@ -176,6 +176,55 @@ Row 4: Found DOI via Crossref: 10.1016/j.scitotenv.2019.07.270
 
 This intelligent detection saves you from manually replacing problematic URLs and ensures maximum success in downloading papers from your CSV files.
 
+### Performance Optimizations
+
+The Download tool includes several performance optimizations for efficient batch downloading:
+
+**HTTP/2 and Connection Pooling:**
+- Uses a single optimized HTTP client with connection pooling across all download requests
+- Maintains up to 100 idle connections (10 per host) for connection reuse
+- Enables HTTP/2 where supported by the server for multiplexed requests
+- Configured timeouts: 60s general, 5 minutes for large PDF downloads
+- Automatic gzip compression support
+
+**Concurrent Downloads with Smart Rate Limiting:**
+- Downloads multiple PDFs simultaneously using goroutines and worker pools
+- **Global concurrency limit**: Maximum 25 concurrent downloads system-wide
+- **Per-host concurrency limit**: Maximum 4 concurrent requests per publisher/domain
+- Prevents overwhelming individual publishers and reduces 429/403 throttling responses
+- Automatically manages connection resources while maximizing throughput
+
+**Early Response Validation:**
+- Validates `Content-Type` headers before downloading full response body
+- Checks first 4 bytes for `%PDF` signature to confirm valid PDF files
+- Aborts quickly on HTML error pages or invalid content to save bandwidth
+- Reduces wasted time and resources on non-PDF responses
+
+**Intelligent Retry Policy:**
+- Automatic retry on transient errors (5xx status codes, timeouts, connection resets)
+- Respects `Retry-After` headers from servers to avoid aggressive retrying
+- Exponential backoff with jitter (1s, 2s, 4s delays) to prevent retry storms
+- Maximum 3 retry attempts per download with smart error classification
+- Non-retryable errors (4xx client errors) fail immediately
+
+**Unpaywall Fallback for Open Access:**
+- When downloads fail, automatically searches Unpaywall database as a last resort
+- Finds free, legal open access versions of scholarly articles from 50,000+ publishers
+- Extracts DOIs from URLs or metadata to query the open access database
+- Attempts download from alternative open access repositories when available
+- Helps recover papers that might be paywalled at original source but freely available elsewhere
+
+**Benefits:**
+- Significantly faster batch downloads compared to sequential processing
+- Respectful downloading that avoids hammering individual publishers
+- Faster downloads when processing multiple papers from the same publisher
+- Reduced network overhead through connection reuse
+- Better performance on modern servers supporting HTTP/2
+- Optimized timeouts prevent hanging on slow connections
+- Automatic load balancing across different hosts
+
+These optimizations are automatic and require no configuration from users.
+
 ### Intelligent File Naming
 
 When using CSV/TSV files, the tool generates meaningful filenames using available metadata:
@@ -331,19 +380,24 @@ To get the most out of the Download tool:
    - Include metadata columns (Title, Authors, Year, DOI) to enable automatic Crossref resolution
    - The tool will intelligently detect and resolve problematic URLs, significantly improving download success rates
 
-3. **Check for duplicates**:
+3. **Optimize for batch downloads**:
+   - The tool automatically uses HTTP/2 and connection pooling for better performance
+   - Group downloads from the same publisher/domain for maximum connection reuse benefits
+   - Large CSV files benefit most from the connection pooling optimizations
+
+4. **Check for duplicates**:
    - Zotero can help identify duplicate entries before downloading
    - Use consistent file naming in URL lists to avoid duplicate downloads
 
-4. **Verify accessibility**:
+5. **Verify accessibility**:
    - Ensure you have access rights to all papers before downloading
    - Some journals may require institutional access or subscriptions
 
-5. **Structure your downloads**:
+6. **Structure your downloads**:
    - Use separate output directories for different paper categories
    - Consider naming conventions that will help with the next workflow steps
 
-6. **Batch processing**:
+7. **Batch processing**:
    - For large reviews, consider downloading in batches to manage resources
    - This approach also allows for quality checks along the way
 
