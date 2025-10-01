@@ -1626,11 +1626,11 @@ func tryUnpaywallFallback(task *DownloadTask) error {
 func extractDOIFromURL(url string) string {
 	// Try to extract DOI from common DOI URL patterns
 	doiPatterns := []string{
-		`doi\.org/(.+)`,
-		`dx\.doi\.org/(.+)`,
-		`doi:(.+)`,
-		`DOI:(.+)`,
-		`/doi/(.+)`,
+		`^doi\.org/(.+)`,
+		`^dx\.doi\.org/(.+)`,
+		`^doi:(.+)`,
+		`^DOI:(.+)`,
+		`^/doi/(.+)`,
 	}
 
 	for _, pattern := range doiPatterns {
