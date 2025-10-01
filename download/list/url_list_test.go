@@ -1272,6 +1272,78 @@ func TestNonRetryableError(t *testing.T) {
 	t.Logf("Non-retryable error handled correctly with %d attempts", attemptCount)
 }
 
+// TestImprovedColumnDetection tests the improved column detection for source vs journal
+func TestImprovedColumnDetection(t *testing.T) {
+	tests := []struct {
+		name        string
+		headers     []string
+		sampleRows  [][]string
+		expectedCol int
+		description string
+	}{
+		{
+			name:    "SourceTitle preferred over Source",
+			headers: []string{"Title", "Authors", "Source", "SourceTitle", "Year"},
+			sampleRows: [][]string{
+				{"Paper 1", "Author 1", "Scopus", "Nature Medicine", "2023"},
+				{"Paper 2", "Author 2", "PubMed", "Science", "2022"},
+				{"Paper 3", "Author 3", "Crossref", "PLOS ONE", "2023"},
+			},
+			expectedCol: 3, // SourceTitle column
+			description: "Should prefer SourceTitle over Source when Source contains database names",
+		},
+		{
+			name:    "Source used when contains journal names",
+			headers: []string{"Title", "Authors", "Source", "DOI"},
+			sampleRows: [][]string{
+				{"Paper 1", "Author 1", "Journal of Medicine", "10.1234/test1"},
+				{"Paper 2", "Author 2", "Nature Communications", "10.1234/test2"},
+				{"Paper 3", "Author 3", "Proceedings of Science", "10.1234/test3"},
+			},
+			expectedCol: 2, // Source column
+			description: "Should use Source when it contains journal-like names",
+		},
+		{
+			name:    "PublicationTitle preferred",
+			headers: []string{"Title", "Source", "PublicationTitle", "Authors"},
+			sampleRows: [][]string{
+				{"Paper 1", "WOS", "Cell Biology Journal", "Author 1"},
+				{"Paper 2", "Dimensions", "Nature Reviews", "Author 2"},
+			},
+			expectedCol: 2, // PublicationTitle column
+			description: "Should prefer PublicationTitle over generic Source",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mapping := detectColumnsWithContent(tt.headers, tt.sampleRows)
+
+			if mapping.Journal != tt.expectedCol {
+				t.Errorf("Expected journal column %d (%s), got %d (%s)",
+					tt.expectedCol,
+					tt.headers[tt.expectedCol],
+					mapping.Journal,
+					func() string {
+						if mapping.Journal >= 0 && mapping.Journal < len(tt.headers) {
+							return tt.headers[mapping.Journal]
+						}
+						return "none"
+					}())
+			}
+
+			t.Logf("%s: Correctly detected journal column as '%s'",
+				tt.description,
+				func() string {
+					if mapping.Journal >= 0 && mapping.Journal < len(tt.headers) {
+						return tt.headers[mapping.Journal]
+					}
+					return "none"
+				}())
+		})
+	}
+}
+
 // TestUnpaywallFallback tests the Unpaywall API fallback functionality
 func TestUnpaywallFallback(t *testing.T) {
 	tempDir := t.TempDir()

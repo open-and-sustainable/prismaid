@@ -516,14 +516,48 @@ func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, []string, 
 		return nil, nil, fmt.Errorf("failed to read header row: %w", err)
 	}
 
-	// Detect column mappings
-	mapping := detectColumns(headers)
+	// Read a few sample rows for content analysis
+	var sampleRows [][]string
+	sampleCount := 0
+	for sampleCount < 5 { // Read up to 5 sample rows
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			continue
+		}
+		sampleRows = append(sampleRows, record)
+		sampleCount++
+	}
+
+	// Detect column mappings with content analysis
+	mapping := detectColumnsWithContent(headers, sampleRows)
 	if mapping.URL == -1 && mapping.DOI == -1 {
 		return nil, nil, fmt.Errorf("no URL or DOI column found in CSV/TSV file")
 	}
 
 	// Log detected columns for debugging
 	logDetectedColumns(headers, mapping)
+
+	// Reset file reader for actual parsing
+	file.Close()
+	file, err = os.Open(filepath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to reopen file: %w", err)
+	}
+	defer file.Close()
+
+	reader = csv.NewReader(file)
+	reader.Comma = delimiter
+	reader.LazyQuotes = true
+	reader.TrimLeadingSpace = true
+
+	// Skip header row
+	_, err = reader.Read()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read header row on second pass: %w", err)
+	}
 
 	// Parse data rows
 	var papers []*PaperMetadata
@@ -551,6 +585,140 @@ func parseCSVFile(filepath string, delimiter rune) ([]*PaperMetadata, []string, 
 }
 
 // detectColumns intelligently identifies column indices based on header names
+// analyzeColumnContent analyzes sample data to determine if a column likely contains journal names vs database names
+func analyzeColumnContent(columnData []string) (bool, string) {
+	if len(columnData) == 0 {
+		return false, "no_data"
+	}
+
+	journalIndicators := 0
+	databaseIndicators := 0
+	totalNonEmpty := 0
+
+	for _, value := range columnData {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			continue
+		}
+		totalNonEmpty++
+		valueLower := strings.ToLower(value)
+
+		// Journal indicators
+		if strings.Contains(valueLower, "journal") ||
+			strings.Contains(valueLower, "proceedings") ||
+			strings.Contains(valueLower, "conference") ||
+			strings.Contains(valueLower, "review") ||
+			strings.Contains(valueLower, "nature") ||
+			strings.Contains(valueLower, "science") ||
+			strings.Contains(valueLower, "plos") ||
+			len(strings.Fields(value)) > 2 { // Multi-word journal names are common
+			journalIndicators++
+		}
+
+		// Database indicators
+		if strings.Contains(valueLower, "scopus") ||
+			strings.Contains(valueLower, "pubmed") ||
+			strings.Contains(valueLower, "crossref") ||
+			strings.Contains(valueLower, "wos") ||
+			strings.Contains(valueLower, "web of science") ||
+			strings.Contains(valueLower, "google scholar") ||
+			strings.Contains(valueLower, "dimensions") ||
+			strings.Contains(valueLower, "semantic scholar") ||
+			(len(strings.Fields(value)) == 1 && len(value) < 15) { // Short single words often databases
+			databaseIndicators++
+		}
+	}
+
+	if totalNonEmpty == 0 {
+		return false, "empty"
+	}
+
+	journalRatio := float64(journalIndicators) / float64(totalNonEmpty)
+	databaseRatio := float64(databaseIndicators) / float64(totalNonEmpty)
+
+	// If more than 30% look like journals and less than 20% look like databases, likely journal
+	if journalRatio > 0.3 && databaseRatio < 0.2 {
+		return true, "likely_journal"
+	}
+	// If more than 30% look like databases, likely database
+	if databaseRatio > 0.3 {
+		return false, "likely_database"
+	}
+
+	return journalRatio > databaseRatio, "unclear"
+}
+
+// detectColumnsWithContent detects columns using both headers and content analysis
+func detectColumnsWithContent(headers []string, sampleRows [][]string) ColumnMapping {
+	mapping := detectColumns(headers)
+
+	// If we found a journal column, validate it with content analysis
+	if mapping.Journal != -1 && len(sampleRows) > 0 {
+		// Extract sample data for the detected journal column
+		var journalSamples []string
+		for _, row := range sampleRows {
+			if mapping.Journal < len(row) {
+				journalSamples = append(journalSamples, row[mapping.Journal])
+			}
+		}
+
+		isJournal, reason := analyzeColumnContent(journalSamples)
+		if !isJournal && reason == "likely_database" {
+			logger.Info(fmt.Sprintf("Column '%s' detected as journal but content suggests database source, searching for better journal column", headers[mapping.Journal]))
+
+			// Look for alternative journal columns
+			originalJournalCol := mapping.Journal
+			mapping.Journal = -1
+
+			// Try to find a better journal column
+			for i, header := range headers {
+				if i == originalJournalCol {
+					continue
+				}
+				headerLower := strings.ToLower(strings.TrimSpace(header))
+
+				// Look for more specific journal indicators
+				if strings.Contains(headerLower, "sourcetitle") ||
+					strings.Contains(headerLower, "source_title") ||
+					strings.Contains(headerLower, "publicationtitle") ||
+					strings.Contains(headerLower, "publication_title") ||
+					strings.Contains(headerLower, "journaltitle") ||
+					strings.Contains(headerLower, "journal_title") ||
+					(strings.Contains(headerLower, "title") &&
+						(strings.Contains(headerLower, "source") ||
+							strings.Contains(headerLower, "journal") ||
+							strings.Contains(headerLower, "publication"))) {
+
+					// Analyze content for this candidate
+					var candidateSamples []string
+					for _, row := range sampleRows {
+						if i < len(row) {
+							candidateSamples = append(candidateSamples, row[i])
+						}
+					}
+
+					candidateIsJournal, candidateReason := analyzeColumnContent(candidateSamples)
+					if candidateIsJournal || candidateReason != "likely_database" {
+						mapping.Journal = i
+						logger.Info(fmt.Sprintf("Found better journal column: '%s' (reason: %s)", header, candidateReason))
+						break
+					}
+				}
+			}
+
+			// If no better column found, keep original but warn
+			if mapping.Journal == -1 {
+				mapping.Journal = originalJournalCol
+				logger.Info(fmt.Sprintf("No better journal column found, keeping '%s' despite database-like content", headers[originalJournalCol]))
+			}
+		} else {
+			logger.Info(fmt.Sprintf("Column '%s' confirmed as journal (reason: %s)", headers[mapping.Journal], reason))
+		}
+	}
+
+	return mapping
+}
+
 func detectColumns(headers []string) ColumnMapping {
 	mapping := ColumnMapping{
 		URL:      -1,
@@ -603,12 +771,28 @@ func detectColumns(headers []string) ColumnMapping {
 			mapping.Year = i
 		}
 
-		// Journal/Source detection
-		if mapping.Journal == -1 && (strings.Contains(headerLower, "journal") ||
-			strings.Contains(headerLower, "source") ||
-			(strings.Contains(headerLower, "publication") && !strings.Contains(headerLower, "year")) ||
-			strings.Contains(headerLower, "venue")) {
-			mapping.Journal = i
+		// Journal/Source detection - prioritize journal-specific terms
+		// First check for highest priority journal columns
+		if strings.Contains(headerLower, "sourcetitle") ||
+			strings.Contains(headerLower, "source_title") ||
+			strings.Contains(headerLower, "publication_title") ||
+			strings.Contains(headerLower, "publicationtitle") ||
+			strings.Contains(headerLower, "journaltitle") ||
+			strings.Contains(headerLower, "journal_title") {
+			mapping.Journal = i // Always override for these specific terms
+		} else if mapping.Journal == -1 {
+			// Second priority: general journal terms
+			if strings.Contains(headerLower, "journal") ||
+				strings.Contains(headerLower, "venue") {
+				mapping.Journal = i
+			} else if strings.Contains(headerLower, "publication") &&
+				!strings.Contains(headerLower, "year") &&
+				!strings.Contains(headerLower, "date") {
+				mapping.Journal = i
+			} else if strings.Contains(headerLower, "source") {
+				// Lowest priority: generic "source" - content analysis will refine this later
+				mapping.Journal = i
+			}
 		}
 
 		// Abstract detection
@@ -1626,11 +1810,11 @@ func tryUnpaywallFallback(task *DownloadTask) error {
 func extractDOIFromURL(url string) string {
 	// Try to extract DOI from common DOI URL patterns
 	doiPatterns := []string{
-		`^doi\.org/(.+)`,
-		`^dx\.doi\.org/(.+)`,
+		`^https?://doi\.org/(.+)`,
+		`^https?://dx\.doi\.org/(.+)`,
 		`^doi:(.+)`,
 		`^DOI:(.+)`,
-		`^/doi/(.+)`,
+		`.*/doi/(.+)`,
 	}
 
 	for _, pattern := range doiPatterns {

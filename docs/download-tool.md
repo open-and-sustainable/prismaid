@@ -118,14 +118,24 @@ https://arxiv.org/pdf/2301.12345.pdf
 
 ### CSV/TSV Format with Metadata
 
-For CSV or TSV files, the tool automatically detects columns for:
+For CSV or TSV files, the tool uses intelligent column detection with content analysis:
+
+**Column Detection Priority:**
 - **URL/Link**: BestLink, BestURL, URL, Link, href (prioritizes "best" variants)
 - **DOI**: Automatically converts DOIs to resolvable URLs if no direct URL is found
 - **Title**: ArticleTitle, Article_Title, Paper_Title, Title
 - **Authors**: Authors, Creator, Contributor
 - **Year**: PublicationYear, Publication_Year, Year
-- **Journal**: SourceTitle, Source_Title, Journal, Source, Publication
+- **Journal**: Prioritized detection to distinguish journal names from database sources:
+  - *High Priority*: SourceTitle, Source_Title, Publication_Title, JournalTitle, Journal_Title
+  - *Medium Priority*: Journal, Venue, Publication
+  - *Low Priority*: Source (with content analysis to distinguish from database names)
 - **Abstract**: Abstract (preserved for future use)
+
+**Smart Content Analysis:**
+- Analyzes sample data to distinguish between journal names and database sources
+- Automatically detects when "Source" contains database names (Scopus, PubMed, etc.) vs journal titles
+- Prefers more specific column names like "SourceTitle" over generic "Source" when both exist
 
 Example CSV file:
 ```csv

@@ -30,6 +30,10 @@ Security: For vulnerabilities.
   - Finds free, legal versions from 50,000+ publishers and repositories
   - Extracts DOIs from URLs or metadata to query open access database
   - Helps recover papers that are paywalled at original source but freely available elsewhere
+- Improved CSV/TSV column detection with content analysis in download tool:
+  - Smart distinction between journal titles and database sources in "Source" columns
+  - Prioritizes specific column names (SourceTitle, Publication_Title) over generic ones
+  - Content analysis prevents misidentifying database names as journal titles
 
 ### Changed
 - Download tool now processes multiple PDFs concurrently instead of sequentially
