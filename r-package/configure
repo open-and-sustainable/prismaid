@@ -1,0 +1,136 @@
+#!/bin/bash
+
+# Configure script for prismaid R package
+# Rejects unsupported OS/CPU combinations before compilation
+
+# Parse command line arguments to extract host triplet
+HOST=""
+for arg in "$@"; do
+  case $arg in
+    --host=*)
+      HOST="${arg#*=}"
+      shift
+      ;;
+  esac
+done
+
+# If no host specified, try to detect it
+if [ -z "$HOST" ]; then
+  if command -v config.guess >/dev/null 2>&1; then
+    HOST=$(config.guess)
+  else
+    # Fallback detection
+    UNAME_S=$(uname -s)
+    UNAME_M=$(uname -m)
+    case "$UNAME_S" in
+      Linux)
+        case "$UNAME_M" in
+          x86_64) HOST="x86_64-pc-linux-gnu" ;;
+          aarch64) HOST="aarch64-pc-linux-gnu" ;;
+          *) HOST="$UNAME_M-pc-linux-gnu" ;;
+        esac
+        ;;
+      Darwin)
+        case "$UNAME_M" in
+          arm64) HOST="aarch64-apple-darwin" ;;
+          x86_64) HOST="x86_64-apple-darwin" ;;
+          *) HOST="$UNAME_M-apple-darwin" ;;
+        esac
+        ;;
+      MINGW*|MSYS*|Windows*)
+        HOST="x86_64-w64-mingw32"
+        ;;
+      *)
+        HOST="unknown-unknown-$UNAME_S"
+        ;;
+    esac
+  fi
+fi
+
+echo "Detected host: $HOST"
+
+# Extract OS and CPU from host triplet
+case "$HOST" in
+  *-*-linux-*)
+    HOST_OS="linux"
+    ;;
+  *-apple-darwin*)
+    HOST_OS="darwin"
+    ;;
+  *-w64-mingw32*)
+    HOST_OS="windows"
+    ;;
+  *)
+    HOST_OS="unknown"
+    ;;
+esac
+
+case "$HOST" in
+  x86_64-*)
+    HOST_CPU="x86_64"
+    ;;
+  aarch64-*|arm64-*)
+    HOST_CPU="aarch64"
+    ;;
+  *)
+    HOST_CPU="unknown"
+    ;;
+esac
+
+echo "Parsed OS: $HOST_OS, CPU: $HOST_CPU"
+
+# Define supported combinations
+# prismaid supports:
+# - Linux x86_64 (AMD64)
+# - Windows x86_64 (AMD64)
+# - macOS aarch64 (ARM64)
+
+SUPPORTED=false
+
+case "$HOST_OS" in
+  linux)
+    if [ "$HOST_CPU" = "x86_64" ]; then
+      SUPPORTED=true
+      echo "✓ Supported: Linux x86_64"
+    fi
+    ;;
+  windows)
+    if [ "$HOST_CPU" = "x86_64" ]; then
+      SUPPORTED=true
+      echo "✓ Supported: Windows x86_64"
+    fi
+    ;;
+  darwin)
+    if [ "$HOST_CPU" = "aarch64" ]; then
+      SUPPORTED=true
+      echo "✓ Supported: macOS ARM64"
+    fi
+    ;;
+esac
+
+# Reject unsupported combinations
+if [ "$SUPPORTED" = false ]; then
+  echo ""
+  echo "ERROR: Unsupported platform combination: $HOST_OS/$HOST_CPU"
+  echo ""
+  echo "prismaid package supports only:"
+  echo "  - Linux x86_64 (AMD64)"
+  echo "  - Windows x86_64 (AMD64)"
+  echo "  - macOS aarch64 (ARM64)"
+  echo ""
+  echo "Current platform: $HOST_OS/$HOST_CPU is not supported."
+  echo "This is expected behavior - prismaid provides native libraries"
+  echo "only for the above platform combinations."
+  echo ""
+  exit 1
+fi
+
+echo "✓ Platform check passed. Proceeding with build..."
+
+# Create src/Makevars if it doesn't exist (shouldn't be needed, but safety check)
+if [ ! -f src/Makevars ]; then
+  echo "Warning: src/Makevars not found"
+fi
+
+# All checks passed
+exit 0

@@ -1,0 +1,15 @@
+# Windows-specific Makevars for prismaid package
+# This file is used specifically for Windows builds
+
+# Compiler Flags
+PKG_CFLAGS = -I$(R_HOME)/include
+
+# Windows Library Linking Configuration
+PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR -L../inst/libs/windows -lprismaid_windows_amd64
+
+# Default target
+all: R_wrapper.o
+
+# Compile R_wrapper.c to R_wrapper.o
+R_wrapper.o: R_wrapper.c
+	$(CC) $(PKG_CFLAGS) -c R_wrapper.c -o R_wrapper.o

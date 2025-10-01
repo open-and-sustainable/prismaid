@@ -9,14 +9,15 @@ ifeq ($(UNAME), Linux)
 	PKG_LIBS = -L$(R_HOME)/lib -lR -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux'
 endif
 
-ifeq ($(UNAME), Windows_NT)
-    # Ensure the R base library and your library are both linked.
-	PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR -L../inst/libs/windows -lprismaid_windows_amd64
-    # If using a .def file to control exports, ensure it's being used correctly:
-    # PKG_LIBS += -Wl,--input-def=../inst/libs/windows/libprismaid_windows_amd64.def
-    # Optionally add flags to ensure all symbols are exported:
-    PKG_LIBS += -Wl,--verbose
-endif
+# Windows configuration moved to Makevars.win file
+# ifeq ($(UNAME), Windows_NT)
+#     # Ensure the R base library and your library are both linked.
+# 	PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR -L../inst/libs/windows -lprismaid_windows_amd64
+#     # If using a .def file to control exports, ensure it's being used correctly:
+#     # PKG_LIBS += -Wl,--input-def=../inst/libs/windows/libprismaid_windows_amd64.def
+#     # Optionally add flags to ensure all symbols are exported:
+#     PKG_LIBS += -Wl,--verbose
+# endif
 
 
 ifeq ($(UNAME), Darwin)
