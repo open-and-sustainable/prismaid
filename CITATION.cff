@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.9.3 - Concurrency and fallback improvements in the download tool.
-  Multiple improvements to effectively and efficiently download PDF from reference lists.
+  v0.9.4 - Fix formatting and management of DOIs in the download tool.
+  Multiple improvements to properly manage DOIs from reference lists.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

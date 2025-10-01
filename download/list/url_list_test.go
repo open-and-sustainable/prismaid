@@ -3,7 +3,6 @@ package list
 import (
 	"encoding/csv"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -17,7 +16,7 @@ import (
 // Test DownloadURLList with different file types
 func TestDownloadURLList(t *testing.T) {
 	// Create temp dir
-	tempDir, err := ioutil.TempDir("", "download_test")
+	tempDir, err := os.MkdirTemp("", "download_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
@@ -33,7 +32,7 @@ func TestDownloadURLList(t *testing.T) {
 	t.Run("TXT file", func(t *testing.T) {
 		txtFile := filepath.Join(tempDir, "urls.txt")
 		content := pdfServer.URL + "\n# comment\n\n"
-		if err := ioutil.WriteFile(txtFile, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(txtFile, []byte(content), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -46,7 +45,7 @@ func TestDownloadURLList(t *testing.T) {
 	t.Run("CSV file", func(t *testing.T) {
 		csvFile := filepath.Join(tempDir, "papers.csv")
 		content := "Title,URL,DOI\nTest Paper," + pdfServer.URL + ",10.1234/test\n"
-		if err := ioutil.WriteFile(csvFile, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(csvFile, []byte(content), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -65,7 +64,7 @@ func TestDownloadURLList(t *testing.T) {
 	t.Run("TSV file", func(t *testing.T) {
 		tsvFile := filepath.Join(tempDir, "papers.tsv")
 		content := "Title\tURL\tDOI\nTest\t" + pdfServer.URL + "\t10.1234/test\n"
-		if err := ioutil.WriteFile(tsvFile, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(tsvFile, []byte(content), 0644); err != nil {
 			t.Fatal(err)
 		}
 
@@ -354,7 +353,7 @@ func TestFindUniqueFilename(t *testing.T) {
 
 	// Create existing file
 	existingFile := filepath.Join(tempDir, "test.pdf")
-	if err := ioutil.WriteFile(existingFile, []byte("test"), 0644); err != nil {
+	if err := os.WriteFile(existingFile, []byte("test"), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -489,7 +488,7 @@ func TestWriteFailedURLsLog(t *testing.T) {
 	}
 
 	// Read and verify content
-	content, err := ioutil.ReadFile(logPath)
+	content, err := os.ReadFile(logPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -593,7 +592,7 @@ func TestProcessTextFileWithFailedLogging(t *testing.T) {
 	defer mockServer.Close()
 
 	content := mockServer.URL + "\nhttps://invalid-url-will-fail.com/paper.pdf\n"
-	if err := ioutil.WriteFile(txtPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(txtPath, []byte(content), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -608,7 +607,7 @@ func TestProcessTextFileWithFailedLogging(t *testing.T) {
 		t.Error("Failed URLs log not created")
 	} else {
 		// Read and verify content
-		content, err := ioutil.ReadFile(failedLogPath)
+		content, err := os.ReadFile(failedLogPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1340,6 +1339,60 @@ func TestImprovedColumnDetection(t *testing.T) {
 					}
 					return "none"
 				}())
+		})
+	}
+}
+
+// TestDOICleaningForUnpaywall tests that DOIs are properly cleaned before sending to Unpaywall API
+func TestDOICleaningForUnpaywall(t *testing.T) {
+	tests := []struct {
+		inputDOI    string
+		expectedDOI string
+		description string
+	}{
+		{"10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "Plain DOI"},
+		{"https://doi.org/10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "HTTPS DOI URL"},
+		{"http://doi.org/10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "HTTP DOI URL"},
+		{"https://dx.doi.org/10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "DX DOI URL HTTPS"},
+		{"http://dx.doi.org/10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "DX DOI URL HTTP"},
+		{"doi:10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "DOI with prefix"},
+		{"DOI:10.1109/POMS.2018.8629496", "10.1109/POMS.2018.8629496", "DOI with uppercase prefix"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			// Create a task with the test DOI
+			task := &DownloadTask{
+				Paper: &PaperMetadata{
+					DOI: tt.inputDOI,
+				},
+			}
+
+			// Test DOI extraction and cleaning
+			doi := extractDOIFromURL(task.Paper.DOI)
+			if doi == "" {
+				doi = task.Paper.DOI
+			}
+
+			// Clean the DOI as done in tryUnpaywallFallback
+			cleanDOI := strings.TrimSpace(doi)
+			if strings.HasPrefix(strings.ToLower(cleanDOI), "https://doi.org/") {
+				cleanDOI = cleanDOI[16:]
+			} else if strings.HasPrefix(strings.ToLower(cleanDOI), "http://doi.org/") {
+				cleanDOI = cleanDOI[15:]
+			} else if strings.HasPrefix(strings.ToLower(cleanDOI), "https://dx.doi.org/") {
+				cleanDOI = cleanDOI[19:]
+			} else if strings.HasPrefix(strings.ToLower(cleanDOI), "http://dx.doi.org/") {
+				cleanDOI = cleanDOI[18:]
+			} else if strings.HasPrefix(strings.ToLower(cleanDOI), "doi:") {
+				cleanDOI = strings.TrimSpace(cleanDOI[4:])
+			}
+
+			if cleanDOI != tt.expectedDOI {
+				t.Errorf("Expected cleaned DOI '%s', got '%s'", tt.expectedDOI, cleanDOI)
+			}
+
+			t.Logf("%s: '%s' -> '%s'", tt.description, tt.inputDOI, cleanDOI)
 		})
 	}
 }

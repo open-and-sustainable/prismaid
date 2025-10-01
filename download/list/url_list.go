@@ -1505,7 +1505,7 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 					}
 					logger.Info("Found DOI in meta tags:", doi, "- attempting to resolve")
 					// Recursively call extractPDF with the DOI URL
-					doiURL := "https://doi.org/" + doi
+					doiURL := convertDOIToURL(doi)
 					resolvedURL, resolvedFilename, err := extractPDF(doiURL)
 					if err == nil && resolvedURL != "" {
 						pdfURL = resolvedURL
@@ -1540,7 +1540,7 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 						doi = strings.TrimSuffix(doi, ")")
 
 						logger.Info("Found DOI in page content:", doi, "- attempting to resolve")
-						doiURL := "https://doi.org/" + doi
+						doiURL := convertDOIToURL(doi)
 						resolvedURL, resolvedFilename, err := extractPDF(doiURL)
 						if err == nil && resolvedURL != "" {
 							pdfURL = resolvedURL
@@ -1765,8 +1765,22 @@ func tryUnpaywallFallback(task *DownloadTask) error {
 		return fmt.Errorf("no DOI available for Unpaywall lookup")
 	}
 
+	// Clean the DOI for API usage (remove URL prefixes if present)
+	cleanDOI := strings.TrimSpace(doi)
+	if strings.HasPrefix(strings.ToLower(cleanDOI), "https://doi.org/") {
+		cleanDOI = cleanDOI[16:]
+	} else if strings.HasPrefix(strings.ToLower(cleanDOI), "http://doi.org/") {
+		cleanDOI = cleanDOI[15:]
+	} else if strings.HasPrefix(strings.ToLower(cleanDOI), "https://dx.doi.org/") {
+		cleanDOI = cleanDOI[19:]
+	} else if strings.HasPrefix(strings.ToLower(cleanDOI), "http://dx.doi.org/") {
+		cleanDOI = cleanDOI[18:]
+	} else if strings.HasPrefix(strings.ToLower(cleanDOI), "doi:") {
+		cleanDOI = strings.TrimSpace(cleanDOI[4:])
+	}
+
 	// Query Unpaywall API
-	unpaywallURL := fmt.Sprintf("https://api.unpaywall.org/v2/%s?email=prismaid@ourresearch.org", doi)
+	unpaywallURL := fmt.Sprintf("https://api.unpaywall.org/v2/%s?email=prismaid@ourresearch.org", cleanDOI)
 
 	resp, err := httpClient.Get(unpaywallURL)
 	if err != nil {
@@ -2053,7 +2067,7 @@ func handleDimensionsURL(pageURL string) (pdfURL string, filename string, err er
 			bodyStr := string(body)
 			if doi := extractDOIFromText(bodyStr); doi != "" {
 				// Found a DOI, resolve it
-				doiURL := "https://doi.org/" + doi
+				doiURL := convertDOIToURL(doi)
 				logger.Info(fmt.Sprintf("Found DOI %s for Dimensions publication %s, resolving...", doi, pubID))
 				return extractPDF(doiURL)
 			}
@@ -2069,7 +2083,7 @@ func handleDimensionsURL(pageURL string) (pdfURL string, filename string, err er
 		if err == nil {
 			bodyStr := string(body)
 			if doi := extractDOIFromText(bodyStr); doi != "" {
-				doiURL := "https://doi.org/" + doi
+				doiURL := convertDOIToURL(doi)
 				logger.Info(fmt.Sprintf("Found DOI %s for Dimensions publication %s, resolving...", doi, pubID))
 				return extractPDF(doiURL)
 			}

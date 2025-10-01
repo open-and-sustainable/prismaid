@@ -9,6 +9,15 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.4] - 2025-10-01
+### Fixed
+- DOI handling consistency across download tool:
+  - Fixed inconsistent DOI URL construction in page content extraction, meta tag resolution, and Dimensions URL handling
+  - All DOI resolution now properly uses convertDOIToURL() function instead of manual string concatenation
+  - DOI cleaning for Unpaywall API integration to remove URL prefixes and ensure clean DOI identifiers
+  - Proper handling of DOIs with various prefixes (doi:, DOI:, https://doi.org/, etc.)
+  - Ensures reliable DOI resolution whether found in page content, meta tags, or API responses
+
 ## [0.9.3] - 2025-10-01
 ### Added
 - Concurrent download functionality with intelligent rate limiting:
