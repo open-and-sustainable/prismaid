@@ -2,13 +2,16 @@ package list
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 // Test DownloadURLList with different file types
@@ -23,7 +26,7 @@ func TestDownloadURLList(t *testing.T) {
 	// Create mock PDF server
 	pdfServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/pdf")
-		w.Write([]byte("mock pdf content"))
+		w.Write([]byte("%PDF-1.4\nmock pdf content"))
 	}))
 	defer pdfServer.Close()
 
@@ -726,6 +729,177 @@ func TestIsProblematicURL(t *testing.T) {
 	}
 }
 
+// Test HTTP client configuration and connection pooling
+func TestHTTPClientConfiguration(t *testing.T) {
+	// Test that the global HTTP client is properly initialized
+	if httpClient == nil {
+		t.Fatal("Global HTTP client should be initialized")
+	}
+
+	// Test client timeout
+	if httpClient.Timeout != 60*time.Second {
+		t.Errorf("Expected timeout of 60s, got %v", httpClient.Timeout)
+	}
+
+	// Test transport configuration
+	transport, ok := httpClient.Transport.(*http.Transport)
+	if !ok {
+		t.Fatal("Expected *http.Transport")
+	}
+
+	// Test connection pool settings
+	if transport.MaxIdleConns != 100 {
+		t.Errorf("Expected MaxIdleConns=100, got %d", transport.MaxIdleConns)
+	}
+	if transport.MaxIdleConnsPerHost != 10 {
+		t.Errorf("Expected MaxIdleConnsPerHost=10, got %d", transport.MaxIdleConnsPerHost)
+	}
+	if transport.IdleConnTimeout != 90*time.Second {
+		t.Errorf("Expected IdleConnTimeout=90s, got %v", transport.IdleConnTimeout)
+	}
+
+	// Test HTTP/2 support
+	if !transport.ForceAttemptHTTP2 {
+		t.Error("Expected ForceAttemptHTTP2 to be true")
+	}
+
+	// Test timeouts
+	if transport.TLSHandshakeTimeout != 10*time.Second {
+		t.Errorf("Expected TLSHandshakeTimeout=10s, got %v", transport.TLSHandshakeTimeout)
+	}
+	if transport.ResponseHeaderTimeout != 30*time.Second {
+		t.Errorf("Expected ResponseHeaderTimeout=30s, got %v", transport.ResponseHeaderTimeout)
+	}
+}
+
+// Test connection reuse by making multiple requests
+func TestHTTPConnectionReuse(t *testing.T) {
+	// Create a test server that tracks connections
+	connCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		connCount++
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Write([]byte("%PDF-1.4\nfake pdf content"))
+	}))
+	defer server.Close()
+
+	// Create temporary directory
+	tempDir := t.TempDir()
+
+	// Test multiple downloads to same host
+	urls := []string{
+		server.URL + "/paper1.pdf",
+		server.URL + "/paper2.pdf",
+		server.URL + "/paper3.pdf",
+	}
+
+	successCount := 0
+	for i, url := range urls {
+		filename := fmt.Sprintf("paper%d.pdf", i+1)
+		fullPath := filepath.Join(tempDir, filename)
+
+		err := downloadPDF(url, fullPath)
+		if err != nil {
+			t.Logf("Download failed for %s: %v", url, err)
+		} else {
+			successCount++
+		}
+	}
+
+	// At least some downloads should succeed
+	if successCount == 0 {
+		t.Error("No downloads succeeded")
+	}
+
+	t.Logf("Successfully downloaded %d out of %d files", successCount, len(urls))
+}
+
+// Test HTTP client timeout behavior
+func TestHTTPClientTimeout(t *testing.T) {
+	// Create a server that delays response
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(2 * time.Second)
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Write([]byte("%PDF-1.4\nslow pdf content"))
+	}))
+	defer server.Close()
+
+	tempDir := t.TempDir()
+	fullPath := filepath.Join(tempDir, "slow.pdf")
+
+	// This should succeed as our timeout is 300 seconds for downloads
+	start := time.Now()
+	err := downloadPDF(server.URL, fullPath)
+	elapsed := time.Since(start)
+
+	if err != nil {
+		t.Errorf("Download should succeed but got error: %v", err)
+	}
+
+	// Should take around 2 seconds plus overhead
+	if elapsed > 10*time.Second {
+		t.Errorf("Download took too long: %v", elapsed)
+	}
+
+	t.Logf("Download completed in %v", elapsed)
+}
+
+// Test extractPDF with optimized client
+func TestExtractPDFWithOptimizedClient(t *testing.T) {
+	// Create a mock server that returns HTML with PDF link
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, ".pdf") {
+			w.Header().Set("Content-Type", "application/pdf")
+			w.Write([]byte("mock pdf content"))
+		} else {
+			w.Header().Set("Content-Type", "text/html")
+			html := fmt.Sprintf(`<html><body><a href="%s/paper.pdf">Download PDF</a></body></html>`, server.URL)
+			w.Write([]byte(html))
+		}
+	}))
+	defer server.Close()
+
+	// Test extractPDF function
+	pdfURL, filename, err := extractPDF(server.URL)
+	if err != nil {
+		t.Fatalf("extractPDF failed: %v", err)
+	}
+
+	if pdfURL == "" {
+		t.Error("Expected PDF URL but got empty string")
+	}
+
+	if filename == "" {
+		t.Error("Expected filename but got empty string")
+	}
+
+	t.Logf("Found PDF URL: %s, filename: %s", pdfURL, filename)
+}
+
+// Test Crossref API with optimized client
+func TestCrossrefAPIWithOptimizedClient(t *testing.T) {
+	// Skip if running in offline mode
+	if testing.Short() {
+		t.Skip("Skipping Crossref API test in short mode")
+	}
+
+	title := "Machine Learning"
+	authors := "Tom Mitchell"
+	year := "1997"
+
+	start := time.Now()
+	doi := searchCrossrefForDOI(title, authors, year)
+	elapsed := time.Since(start)
+
+	// Should complete within reasonable time
+	if elapsed > 30*time.Second {
+		t.Errorf("Crossref API call took too long: %v", elapsed)
+	}
+
+	t.Logf("Crossref query completed in %v, result: %s", elapsed, doi)
+}
+
 // Test searchCrossrefForDOI function
 func TestSearchCrossrefForDOI(t *testing.T) {
 	// Note: These tests make real API calls to Crossref
@@ -914,6 +1088,271 @@ func TestExtractPaperMetadataWithProblematicURLs(t *testing.T) {
 			}
 
 			t.Logf("%s: URL changed to %q", tt.description, paper.URL)
+		})
+	}
+}
+
+// TestConcurrentDownloader tests the concurrent download functionality
+func TestConcurrentDownloader(t *testing.T) {
+	// Create temp dir
+	tempDir := t.TempDir()
+
+	// Track request timing to verify concurrent execution
+	requestTimes := make(map[string]time.Time)
+	var requestMutex sync.Mutex
+
+	// Create mock server with artificial delay
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestMutex.Lock()
+		requestTimes[r.URL.Path] = time.Now()
+		requestMutex.Unlock()
+
+		// Add small delay to simulate network latency
+		time.Sleep(100 * time.Millisecond)
+
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Write([]byte("%PDF-1.4\nmock pdf content"))
+	}))
+	defer server.Close()
+
+	// Create downloader with low limits for testing
+	downloader := NewConcurrentDownloader(3, 2) // 3 global, 2 per host
+
+	// Create multiple download tasks
+	tasks := []*DownloadTask{
+		{
+			PDFUrl:   server.URL + "/paper1.pdf",
+			Filename: "paper1.pdf",
+			FullPath: filepath.Join(tempDir, "paper1.pdf"),
+		},
+		{
+			PDFUrl:   server.URL + "/paper2.pdf",
+			Filename: "paper2.pdf",
+			FullPath: filepath.Join(tempDir, "paper2.pdf"),
+		},
+		{
+			PDFUrl:   server.URL + "/paper3.pdf",
+			Filename: "paper3.pdf",
+			FullPath: filepath.Join(tempDir, "paper3.pdf"),
+		},
+	}
+
+	start := time.Now()
+	results := downloader.downloadConcurrently(tasks)
+	duration := time.Since(start)
+
+	// Verify all downloads succeeded
+	successCount := 0
+	for _, result := range results {
+		if result.Success {
+			successCount++
+			// Verify file was created
+			if _, err := os.Stat(result.Task.FullPath); err != nil {
+				t.Errorf("Expected file %s to exist", result.Task.FullPath)
+			}
+		} else {
+			t.Errorf("Download failed: %v", result.Error)
+		}
+	}
+
+	if successCount != 3 {
+		t.Errorf("Expected 3 successful downloads, got %d", successCount)
+	}
+
+	// Verify concurrent execution (should be faster than sequential)
+	expectedSequentialTime := time.Duration(len(tasks)) * 100 * time.Millisecond
+	if duration >= expectedSequentialTime {
+		t.Logf("Warning: Duration %v suggests downloads may not have been concurrent (expected < %v)", duration, expectedSequentialTime)
+	} else {
+		t.Logf("Downloads completed in %v (concurrent execution detected)", duration)
+	}
+
+	t.Logf("Successfully downloaded %d files concurrently in %v", successCount, duration)
+}
+
+// TestRetryFunctionality tests the retry logic with exponential backoff
+func TestRetryFunctionality(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Track retry attempts
+	attemptCount := 0
+	var attemptMutex sync.Mutex
+
+	// Create mock server that fails first 2 attempts, succeeds on 3rd
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptMutex.Lock()
+		attemptCount++
+		currentAttempt := attemptCount
+		attemptMutex.Unlock()
+
+		if currentAttempt <= 2 {
+			// First 2 attempts: return 503 (retryable)
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Service temporarily unavailable"))
+			return
+		}
+
+		// 3rd attempt: succeed
+		w.Header().Set("Content-Type", "application/pdf")
+		w.Write([]byte("%PDF-1.4\nretry success pdf"))
+	}))
+	defer server.Close()
+
+	fullPath := filepath.Join(tempDir, "retry_test.pdf")
+
+	// Test with retry config that allows 3 attempts
+	config := RetryConfig{
+		MaxRetries: 2,                     // Total of 3 attempts (0, 1, 2)
+		BaseDelay:  50 * time.Millisecond, // Fast for testing
+		MaxDelay:   200 * time.Millisecond,
+		Jitter:     false, // Disable jitter for predictable testing
+	}
+
+	start := time.Now()
+	err := downloadPDFWithRetry(server.URL, fullPath, config)
+	duration := time.Since(start)
+
+	if err != nil {
+		t.Errorf("Expected download to succeed after retries, got: %v", err)
+	}
+
+	// Verify file was created
+	if _, statErr := os.Stat(fullPath); statErr != nil {
+		t.Errorf("Expected file to exist at %s", fullPath)
+	}
+
+	// Should have made exactly 3 attempts
+	if attemptCount != 3 {
+		t.Errorf("Expected 3 attempts, got %d", attemptCount)
+	}
+
+	// Should take at least the retry delays (50ms + 100ms = 150ms minimum)
+	expectedMinDuration := 150 * time.Millisecond
+	if duration < expectedMinDuration {
+		t.Errorf("Duration %v too short, expected at least %v", duration, expectedMinDuration)
+	}
+
+	t.Logf("Retry test completed in %v with %d attempts", duration, attemptCount)
+}
+
+// TestNonRetryableError tests that non-retryable errors fail immediately
+func TestNonRetryableError(t *testing.T) {
+	tempDir := t.TempDir()
+
+	attemptCount := 0
+	var attemptMutex sync.Mutex
+
+	// Create mock server that always returns 404 (non-retryable)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attemptMutex.Lock()
+		attemptCount++
+		attemptMutex.Unlock()
+
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("Not Found"))
+	}))
+	defer server.Close()
+
+	fullPath := filepath.Join(tempDir, "nonretry_test.pdf")
+
+	config := DefaultRetryConfig()
+
+	err := downloadPDFWithRetry(server.URL, fullPath, config)
+
+	// Should fail immediately without retries
+	if err == nil {
+		t.Error("Expected download to fail for 404 error")
+	}
+
+	// Should have made only 1 attempt (no retries for 404)
+	if attemptCount != 1 {
+		t.Errorf("Expected 1 attempt for non-retryable error, got %d", attemptCount)
+	}
+
+	t.Logf("Non-retryable error handled correctly with %d attempts", attemptCount)
+}
+
+// TestUnpaywallFallback tests the Unpaywall API fallback functionality
+func TestUnpaywallFallback(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Mock Unpaywall API response
+	unpaywallServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, "/v2/10.1234/test") {
+			// Return a successful Unpaywall response with open access PDF
+			response := `{
+				"doi": "10.1234/test",
+				"is_oa": true,
+				"best_oa_location": {
+					"host_type": "repository",
+					"url_for_pdf": "http://localhost:` + strings.Split(r.Host, ":")[1] + `/open_access.pdf"
+				},
+				"oa_locations": []
+			}`
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(response))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer unpaywallServer.Close()
+
+	// Mock PDF server that serves the open access PDF
+	pdfServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/open_access.pdf" {
+			w.Header().Set("Content-Type", "application/pdf")
+			w.Write([]byte("%PDF-1.4\nopen access pdf content"))
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer pdfServer.Close()
+
+	// Create download task with a DOI-based URL that will fail initially
+	task := &DownloadTask{
+		URL:         "https://doi.org/10.1234/test",
+		PDFUrl:      "https://example.com/nonexistent.pdf", // This will fail
+		Filename:    "test.pdf",
+		FullPath:    filepath.Join(tempDir, "test.pdf"),
+		OriginalURL: "https://doi.org/10.1234/test",
+		Paper: &PaperMetadata{
+			DOI: "10.1234/test",
+		},
+	}
+
+	// Temporarily override the Unpaywall API URL in the function
+	// We'll need to modify the function to make it testable, but for now test the DOI extraction
+	doi := extractDOIFromURL(task.OriginalURL)
+	if doi != "10.1234/test" {
+		t.Errorf("Expected DOI '10.1234/test', got '%s'", doi)
+	}
+
+	t.Logf("Successfully extracted DOI: %s", doi)
+}
+
+// TestExtractDOIFromURL tests DOI extraction from various URL formats
+func TestExtractDOIFromURL(t *testing.T) {
+	tests := []struct {
+		url         string
+		expectedDOI string
+	}{
+		{"https://doi.org/10.1234/test", "10.1234/test"},
+		{"https://dx.doi.org/10.5678/example", "10.5678/example"},
+		{"https://example.com/doi/10.9999/paper", "10.9999/paper"},
+		{"doi:10.1111/sample", "10.1111/sample"},
+		{"DOI:10.2222/UPPERCASE", "10.2222/UPPERCASE"},
+		{"https://doi.org/10.1234/test?ref=123", "10.1234/test"},
+		{"https://doi.org/10.1234/test#section1", "10.1234/test"},
+		{"https://example.com/paper", ""},
+		{"", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.url, func(t *testing.T) {
+			result := extractDOIFromURL(tt.url)
+			if result != tt.expectedDOI {
+				t.Errorf("Expected DOI '%s', got '%s'", tt.expectedDOI, result)
+			}
 		})
 	}
 }

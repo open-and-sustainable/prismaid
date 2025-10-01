@@ -9,6 +9,33 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [Unreleased - 0.9.3]
+### Added
+- Concurrent download functionality with intelligent rate limiting:
+  - Global concurrency limit: Maximum 25 concurrent downloads system-wide
+  - Per-host concurrency limit: Maximum 4 concurrent requests per publisher/domain
+  - Prevents overwhelming individual publishers and reduces 429/403 throttling responses
+- Early response validation for efficient bandwidth usage:
+  - Validates Content-Type headers before downloading full response body
+  - Checks first 4 bytes for %PDF signature to confirm valid PDF files
+  - Aborts quickly on HTML error pages or invalid content
+- Intelligent retry policy with exponential backoff:
+  - Automatic retry on transient errors (5xx status codes, timeouts, connection resets)
+  - Respects Retry-After headers from servers to avoid aggressive retrying
+  - Exponential backoff with jitter (1s, 2s, 4s delays) to prevent retry storms
+  - Maximum 3 retry attempts per download with smart error classification
+  - Non-retryable errors (4xx client errors) fail immediately
+- Unpaywall API integration as final fallback:
+  - When downloads fail, automatically searches Unpaywall database for open access alternatives
+  - Finds free, legal versions from 50,000+ publishers and repositories
+  - Extracts DOIs from URLs or metadata to query open access database
+  - Helps recover papers that are paywalled at original source but freely available elsewhere
+
+### Changed
+- Download tool now processes multiple PDFs concurrently instead of sequentially
+- Significantly improved download performance for batch operations
+- Enhanced error handling and reporting for failed downloads
+
 ## [0.9.2] - 2025-09-30
 ### Fixed
 - Improved download tool features:

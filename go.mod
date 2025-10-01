@@ -11,6 +11,7 @@ require (
 	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
 	github.com/open-and-sustainable/alembica v0.0.8
 	github.com/pdfcpu/pdfcpu v0.11.0
+	golang.org/x/sync v0.16.0
 )
 
 require (
@@ -81,7 +82,6 @@ require (
 	golang.org/x/image v0.27.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
-	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
