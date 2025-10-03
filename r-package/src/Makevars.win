@@ -27,13 +27,13 @@ R_wrapper.o: R_wrapper.c
 
 # Copy prismaid DLL to build directory so it's installed alongside prismaid.dll
 copy_prismaid_dll:
-	@if exist "..\inst\libs\windows\libprismaid_windows_amd64.dll" ( \
-		echo Copying prismaid DLL to build directory && \
-		copy "..\inst\libs\windows\libprismaid_windows_amd64.dll" . \
-	) else ( \
-		echo ERROR: prismaid DLL not found at ../inst/libs/windows/libprismaid_windows_amd64.dll && \
-		exit 1 \
-	)
+	@if [ -f "../inst/libs/windows/libprismaid_windows_amd64.dll" ]; then \
+		echo "Copying prismaid DLL to build directory"; \
+		cp "../inst/libs/windows/libprismaid_windows_amd64.dll" .; \
+	else \
+		echo "ERROR: prismaid DLL not found at ../inst/libs/windows/libprismaid_windows_amd64.dll"; \
+		exit 1; \
+	fi
 
 .PHONY: copy_prismaid_dll
 
