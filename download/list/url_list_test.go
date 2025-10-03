@@ -54,10 +54,10 @@ func TestDownloadURLList(t *testing.T) {
 			t.Errorf("DownloadURLList failed: %v", err)
 		}
 
-		// Check report was created
-		reportPath := strings.TrimSuffix(csvFile, ".csv") + "_report.csv"
-		if _, err := os.Stat(reportPath); os.IsNotExist(err) {
-			t.Error("Report file not created")
+		// Check download file was created
+		downloadPath := strings.TrimSuffix(csvFile, ".csv") + "_download.csv"
+		if _, err := os.Stat(downloadPath); os.IsNotExist(err) {
+			t.Error("Download file not created")
 		}
 	})
 
@@ -370,37 +370,41 @@ func TestFindUniqueFilename(t *testing.T) {
 	}
 }
 
-// Test writeDownloadReport function
-func TestWriteDownloadReport(t *testing.T) {
+// Test writeURLListResults function
+func TestWriteURLListResults(t *testing.T) {
 	tempDir := t.TempDir()
-	reportPath := filepath.Join(tempDir, "report.csv")
+	downloadPath := filepath.Join(tempDir, "download.csv")
 
-	papers := []*PaperMetadata{
+	allURLs := []string{
+		"http://example.com/paper1",
+		"http://example.com/paper2",
+		"http://example.com/paper3",
+	}
+
+	successfulTasks := []*DownloadTask{
 		{
-			ID:         "1",
-			Title:      "Test Paper",
-			Downloaded: true,
-			Filename:   "test.pdf",
-		},
-		{
-			ID:       "2",
-			Title:    "Failed",
-			ErrorMsg: "No PDF found",
+			OriginalURL: "http://example.com/paper1",
+			Filename:    "paper1.pdf",
 		},
 	}
 
-	err := writeDownloadReport(papers, reportPath)
+	failedURLs := []string{
+		"http://example.com/paper2",
+		"http://example.com/paper3",
+	}
+
+	err := writeURLListResults(allURLs, successfulTasks, failedURLs, downloadPath)
 	if err != nil {
-		t.Fatalf("Failed to write report: %v", err)
+		t.Fatalf("Failed to write download file: %v", err)
 	}
 
 	// Verify file exists
-	if _, err := os.Stat(reportPath); os.IsNotExist(err) {
-		t.Error("Report file not created")
+	if _, err := os.Stat(downloadPath); os.IsNotExist(err) {
+		t.Error("Download file not created")
 	}
 
 	// Read and verify content
-	file, err := os.Open(reportPath)
+	file, err := os.Open(downloadPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -412,8 +416,23 @@ func TestWriteDownloadReport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(records) != 3 { // header + 2 data rows
-		t.Errorf("Expected 3 rows, got %d", len(records))
+	if len(records) != 4 { // header + 3 data rows
+		t.Errorf("Expected 4 rows, got %d", len(records))
+	}
+
+	// Check header
+	if records[0][0] != "url" || records[0][1] != "downloaded" || records[0][2] != "error_reason" || records[0][3] != "filename" {
+		t.Errorf("Unexpected header: %v", records[0])
+	}
+
+	// Check successful download
+	if records[1][1] != "true" || records[1][3] != "paper1.pdf" {
+		t.Errorf("Unexpected successful record: %v", records[1])
+	}
+
+	// Check failed downloads
+	if records[2][1] != "false" || records[2][2] == "" {
+		t.Errorf("Unexpected failed record: %v", records[2])
 	}
 }
 
@@ -466,46 +485,6 @@ func TestExtractDOIFromText(t *testing.T) {
 	}
 }
 
-// Test writeFailedURLsLog function
-func TestWriteFailedURLsLog(t *testing.T) {
-	tempDir := t.TempDir()
-	logPath := filepath.Join(tempDir, "failed_urls.txt")
-
-	failedURLs := []string{
-		"https://example.com/paper1.pdf",
-		"https://invalid-domain.com/paper2.pdf",
-		"https://www.researchgate.net/publication/123456",
-	}
-
-	err := writeFailedURLsLog(failedURLs, logPath)
-	if err != nil {
-		t.Fatalf("Failed to write failed URLs log: %v", err)
-	}
-
-	// Verify file exists
-	if _, err := os.Stat(logPath); os.IsNotExist(err) {
-		t.Error("Failed URLs log file not created")
-	}
-
-	// Read and verify content
-	content, err := os.ReadFile(logPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	contentStr := string(content)
-	for _, url := range failedURLs {
-		if !strings.Contains(contentStr, url) {
-			t.Errorf("Failed URLs log missing URL: %s", url)
-		}
-	}
-
-	// Verify header comments
-	if !strings.Contains(contentStr, "# Failed Downloads") {
-		t.Error("Failed URLs log missing header comment")
-	}
-}
-
 // Test writeEnhancedCSV function
 func TestWriteEnhancedCSV(t *testing.T) {
 	tempDir := t.TempDir()
@@ -520,6 +499,7 @@ func TestWriteEnhancedCSV(t *testing.T) {
 			Year:           "2023",
 			URL:            "https://example.com/1.pdf",
 			Downloaded:     true,
+			Filename:       "paper1.pdf",
 			OriginalRecord: []string{"Paper One", "Smith, J.", "2023", "https://example.com/1.pdf"},
 		},
 		{
@@ -529,6 +509,7 @@ func TestWriteEnhancedCSV(t *testing.T) {
 			Year:           "2024",
 			URL:            "https://example.com/2.pdf",
 			Downloaded:     false,
+			ErrorMsg:       "No PDF found",
 			OriginalRecord: []string{"Paper Two", "Jones, M.", "2024", "https://example.com/2.pdf"},
 		},
 	}
@@ -561,8 +542,14 @@ func TestWriteEnhancedCSV(t *testing.T) {
 		t.Fatal("No header in enhanced CSV")
 	}
 	header := records[0]
-	if header[len(header)-1] != "downloaded" {
-		t.Errorf("Last column should be 'downloaded', got %q", header[len(header)-1])
+	expectedHeaders := []string{"downloaded", "error_reason", "filename"}
+	if len(header) < 3 {
+		t.Fatal("Header missing expected columns")
+	}
+	for i, expected := range expectedHeaders {
+		if header[len(header)-3+i] != expected {
+			t.Errorf("Column %d should be '%s', got %q", len(header)-3+i, expected, header[len(header)-3+i])
+		}
 	}
 
 	// Check data rows
@@ -570,12 +557,26 @@ func TestWriteEnhancedCSV(t *testing.T) {
 		t.Errorf("Expected 3 rows, got %d", len(records))
 	}
 
-	// Verify download status column
-	if records[1][len(records[1])-1] != "true" {
-		t.Errorf("Row 1 should have downloaded=true, got %q", records[1][len(records[1])-1])
+	// Verify download columns for successful row
+	if records[1][len(records[1])-3] != "true" {
+		t.Errorf("Row 1 should have downloaded=true, got %q", records[1][len(records[1])-3])
 	}
-	if records[2][len(records[2])-1] != "false" {
-		t.Errorf("Row 2 should have downloaded=false, got %q", records[2][len(records[2])-1])
+	if records[1][len(records[1])-2] != "" {
+		t.Errorf("Row 1 should have empty error_reason, got %q", records[1][len(records[1])-2])
+	}
+	if records[1][len(records[1])-1] != "paper1.pdf" {
+		t.Errorf("Row 1 should have filename=paper1.pdf, got %q", records[1][len(records[1])-1])
+	}
+
+	// Verify download columns for failed row
+	if records[2][len(records[2])-3] != "false" {
+		t.Errorf("Row 2 should have downloaded=false, got %q", records[2][len(records[2])-3])
+	}
+	if records[2][len(records[2])-2] != "No PDF found" {
+		t.Errorf("Row 2 should have error_reason='No PDF found', got %q", records[2][len(records[2])-2])
+	}
+	if records[2][len(records[2])-1] != "" {
+		t.Errorf("Row 2 should have empty filename, got %q", records[2][len(records[2])-1])
 	}
 }
 
@@ -601,18 +602,18 @@ func TestProcessTextFileWithFailedLogging(t *testing.T) {
 		t.Errorf("processTextFile failed: %v", err)
 	}
 
-	// Check if failed URLs log was created
-	failedLogPath := filepath.Join(tempDir, "test_failed.txt")
-	if _, err := os.Stat(failedLogPath); os.IsNotExist(err) {
-		t.Error("Failed URLs log not created")
+	// Check if download file was created
+	downloadPath := filepath.Join(tempDir, "test_download.csv")
+	if _, err := os.Stat(downloadPath); os.IsNotExist(err) {
+		t.Error("Download file not created")
 	} else {
 		// Read and verify content
-		content, err := os.ReadFile(failedLogPath)
+		content, err := os.ReadFile(downloadPath)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if !strings.Contains(string(content), "invalid-url-will-fail.com") {
-			t.Error("Failed URLs log missing invalid URL")
+			t.Error("Download file missing invalid URL")
 		}
 	}
 }

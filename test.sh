@@ -54,12 +54,12 @@ if go run cmd/main.go --download-URL "$TEMP_DOWNLOAD_DIR/url_list_test.txt"; the
         echo "    ⚠ Warning: No PDF files were downloaded"
     fi
 
-    # Check if failed URLs log was generated
-    if [ -f "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" ]; then
-        echo "    ✓ Failed URLs log generated"
-        # Move failed URLs log to outputs for inspection
-        cp "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" projects/test/outputs/download/
-        FAILED_COUNT=$(grep -c "^https" "$TEMP_DOWNLOAD_DIR/url_list_test_failed.txt" 2>/dev/null || echo "0")
+    # Check if download results file was generated
+    if [ -f "$TEMP_DOWNLOAD_DIR/url_list_test_download.csv" ]; then
+        echo "    ✓ Download results file generated"
+        # Move download results file to outputs for inspection
+        cp "$TEMP_DOWNLOAD_DIR/url_list_test_download.csv" projects/test/outputs/download/
+        FAILED_COUNT=$(grep -c ",false," "$TEMP_DOWNLOAD_DIR/url_list_test_download.csv" 2>/dev/null || echo "0")
         if [ "$FAILED_COUNT" -gt 0 ]; then
             echo "    ✓ Logged $FAILED_COUNT failed URLs"
         fi
@@ -78,15 +78,15 @@ cp projects/test/inputs/download/csv_test.csv "$TEMP_CSV_DIR/"
 if go run cmd/main.go --download-URL "$TEMP_CSV_DIR/csv_test.csv" 2>&1 | tee "$TEMP_CSV_LOG"; then
     echo "    ✓ CSV download command executed"
 
-    # Check if report was generated
-    if [ -f "$TEMP_CSV_DIR/csv_test_report.csv" ]; then
-        echo "    ✓ Download report generated"
-        # Move report to outputs for inspection
-        cp "$TEMP_CSV_DIR/csv_test_report.csv" projects/test/outputs/download/
+    # Check if download results file was generated
+    if [ -f "$TEMP_CSV_DIR/csv_test_download.csv" ]; then
+        echo "    ✓ Download results file generated"
+        # Move download results file to outputs for inspection
+        cp "$TEMP_CSV_DIR/csv_test_download.csv" projects/test/outputs/download/
 
-        # Count successful downloads in the report (excluding header)
-        SUCCESS_COUNT=$(grep -c ",true," "$TEMP_CSV_DIR/csv_test_report.csv" 2>/dev/null || echo "0")
-        TOTAL_COUNT=$(tail -n +2 "$TEMP_CSV_DIR/csv_test_report.csv" | wc -l 2>/dev/null || echo "0")
+        # Count successful downloads in the results file (excluding header)
+        SUCCESS_COUNT=$(grep -c ",true," "$TEMP_CSV_DIR/csv_test_download.csv" 2>/dev/null || echo "0")
+        TOTAL_COUNT=$(tail -n +2 "$TEMP_CSV_DIR/csv_test_download.csv" | wc -l 2>/dev/null || echo "0")
         echo "    ✓ Downloaded $SUCCESS_COUNT out of $TOTAL_COUNT papers"
 
         # Check for problematic URL detection in the log output
@@ -101,16 +101,7 @@ if go run cmd/main.go --download-URL "$TEMP_CSV_DIR/csv_test.csv" 2>&1 | tee "$T
             fi
         fi
     else
-        echo "    ⚠ Warning: Download report not found"
-    fi
-
-    # Check if enhanced CSV with download status was generated
-    if [ -f "$TEMP_CSV_DIR/csv_test_with_status.csv" ]; then
-        echo "    ✓ Enhanced CSV with download status generated"
-        # Move enhanced CSV to outputs for inspection
-        cp "$TEMP_CSV_DIR/csv_test_with_status.csv" projects/test/outputs/download/
-    else
-        echo "    ⚠ Warning: Enhanced CSV with download status not found"
+        echo "    ⚠ Warning: Download results file not found"
     fi
 
     # Move downloaded PDFs to test output

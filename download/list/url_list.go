@@ -371,14 +371,12 @@ func processTextFile(path, dirPath string) error {
 		}
 	}
 
-	// Write failed URLs log if there are any failures
-	if len(failedURLs) > 0 {
-		failedLogPath := strings.TrimSuffix(path, filepath.Ext(path)) + "_failed.txt"
-		if err := writeFailedURLsLog(failedURLs, failedLogPath); err != nil {
-			logger.Error(fmt.Sprintf("Failed to write failed URLs log: %v", err))
-		} else {
-			logger.Info(fmt.Sprintf("Failed URLs log saved to: %s", failedLogPath))
-		}
+	// Generate download results file for plain text URL lists
+	downloadPath := strings.TrimSuffix(path, filepath.Ext(path)) + "_download.csv"
+	if err := writeURLListResults(urls, tasks, failedURLs, downloadPath); err != nil {
+		logger.Error(fmt.Sprintf("Failed to write download file: %v", err))
+	} else {
+		logger.Info(fmt.Sprintf("Download file saved to: %s", downloadPath))
 	}
 
 	return nil
@@ -473,21 +471,13 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 		}
 	}
 
-	// Generate download report (original format for backward compatibility)
-	reportPath := strings.TrimSuffix(path, filepath.Ext(path)) + "_report.csv"
-	if err := writeDownloadReport(papers, reportPath); err != nil {
-		logger.Error(fmt.Sprintf("Failed to write download report: %v", err))
-	} else {
-		logger.Info(fmt.Sprintf("Download report saved to: %s", reportPath))
-	}
-
-	// Generate enhanced CSV/TSV with original columns + downloaded status
+	// Generate single enhanced CSV/TSV with original columns + download fields
 	ext := filepath.Ext(path)
-	enhancedPath := strings.TrimSuffix(path, ext) + "_with_status" + ext
+	enhancedPath := strings.TrimSuffix(path, ext) + "_download" + ext
 	if err := writeEnhancedCSV(papers, headers, enhancedPath, delimiter); err != nil {
 		logger.Error(fmt.Sprintf("Failed to write enhanced CSV: %v", err))
 	} else {
-		logger.Info(fmt.Sprintf("Enhanced CSV with download status saved to: %s", enhancedPath))
+		logger.Info(fmt.Sprintf("Enhanced CSV with download results saved to: %s", enhancedPath))
 	}
 
 	// Log summary
@@ -1101,11 +1091,11 @@ func logDetectedColumns(headers []string, mapping ColumnMapping) {
 	}
 }
 
-// writeDownloadReport generates a CSV report of download results
-func writeDownloadReport(papers []*PaperMetadata, outputPath string) error {
+// writeURLListResults creates a CSV file with download results for plain text URL lists
+func writeURLListResults(allURLs []string, successfulTasks []*DownloadTask, failedURLs []string, outputPath string) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
-		return fmt.Errorf("failed to create report file: %w", err)
+		return fmt.Errorf("failed to create results file: %w", err)
 	}
 	defer file.Close()
 
@@ -1113,63 +1103,43 @@ func writeDownloadReport(papers []*PaperMetadata, outputPath string) error {
 	defer writer.Flush()
 
 	// Write header
-	headers := []string{"ID", "Title", "Authors", "Year", "Journal", "URL", "DOI", "Downloaded", "Filename", "Error"}
+	headers := []string{"url", "downloaded", "error_reason", "filename"}
 	if err := writer.Write(headers); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
-	// Write data rows
-	for _, paper := range papers {
-		record := []string{
-			paper.ID,
-			paper.Title,
-			paper.Authors,
-			paper.Year,
-			paper.Journal,
-			paper.URL,
-			paper.DOI,
-			fmt.Sprintf("%t", paper.Downloaded),
-			paper.Filename,
-			paper.ErrorMsg,
-		}
-		if err := writer.Write(record); err != nil {
-			return fmt.Errorf("failed to write record: %w", err)
-		}
+	// Create lookup maps for efficiency
+	successMap := make(map[string]*DownloadTask)
+	for _, task := range successfulTasks {
+		successMap[task.OriginalURL] = task
 	}
 
-	return nil
-}
-
-// writeFailedURLsLog writes a list of failed URLs to a text file
-func writeFailedURLsLog(failedURLs []string, outputPath string) error {
-	file, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("failed to create failed URLs log: %w", err)
-	}
-	defer file.Close()
-
-	writer := bufio.NewWriter(file)
-	defer writer.Flush()
-
-	// Write header comment
-	if _, err := writer.WriteString("# Failed Downloads - URLs that could not be retrieved\n"); err != nil {
-		return fmt.Errorf("failed to write header: %w", err)
-	}
-	if _, err := writer.WriteString("# One URL per line\n\n"); err != nil {
-		return fmt.Errorf("failed to write header: %w", err)
-	}
-
-	// Write each failed URL
+	failedMap := make(map[string]bool)
 	for _, url := range failedURLs {
-		if _, err := writer.WriteString(url + "\n"); err != nil {
-			return fmt.Errorf("failed to write URL: %w", err)
+		failedMap[url] = true
+	}
+
+	// Write data rows for all URLs
+	for _, url := range allURLs {
+		if task, exists := successMap[url]; exists {
+			// Successful download
+			record := []string{url, "true", "", task.Filename}
+			if err := writer.Write(record); err != nil {
+				return fmt.Errorf("failed to write record: %w", err)
+			}
+		} else if failedMap[url] {
+			// Failed download
+			record := []string{url, "false", "Download failed or no PDF found", ""}
+			if err := writer.Write(record); err != nil {
+				return fmt.Errorf("failed to write record: %w", err)
+			}
 		}
 	}
 
 	return nil
 }
 
-// writeEnhancedCSV writes a CSV/TSV file with all original columns plus a 'downloaded' column
+// writeEnhancedCSV writes a CSV/TSV file with all original columns plus download result columns
 func writeEnhancedCSV(papers []*PaperMetadata, headers []string, outputPath string, delimiter rune) error {
 	file, err := os.Create(outputPath)
 	if err != nil {
@@ -1181,13 +1151,13 @@ func writeEnhancedCSV(papers []*PaperMetadata, headers []string, outputPath stri
 	writer.Comma = delimiter
 	defer writer.Flush()
 
-	// Write header with additional 'downloaded' column
-	enhancedHeaders := append(headers, "downloaded")
+	// Write header with additional download result columns
+	enhancedHeaders := append(headers, "downloaded", "error_reason", "filename")
 	if err := writer.Write(enhancedHeaders); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
-	// Write data rows with download status
+	// Write data rows with download results
 	for _, paper := range papers {
 		// Start with the original record
 		record := make([]string, len(paper.OriginalRecord))
@@ -1199,6 +1169,20 @@ func writeEnhancedCSV(papers []*PaperMetadata, headers []string, outputPath stri
 			downloadedStatus = "true"
 		}
 		record = append(record, downloadedStatus)
+
+		// Append error reason (empty if successful)
+		errorReason := ""
+		if paper.ErrorMsg != "" {
+			errorReason = paper.ErrorMsg
+		}
+		record = append(record, errorReason)
+
+		// Append filename (empty if failed)
+		filename := ""
+		if paper.Downloaded && paper.Filename != "" {
+			filename = paper.Filename
+		}
+		record = append(record, filename)
 
 		if err := writer.Write(record); err != nil {
 			return fmt.Errorf("failed to write record: %w", err)

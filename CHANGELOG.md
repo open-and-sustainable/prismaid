@@ -9,6 +9,11 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.5] - 2025-10-03
+### Changed
+- Configuration for R package compilation and deployment on R universe
+- Modified download tool output to report consistent '_download' lists, with success, eventual reason for failure, and filename for stored PDFs
+
 ## [0.9.4] - 2025-10-01
 ### Fixed
 - DOI handling consistency across download tool:

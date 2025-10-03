@@ -1,35 +1,62 @@
 # Compiler Flags
 PKG_CFLAGS = -I$(R_HOME)/include
 
-# Platform Identification
-UNAME := $(shell uname)
+# Platform Identification - get system info
+UNAME_S := $(shell uname -s 2>/dev/null || echo "unknown")
+UNAME_M := $(shell uname -m 2>/dev/null || echo "unknown")
+
+# Print detected platform for debugging
+$(info Detected system: $(UNAME_S) $(UNAME_M))
 
 # Platform-Specific Configuration for Library Linking
-ifeq ($(UNAME), Linux)
-	PKG_LIBS = -L$(R_HOME)/lib -lR -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux'
+ifeq ($(UNAME_S), Linux)
+    ifeq ($(UNAME_M), x86_64)
+        $(info Using Linux x86_64 configuration)
+        PKG_LIBS = -L$(R_HOME)/lib -lR -L../inst/libs/linux -lprismaid_linux_amd64 -Wl,-rpath,'$$ORIGIN/../libs/linux'
+    else
+        $(info Linux $(UNAME_M) not officially supported - building without native libraries)
+        # For unsupported Linux architectures, build without native libs
+    endif
 endif
 
-# Windows configuration moved to Makevars.win file
-# ifeq ($(UNAME), Windows_NT)
-#     # Ensure the R base library and your library are both linked.
-# 	PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR -L../inst/libs/windows -lprismaid_windows_amd64
-#     # If using a .def file to control exports, ensure it's being used correctly:
-#     # PKG_LIBS += -Wl,--input-def=../inst/libs/windows/libprismaid_windows_amd64.def
-#     # Optionally add flags to ensure all symbols are exported:
-#     PKG_LIBS += -Wl,--verbose
-# endif
+# Note: Windows configuration is handled by Makevars.win
 
-
-ifeq ($(UNAME), Darwin)
-	PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_arm64 -Wl,-rpath,@loader_path/../libs/macos -Wl,-install_name,@loader_path/../libs/macos/libprismaid_darwin_arm64.dylib
-    # Additional command to adjust library path in prismaid.so after building
-    all: prismaid.so
-		install_name_tool -change libprismaid_darwin_arm64.dylib @loader_path/../libs/macos/libprismaid_darwin_arm64.dylib prismaid.so
+ifeq ($(UNAME_S), Darwin)
+    ifeq ($(UNAME_M), arm64)
+        $(info Using macOS ARM64 configuration)
+        PKG_LIBS = -L../inst/libs/macos -lprismaid_darwin_arm64 -Wl,-rpath,@loader_path/../libs/macos -Wl,-install_name,@loader_path/../libs/macos/libprismaid_darwin_arm64.dylib
+        # Additional command to adjust library path in prismaid.so after building
+        all: prismaid.so
+			install_name_tool -change libprismaid_darwin_arm64.dylib @loader_path/../libs/macos/libprismaid_darwin_arm64.dylib prismaid.so || true
+    else
+        $(info macOS $(UNAME_M) not officially supported - building without native libraries)
+        # For unsupported macOS architectures, build without native libs
+    endif
 endif
 
-# Default target
+# For any unrecognized platforms (including WebAssembly), just build the R wrapper
+# This allows WebAssembly and other platforms to build successfully with limited functionality
+ifeq ($(PKG_LIBS),)
+    $(info Building for platform $(UNAME_S)/$(UNAME_M) without native libraries)
+endif
+
+# Default target - always try to build R_wrapper.o
 all: R_wrapper.o
 
 # Compile R_wrapper.c to R_wrapper.o
 R_wrapper.o: R_wrapper.c
 	$(CC) $(PKG_CFLAGS) -c R_wrapper.c -o R_wrapper.o
+
+# Additional safety: check if we can find the required libraries and warn if not
+.PHONY: check-libs
+check-libs:
+	@if [ "$(UNAME_S)" = "Linux" ] && [ "$(UNAME_M)" = "x86_64" ]; then \
+		if [ ! -f "../inst/libs/linux/libprismaid_linux_amd64.so" ]; then \
+			echo "Warning: libprismaid_linux_amd64.so not found"; \
+		fi; \
+	fi
+	@if [ "$(UNAME_S)" = "Darwin" ] && [ "$(UNAME_M)" = "arm64" ]; then \
+		if [ ! -f "../inst/libs/macos/libprismaid_darwin_arm64.dylib" ]; then \
+			echo "Warning: libprismaid_darwin_arm64.dylib not found"; \
+		fi; \
+	fi

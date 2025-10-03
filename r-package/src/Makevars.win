@@ -5,7 +5,18 @@
 PKG_CFLAGS = -I$(R_HOME)/include
 
 # Windows Library Linking Configuration
-PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR -L../inst/libs/windows -lprismaid_windows_amd64
+# For Windows, we link directly to the DLL using its full path
+# This approach works with Go-generated DLLs that export C functions
+
+# Standard R linking
+PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR
+
+# Link directly to our DLL using its full path
+# The DLL exports the Go functions we need
+PKG_LIBS += ../inst/libs/windows/libprismaid_windows_amd64.dll
+
+# Additional Windows linker flags
+PKG_LIBS += -Wl,--enable-auto-import -Wl,--export-all-symbols
 
 # Default target
 all: R_wrapper.o
@@ -13,3 +24,7 @@ all: R_wrapper.o
 # Compile R_wrapper.c to R_wrapper.o
 R_wrapper.o: R_wrapper.c
 	$(CC) $(PKG_CFLAGS) -c R_wrapper.c -o R_wrapper.o
+
+# Print build information
+$(info Windows build: linking directly to DLL)
+$(info DLL path: ../inst/libs/windows/libprismaid_windows_amd64.dll)
