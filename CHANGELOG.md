@@ -9,6 +9,13 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.9.6] - 2025-10-03
+### Fixed
+- Configuration of R package to avoid compilation errors for unsupported CPUs
+- Windows r-universe deployment configuration
+- Infinite recursive DOI resolutions
+
+
 ## [0.9.5] - 2025-10-03
 ### Changed
 - Configuration for R package compilation and deployment on R universe

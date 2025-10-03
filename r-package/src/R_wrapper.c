@@ -1,4 +1,7 @@
-#include "_cgo_export.h"  // Header to access Go functions
+// Include Go headers only when native libraries are available
+#ifdef NATIVE_LIBS_AVAILABLE
+#include "_cgo_export.h"
+#endif
 
 typedef void* SEXP;
 
@@ -11,9 +14,18 @@ extern void Rf_unprotect(int count);
 #define PROTECT(s) Rf_protect(s)
 #define UNPROTECT(n) Rf_unprotect(n)
 
+// Error message for unsupported platforms
+static const char* UNSUPPORTED_PLATFORM_MSG = 
+    "Error: prismaid native libraries not available on this platform.\n"
+    "Supported platforms: Linux x86_64, Windows x86_64, macOS ARM64.\n"
+    "Please use the command-line binary or other language bindings on this platform.";
+
+#ifdef NATIVE_LIBS_AVAILABLE
+
+// Native implementation - call actual Go functions
 SEXP RunReviewR_wrap(SEXP input) {
-    const char *c_input = (const char*)input;  // Cast input as a string
-    const char *c_result = RunReviewR((char *)c_input);  // Call the Go function
+    const char *c_input = (const char*)input;
+    const char *c_result = RunReviewR((char *)c_input);
     SEXP result = Rf_mkString(c_result);
     PROTECT(result);
     UNPROTECT(1);
@@ -66,6 +78,59 @@ SEXP ScreeningR_wrap(SEXP input) {
     const char *c_result = ScreeningR((char *)c_input);
     
     SEXP result = Rf_mkString(c_result);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+#else
+
+// Stub implementation for unsupported platforms
+// These functions return informative error messages
+SEXP RunReviewR_wrap(SEXP input) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP DownloadZoteroPDFsR_wrap(SEXP username, SEXP apiKey, SEXP collectionName, SEXP parentDir) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP DownloadURLListR_wrap(SEXP path) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ScreeningR_wrap(SEXP input) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+#endif
+
+// Platform detection function for R to call
+SEXP check_platform_support() {
+#ifdef NATIVE_LIBS_AVAILABLE
+    SEXP result = Rf_mkString("supported");
+#else
+    SEXP result = Rf_mkString("unsupported");
+#endif
     PROTECT(result);
     UNPROTECT(1);
     return result;

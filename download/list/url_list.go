@@ -1384,6 +1384,19 @@ func findPDFLink(doc *goquery.Document, pageURL string) string {
 //   - filename: A sanitized filename to use when saving the PDF
 //   - err: An error if the HTTP request or HTML parsing fails, nil otherwise
 func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
+	return extractPDFWithDepth(pageURL, 0)
+}
+
+func extractPDFWithDepth(pageURL string, depth int) (pdfURL string, filename string, err error) {
+	return extractPDFWithDepthAndVisited(pageURL, depth, make(map[string]bool))
+}
+
+func extractPDFWithDepthAndVisited(pageURL string, depth int, visitedDOIs map[string]bool) (pdfURL string, filename string, err error) {
+	// Prevent infinite recursion by limiting depth
+	const maxDepth = 3
+	if depth > maxDepth {
+		return "", "", fmt.Errorf("maximum recursion depth reached for URL: %s", pageURL)
+	}
 	// Check if URL looks like a direct PDF link
 	urlLower := strings.ToLower(pageURL)
 	if strings.Contains(urlLower, ".pdf") ||
@@ -1487,10 +1500,17 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 					if strings.HasPrefix(strings.ToLower(doi), "doi:") {
 						doi = strings.TrimSpace(doi[4:])
 					}
+					// Check if we've already processed this DOI
+					if visitedDOIs[doi] {
+						logger.Info("DOI already processed, skipping:", doi)
+						return
+					}
+					visitedDOIs[doi] = true
+
 					logger.Info("Found DOI in meta tags:", doi, "- attempting to resolve")
 					// Recursively call extractPDF with the DOI URL
 					doiURL := convertDOIToURL(doi)
-					resolvedURL, resolvedFilename, err := extractPDF(doiURL)
+					resolvedURL, resolvedFilename, err := extractPDFWithDepthAndVisited(doiURL, depth+1, visitedDOIs)
 					if err == nil && resolvedURL != "" {
 						pdfURL = resolvedURL
 						if resolvedFilename != "" {
@@ -1523,9 +1543,16 @@ func extractPDF(pageURL string) (pdfURL string, filename string, err error) {
 						doi = strings.TrimSuffix(doi, ";")
 						doi = strings.TrimSuffix(doi, ")")
 
+						// Check if we've already processed this DOI
+						if visitedDOIs[doi] {
+							logger.Info("DOI already processed, skipping:", doi)
+							return
+						}
+						visitedDOIs[doi] = true
+
 						logger.Info("Found DOI in page content:", doi, "- attempting to resolve")
 						doiURL := convertDOIToURL(doi)
-						resolvedURL, resolvedFilename, err := extractPDF(doiURL)
+						resolvedURL, resolvedFilename, err := extractPDFWithDepthAndVisited(doiURL, depth+1, visitedDOIs)
 						if err == nil && resolvedURL != "" {
 							pdfURL = resolvedURL
 							if resolvedFilename != "" {

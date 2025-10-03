@@ -2,7 +2,7 @@
 # This file is used specifically for Windows builds
 
 # Compiler Flags
-PKG_CFLAGS = -I$(R_HOME)/include
+PKG_CFLAGS = -I$(R_HOME)/include -DNATIVE_LIBS_AVAILABLE
 
 # Windows Library Linking Configuration
 # For Windows, we link directly to the DLL using its full path
@@ -18,13 +18,25 @@ PKG_LIBS += ../inst/libs/windows/libprismaid_windows_amd64.dll
 # Additional Windows linker flags
 PKG_LIBS += -Wl,--enable-auto-import -Wl,--export-all-symbols
 
-# Default target
-all: R_wrapper.o
+# Default target - build R wrapper and copy prismaid DLL
+all: R_wrapper.o copy_prismaid_dll
 
 # Compile R_wrapper.c to R_wrapper.o
 R_wrapper.o: R_wrapper.c
 	$(CC) $(PKG_CFLAGS) -c R_wrapper.c -o R_wrapper.o
 
+# Copy prismaid DLL to build directory so it's installed alongside prismaid.dll
+copy_prismaid_dll:
+	@if exist "..\inst\libs\windows\libprismaid_windows_amd64.dll" ( \
+		echo Copying prismaid DLL to build directory && \
+		copy "..\inst\libs\windows\libprismaid_windows_amd64.dll" . \
+	) else ( \
+		echo ERROR: prismaid DLL not found at ../inst/libs/windows/libprismaid_windows_amd64.dll && \
+		exit 1 \
+	)
+
+.PHONY: copy_prismaid_dll
+
 # Print build information
-$(info Windows build: linking directly to DLL)
+$(info Windows build: linking directly to DLL and copying to build directory)
 $(info DLL path: ../inst/libs/windows/libprismaid_windows_amd64.dll)

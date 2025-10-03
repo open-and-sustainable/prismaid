@@ -4,44 +4,68 @@
   # Log package loading
   message("Loading package: ", pkgname)
 
-  # Determine the library file based on the platform
-  os_type <- .Platform$OS.type
-  sys_name <- Sys.info()[["sysname"]]
-
-  library_file <- NULL
-  library_path <- NULL
-
-  if (os_type == "windows") {
-    library_file <- "libprismaid_windows_amd64.dll"
-    library_path <- system.file("libs/windows", library_file, package = pkgname)
-  } else if (sys_name == "Darwin") {
-    library_file <- "libprismaid_darwin_arm64.dylib"
-    library_path <- system.file("libs/macos", library_file, package = pkgname)
-  } else if (sys_name == "Linux") {
-    library_file <- "libprismaid_linux_amd64.so"
-    library_path <- system.file("libs/linux", library_file, package = pkgname)
-  } else {
-    stop("Unsupported OS: ", sys_name)
-  }
-
-  # Load the dynamic library with an explicit path
-  dyn.load(library_path)
-
-  # Log the library path
-  message("Attempting to load library from: ", library_path)
-
-  # Check if the library path exists
-  if (!file.exists(library_path)) {
-    stop("Library path does not exist: ", library_path)
-  }
-
-  # Load the library
-  tryCatch({
-    dyn.load(library_path)
-    message("Successfully loaded library: ", library_file)
+  # Check platform support using the C function
+  platform_support <- tryCatch({
+    .Call("check_platform_support", PACKAGE = "prismaid")
   }, error = function(e) {
-    stop("Failed to load C wrapper library: ", e$message)
+    "unknown"
   })
+
+  if (platform_support == "supported") {
+    # Determine the library file based on the platform
+    os_type <- .Platform$OS.type
+    sys_name <- Sys.info()[["sysname"]]
+    arch <- Sys.info()[["machine"]]
+
+    library_file <- NULL
+    library_path <- NULL
+
+    if (os_type == "windows" && grepl("x86_64|amd64", arch, ignore.case = TRUE)) {
+      library_file <- "libprismaid_windows_amd64.dll"
+      library_path <- system.file("libs", arch, library_file, package = pkgname)
+      if (!file.exists(library_path)) {
+        library_path <- system.file("libs/windows", library_file, package = pkgname)
+      }
+    } else if (sys_name == "Darwin" && arch == "arm64") {
+      library_file <- "libprismaid_darwin_arm64.dylib"
+      library_path <- system.file("libs", arch, library_file, package = pkgname)
+      if (!file.exists(library_path)) {
+        library_path <- system.file("libs/macos", library_file, package = pkgname)
+      }
+    } else if (sys_name == "Linux" && arch == "x86_64") {
+      library_file <- "libprismaid_linux_amd64.so"
+      library_path <- system.file("libs", arch, library_file, package = pkgname)
+      if (!file.exists(library_path)) {
+        library_path <- system.file("libs/linux", library_file, package = pkgname)
+      }
+    }
+
+    # Try to load the native library if path exists
+    if (!is.null(library_path) && file.exists(library_path)) {
+      tryCatch({
+        dyn.load(library_path)
+        message("Successfully loaded native library: ", library_file)
+      }, error = function(e) {
+        warning("Failed to load native library, functions will return error messages: ", e$message)
+      })
+    } else if (!is.null(library_file)) {
+      warning("Native library not found: ", library_file, ". Functions will return error messages.")
+    }
+
+  } else {
+    # Unsupported platform - show informative message
+    os_type <- .Platform$OS.type
+    sys_name <- Sys.info()[["sysname"]]
+    arch <- Sys.info()[["machine"]]
+
+    packageStartupMessage(
+      "prismaid: Limited functionality on this platform.\n",
+      "Platform: ", sys_name, " ", arch, "\n",
+      "Supported platforms: Linux x86_64, Windows x86_64, macOS ARM64\n",
+      "Functions will return informative error messages.\n",
+      "Consider using the command-line binary or other language bindings."
+    )
+  }
 }
 
 #' Run Review
