@@ -244,53 +244,42 @@ When using CSV/TSV files, the tool generates meaningful filenames using availabl
 
 ### Download Output Files
 
-The Download tool generates different output files depending on the input format:
+The Download tool generates a single comprehensive output file for all input formats:
 
-#### For Plain Text Files (.txt)
+#### Single Download Results File
 
-When downloading from a plain text URL list, the tool generates:
-- **Downloaded PDFs**: Saved to the same directory as the input file
-- **Failed URLs Log** (`[filename]_failed.txt`): A text file listing all URLs that failed to download, one per line, with header comments
-
-Example failed URLs log:
-```
-# Failed Downloads - URLs that could not be retrieved
-# One URL per line
-
-https://example.com/inaccessible-paper.pdf
-https://invalid-domain.com/paper.pdf
-```
-
-#### For CSV/TSV Files (.csv, .tsv)
-
-When downloading from CSV/TSV files, the tool generates:
+Regardless of input format (plain text, CSV, or TSV), the tool generates:
 
 1. **Downloaded PDFs**: Saved to the same directory as the input file with intelligent metadata-based naming
 
-2. **Download Report** (`[filename]_report.csv`): A summary report containing:
-   - All extracted metadata (ID, Title, Authors, Year, Journal)
-   - Final URL used (including resolved DOIs)
-   - DOI information
-   - Download success/failure status
-   - Generated filename for successful downloads
-   - Error messages for failed downloads
+2. **Download Results File** (`[filename]_download.csv` or `[filename]_download.tsv`): A single file containing all information about the download process
 
-3. **Enhanced CSV/TSV with Status** (`[filename]_with_status.csv` or `.tsv`): A copy of the original input file with all original columns preserved, plus a new `downloaded` column indicating `true` or `false` for each row
-
-   This file is particularly useful for:
-   - Tracking download progress across multiple sessions
-   - Re-attempting failed downloads
-   - Integration with other tools in your workflow
-   - Maintaining a complete record of your literature acquisition process
-
-Example enhanced CSV structure:
+For **Plain Text URL Lists** (`urls.txt`), the output file contains:
 ```csv
-Title,Authors,Year,URL,DOI,OtherColumns...,downloaded
-"Paper One","Smith, J.",2023,https://example.com/1.pdf,10.1234/abc,...,true
-"Paper Two","Jones, M.",2024,https://dimensions.ai/...,,...,false
+url,downloaded,error_reason,filename
+https://doi.org/10.21105/joss.07616,true,,Journal_of_Open_Source_Software.pdf
+https://example.com/inaccessible-paper.pdf,false,Download failed or no PDF found,
+https://invalid-domain.com/paper.pdf,false,Download failed or no PDF found,
 ```
 
-These comprehensive output files help you track which papers were successfully downloaded, which URLs were resolved via Crossref, and troubleshoot any issues efficiently.
+For **CSV/TSV Files**, the output preserves all original columns and adds three new ones:
+```csv
+Title,Authors,Year,URL,DOI,OtherColumns...,downloaded,error_reason,filename
+"Paper One","Smith, J.",2023,https://example.com/1.pdf,10.1234/abc,...,true,,2023_Smith_Paper_One.pdf
+"Paper Two","Jones, M.",2024,https://dimensions.ai/...,,...,false,No PDF found,
+```
+
+The three additional columns are:
+- **`downloaded`**: `true` for successful downloads, `false` for failures
+- **`error_reason`**: Description of what went wrong (empty for successful downloads)
+- **`filename`**: The PDF filename for successful downloads (empty for failures)
+
+This unified approach provides:
+- Complete tracking of download status in a single file
+- Easy identification of successful vs failed downloads
+- Error details for troubleshooting failed downloads
+- Preservation of all original metadata
+- Integration-friendly format for further processing
 
 The URL list download feature allows you to batch download papers from a text file containing URLs, one per line.
 
@@ -315,7 +304,7 @@ Using your preferred method from the [Usage Methods](#usage-methods) section, po
 
 ### Output
 
-Papers will be downloaded to the current working directory by default. Each paper is saved with a filename derived from its URL.
+Papers will be downloaded to the current working directory by default. Each paper is saved with a filename derived from its URL. Additionally, a download results file (`[filename]_download.csv`) is created containing all URLs with their download status, error reasons (if any), and resulting filenames.
 
 ## Zotero Integration
 
