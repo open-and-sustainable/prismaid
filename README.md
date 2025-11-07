@@ -95,7 +95,7 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 ---
 
 ## Contributing
-Contributions are welcome! Please follow guidelines at [open-and-sustainable.github.io/prismaid/research-development.html](https://open-and-sustainable.github.io/prismaid/research-development.html#contributing).
+Contributions are welcome! Please follow guidelines at [https://github.com/open-and-sustainable/prismaid?tab=contributing-ov-file](https://github.com/open-and-sustainable/prismaid?tab=contributing-ov-file).
 
 ---
 
