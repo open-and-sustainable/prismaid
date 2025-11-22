@@ -180,7 +180,7 @@ toml_config = read("project.toml", String)
 PrismAId.run_review(toml_config)
 ```
 
-You can use the [Review Configurator](review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
+You can use the [Review Configurator](../review/review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
 
 ## Information Extraction Mechanism
 
