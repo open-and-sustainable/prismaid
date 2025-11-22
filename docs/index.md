@@ -58,7 +58,7 @@ Explore this website for comprehensive guidance on using the prismAId toolkit:
 3. [Download Tool](tools/download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
 4. [Convert Tool](tools/convert-tool): Learn to transform documents from various formats into plain text for analysis.
 5. [Review Tool](tools/review-tool): Master the core systematic review functionality for extracting structured information.
-6. [Review Support](Review/review-workflow): Learn about methodologies and best practices for systematic reviews with prismAId.
+6. [Review Support](review/review-workflow): Learn about methodologies and best practices for systematic reviews with prismAId.
 7. [Review Configurator](review/review-configurator): Quickly set up your review project with the web initializer tool.
 8. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
 
