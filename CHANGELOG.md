@@ -9,6 +9,14 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.10.0] - 2025-11-22
+### Changed
+- New documentation domain
+- New documentation template release and structure
+
+### Update
+- Documentation pages structure and composition to align with chnaged template structure
+
 ## [0.9.6] - 2025-10-03
 ### Fixed
 - Configuration of R package to avoid compilation errors for unsupported CPUs
