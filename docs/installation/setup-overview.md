@@ -42,7 +42,7 @@ prismAId offers several specialized tools to support systematic reviews:
    - Convert PDFs, DOCX, and HTML files to plain text
    - Prepare documents for AI processing
 
-### Workflow Overview
+## Workflow Overview
 1. **AI Model Provider Account and API Key**:
     - Register for an account with [OpenAI](https://www.openai.com/), [GoogleAI](https://aistudio.google.com), [Cohere](https://cohere.com/), or [Anthropic](https://www.anthropic.com/) and obtain an API key.
     - Generate an API key from the provider's dashboard.

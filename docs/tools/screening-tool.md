@@ -77,7 +77,7 @@ toml_config = read("screening_config.toml", String)
 PrismAId.screening(toml_config)
 ```
 
-## Configuration File Structure
+## Configuration File
 
 The Screening tool is driven by a TOML configuration file that defines all aspects of your screening process. Here's the complete structure:
 
@@ -195,7 +195,7 @@ Classifies manuscripts into multiple overlapping categories (traditional types, 
 
 Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](../filters/topic-relevance.md).
 
-## Filter Interaction and Processing Order
+## Processing Order
 
 The screening tool applies filters sequentially, which optimizes performance and ensures clear exclusion tracking:
 

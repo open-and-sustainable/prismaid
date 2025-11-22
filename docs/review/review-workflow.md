@@ -182,7 +182,7 @@ PrismAId.run_review(toml_config)
 
 You can use the [Review Configurator](../review/review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
 
-## Information Extraction Mechanism
+## Information Extraction
 
 ### LLMs Basics
 - **How LLMs Work**:

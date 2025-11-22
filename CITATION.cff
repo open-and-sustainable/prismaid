@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.9.6 - Improved r-universe deployment and avoid recursive loops in the download tool.
-  Improved R-Universe deployment appproach and fix to infinite loop of recursive calls in DOI reoslution in the download tool.
+  v0.10.0 - Improved documentation website.
+  Improved documentation website formatting and content structure. New domain: https://prismaid.review
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

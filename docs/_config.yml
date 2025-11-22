@@ -24,7 +24,7 @@ nav_links:
     - name: "/Installation/Julia Package"
       url: "/installation/julia.html"
     - name: "/Installation/Additional Information"
-      url: "/installation/addtional-setup.html"
+      url: "/installation/additional-setup.html"
     - name: "/Review/Workflow"
       url: "/review/review-workflow.html"
     - name: "/Review/Configurator"
