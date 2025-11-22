@@ -9,7 +9,7 @@ layout: default
 
 ## Supported Platform
 - Linux: AMD64
-- macOS Arm64
+- macOS: Arm64
 
 ## Installation
 Install the `prismaid` R package from [R-universe](https://open-and-sustainable.r-universe.dev/prismaid) using:
