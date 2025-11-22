@@ -85,7 +85,7 @@ PrismAId.run_review(toml_config)
 
 ## Configuration File Structure
 
-The Review tool is driven by a TOML configuration file that defines all aspects of your systematic review. You can create this file manually, use the `-init` flag with the binary for an interactive setup, or use the [Review Configurator](review-configurator) web tool.
+The Review tool is driven by a TOML configuration file that defines all aspects of your systematic review. You can create this file manually, use the `-init` flag with the binary for an interactive setup, or use the [Review Configurator](../review/review-configurator) web tool.
 
 The configuration file consists of three main sections:
 
@@ -426,7 +426,7 @@ The Review tool is the culmination of the systematic review workflow:
    - Convert downloaded papers to text format for analysis
 
 5. **Review Configuration**:
-   - Set up your review project configuration using the [Review Configurator](review-configurator) or the `-init` flag
+   - Set up your review project configuration using the [Review Configurator](../review/review-configurator) or the `-init` flag
    - Define your information extraction protocol through prompt and review sections
 
 6. **Systematic Review** (Review Tool):

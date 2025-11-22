@@ -172,28 +172,28 @@ rpm_limit = 0                             # Requests per minute limit
 
 The screening tool includes four main filters that can be applied in sequence:
 
-1. **[Deduplication Filter](filters/deduplication.md)** - Identifies and removes duplicate manuscripts
-2. **[Language Detection Filter](filters/language.md)** - Filters manuscripts by language
-3. **[Article Type Classification Filter](filters/article-type.md)** - Classifies and filters by publication type
-4. **[Topic Relevance Filter](filters/topic-relevance.md)** - Scores manuscripts based on topic relevance
+1. **[Deduplication Filter](../filters/deduplication.md)** - Identifies and removes duplicate manuscripts
+2. **[Language Detection Filter](../filters/language.md)** - Filters manuscripts by language
+3. **[Article Type Classification Filter](../filters/article-type.md)** - Classifies and filters by publication type
+4. **[Topic Relevance Filter](../filters/topic-relevance.md)** - Scores manuscripts based on topic relevance
 
 Each filter has detailed documentation available through the links above. Below is a brief overview of each filter's capabilities.
 
 ### Deduplication Filter
 
-Identifies duplicate manuscripts using intelligent field comparison or AI-assisted semantic matching. See [full documentation](filters/deduplication.md).
+Identifies duplicate manuscripts using intelligent field comparison or AI-assisted semantic matching. See [full documentation](../filters/deduplication.md).
 
 ### Language Detection Filter
 
-Identifies manuscript language and filters based on accepted languages using rule-based pattern matching or AI-assisted semantic detection. See [full documentation](filters/language.md).
+Identifies manuscript language and filters based on accepted languages using rule-based pattern matching or AI-assisted semantic detection. See [full documentation](../filters/language.md).
 
 ### Article Type Classification Filter
 
-Classifies manuscripts into multiple overlapping categories (traditional types, methodological types, and study scope). A single manuscript can belong to several types simultaneously. See [full documentation](filters/article-type.md).
+Classifies manuscripts into multiple overlapping categories (traditional types, methodological types, and study scope). A single manuscript can belong to several types simultaneously. See [full documentation](../filters/article-type.md).
 
 ### Topic Relevance Filter
 
-Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](filters/topic-relevance.md).
+Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](../filters/topic-relevance.md).
 
 ## Filter Interaction and Processing Order
 
@@ -713,7 +713,7 @@ log_level = "high"  # Saves detailed log file
 
 ---
 
-For more information on systematic review workflows, see the [Review Support](review-support) documentation.
+For more information on systematic review workflows, see the [Review Support](../Review/review-workflow) documentation.
 
 
 <div id="wcb" class="carbonbadge"></div>
