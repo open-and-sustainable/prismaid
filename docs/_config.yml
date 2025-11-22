@@ -3,8 +3,8 @@ remote_theme: open-and-sustainable/greendoc_theme
 # title and description, URLs
 title: "prismAId"
 description: "Documentation of prismAId"
-baseurl: "/prismaid"
-url: "https://open-and-sustainable.github.io"
+baseurl: ""
+url: "https://prismaid.review"
 github_repo: "https://github.com/open-and-sustainable/prismaid"
 # logo and favicon
 logo: "assets/images/prismaid-logo.png"

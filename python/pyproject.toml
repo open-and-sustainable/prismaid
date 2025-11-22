@@ -22,7 +22,7 @@ license-files = ["LICEN[CS]E*"]
 
 [project.urls]
 homepage = "https://github.com/open-and-sustainable/prismaid"
-documentation = "https://open-and-sustainable.github.io/prismaid/"
+documentation = "https://prismaid.review/"
 repository = "https://github.com/open-and-sustainable/prismaid"
 issues = "https://github.com/open-and-sustainable/prismaid/issues"
 

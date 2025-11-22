@@ -119,7 +119,7 @@ The screening function can apply multiple filters including deduplication, langu
 
 Comprehensive documentation for `PrismAId`, including detailed descriptions of its functionalities, installation guide, usage examples, and configuration settings, is available online. You can access the complete documentation by visiting the following URL:
 
-[prismAId Documentation](https://open-and-sustainable.github.io/prismaid)
+[prismAId Documentation](https://prismaid.review)
 
 ## License
 PrismAId is made available under the GNU Affero General Public License v3 (AGPL v3).
