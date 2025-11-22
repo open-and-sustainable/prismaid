@@ -1,23 +1,9 @@
 ---
-title: Review Support
+title: Review Workflow
 layout: default
 ---
 
-# Review Support
-
----
-
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#reasons-to-use"><strong>Reasons to Use</strong></a>: benefits of adopting prismAId for systematic reviews</li>
-  <li><a href="#review-process-overview"><strong>Review Process Overview</strong></a>: a comprehensive workflow for conducting systematic reviews</li>
-  <li><a href="#using-prismaid-tools"><strong>Using prismAId Tools</strong></a>: guidelines for utilizing each prismAId tool in your review</li>
-  <li><a href="#information-extraction-mechanism"><strong>Information Extraction Mechanism</strong></a>: understanding the technical framework powering prismAId</li>
-  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommended methodologies for effective systematic reviews</li>
-  <li><a href="#technical-faqs"><strong>Technical FAQs</strong></a>: detailed answers to advanced questions about prismAId capabilities and limitations</li>
-</ul>
-</details>
+# Review Workflow
 
 ---
 
@@ -194,7 +180,7 @@ toml_config = read("project.toml", String)
 PrismAId.run_review(toml_config)
 ```
 
-You can use the [Review Configurator](review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
+You can use the [Review Configurator](../review/review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
 
 ## Information Extraction Mechanism
 

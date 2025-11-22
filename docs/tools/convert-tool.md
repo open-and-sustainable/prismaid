@@ -7,22 +7,6 @@ layout: default
 
 ---
 
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#purpose-and-capabilities"><strong>Purpose and Capabilities</strong></a>: what the Convert tool does and why it's necessary</li>
-  <li><a href="#usage-methods"><strong>Usage Methods</strong></a>: how to use the tool across different platforms and programming languages</li>
-  <li><a href="#supported-file-formats"><strong>Supported File Formats</strong></a>: details on each file format the tool can process</li>
-  <li><a href="#conversion-process"><strong>Conversion Process</strong></a>: how the tool works and what to expect</li>
-  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommendations for effective conversions</li>
-  <li><a href="#limitations-and-considerations"><strong>Limitations and Considerations</strong></a>: important factors to be aware of</li>
-  <li><a href="#troubleshooting"><strong>Troubleshooting</strong></a>: solutions to common conversion issues</li>
-  <li><a href="#workflow-integration"><strong>Workflow Integration</strong></a>: how the Convert tool fits into your systematic review process</li>
-</ul>
-</details>
-
----
-
 ## Purpose and Capabilities
 
 The prismAId Convert tool transforms documents from their native formats into plain text files that can be processed by Large Language Models (LLMs). This critical step bridges the literature acquisition phase and the systematic review analysis by:

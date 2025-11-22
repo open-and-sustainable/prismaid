@@ -1,71 +1,20 @@
 ---
-title: Help & Development
+title: Contributing
 layout: default
 ---
 
-# Help & Development
+# Contributing
 
- ---
+---
 
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#getting-help"><strong>Getting Help</strong></a>: where to find assistance</li>
-  <li><a href="#common-issues"><strong>Common Issues</strong></a>: solutions to frequent problems</li>
-  <li><a href="#contributing"><strong>Contributing</strong></a>: how to improve prismAId</li>
-  <li><a href="#software-stack"><strong>Software Stack</strong></a>: technical architecture</li>
-  <li><a href="#open-science-support"><strong>Open Science Support</strong></a>: how prismAId supports open science principles</li>
-</ul>
-</details>
-
- ---
-
-## Getting Help
-
-If you need assistance with any prismAId tool, you can:
-- **Open an Issue** on our [GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
-- **Discuss in the Matrix Support Room**: [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) ![Matrix](https://img.shields.io/matrix/prismAId-support%3Amatrix.org?server_fqdn=matrix.org&logo=appveyor).
-- **Stay Updated with New Releases**: Follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
-
-## Common Issues
-
-### General Issues
-- **Path Problems**: Most crashes occur due to incorrect paths in configurations, such as typos or non-existent directories.
-- **API Keys**: These may be loaded either through system variables or directly in configurations. When both are provided, the configuration values take priority.
-- **Software Bugs**: For troubleshooting software issues, submit an [issue on the GitHub repository](https://github.com/open-and-sustainable/prismaid/issues).
-- **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
-
-### Screening Tool Issues
-- **False Positives in Deduplication**: Adjust the similarity threshold (increase from 0.85 to 0.95 for stricter matching).
-- **Language Detection Errors**: Enable AI-based detection for mixed-language documents or check text encoding.
-- **Article Type Misclassification**: Review classification rules or use AI-based classification for ambiguous cases.
-
-### Download Tool Issues
-- **Zotero Authentication Errors**: Verify your user ID and API key, ensuring the API key has appropriate permissions.
-- **Collection Not Found**: Check that the collection/group path uses the correct format and exists in your Zotero library.
-- **Download Failures**: If some PDFs fail to download, check if they are actually available/accessible in your Zotero library.
-
-### Convert Tool Issues
-- **Conversion Quality**: PDF conversion may result in imperfect text extraction due to limitations of the PDF format. Always check converted files.
-- **Unsupported Formats**: Ensure you're using supported file formats (PDF, DOCX, HTML).
-- **Character Encoding**: Some converted texts may display encoding issues with special characters.
-
-### Review Tool Issues
-- **Debugging Information**: Control the level of debugging information via the `log_level` parameter in the project configuration.
-- **Partial Results**: If only the first few entries of a review are processed, check the Token Per Minute (TPM) limits in your configuration.
-- **Response Format Errors**: Ensure your prompt and review sections are well-structured to guide the AI to produce correctly formatted outputs.
-- **Token Limits**: Very large documents may exceed model token limits; consider splitting or summarizing them.
-
-## Contributing
-
-### How to Contribute
+## How to Contribute
 We welcome contributions to improve any aspect of the prismAId toolkit, whether you're fixing bugs, adding features, or enhancing documentation:
 - **Branching Strategy**: Create a new branch for each set of related changes and submit a pull request via GitHub.
 - **Code Reviews**: All submissions undergo thorough review to maintain code quality.
 - **Community Engagement**: Connect with us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions) for feature requests, suggestions, or questions. - Discuss in the Matrix [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) or follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
 
 ### Guidelines
-For detailed contribution guidelines, see our [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+For detailed contribution guidelines, see our [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md).
 
 ## Software Stack
 

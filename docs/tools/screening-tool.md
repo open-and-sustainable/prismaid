@@ -7,22 +7,6 @@ layout: default
 
 ---
 
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#purpose-and-capabilities"><strong>Purpose and Capabilities</strong></a>: what the Screening tool does and why it's essential</li>
-  <li><a href="#usage-methods"><strong>Usage Methods</strong></a>: how to use the tool across different platforms and programming languages</li>
-  <li><a href="#configuration-file-structure"><strong>Configuration File Structure</strong></a>: detailed explanation of the TOML configuration</li>
-  <li><a href="#screening-filters"><strong>Screening Filters</strong></a>: available filters and their options</li>
-  <li><a href="#input-and-output-formats"><strong>Input and Output Formats</strong></a>: supported file formats and data structures</li>
-  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommendations for effective screening</li>
-  <li><a href="#workflow-integration"><strong>Workflow Integration</strong></a>: how the Screening tool fits into your systematic review process</li>
-  <li><a href="#troubleshooting"><strong>Troubleshooting</strong></a>: solutions to common issues</li>
-</ul>
-</details>
-
----
-
 ## Purpose and Capabilities
 
 The prismAId Screening tool automates the filtering phase of systematic literature reviews by identifying and tagging manuscripts for potential exclusion. This critical step occurs after the initial literature search but before downloading full texts, helping researchers focus on relevant literature by:
@@ -188,28 +172,28 @@ rpm_limit = 0                             # Requests per minute limit
 
 The screening tool includes four main filters that can be applied in sequence:
 
-1. **[Deduplication Filter](filters/deduplication.md)** - Identifies and removes duplicate manuscripts
-2. **[Language Detection Filter](filters/language.md)** - Filters manuscripts by language
-3. **[Article Type Classification Filter](filters/article-type.md)** - Classifies and filters by publication type
-4. **[Topic Relevance Filter](filters/topic-relevance.md)** - Scores manuscripts based on topic relevance
+1. **[Deduplication Filter](../filters/deduplication.md)** - Identifies and removes duplicate manuscripts
+2. **[Language Detection Filter](../filters/language.md)** - Filters manuscripts by language
+3. **[Article Type Classification Filter](../filters/article-type.md)** - Classifies and filters by publication type
+4. **[Topic Relevance Filter](../filters/topic-relevance.md)** - Scores manuscripts based on topic relevance
 
 Each filter has detailed documentation available through the links above. Below is a brief overview of each filter's capabilities.
 
 ### Deduplication Filter
 
-Identifies duplicate manuscripts using intelligent field comparison or AI-assisted semantic matching. See [full documentation](filters/deduplication.md).
+Identifies duplicate manuscripts using intelligent field comparison or AI-assisted semantic matching. See [full documentation](../filters/deduplication.md).
 
 ### Language Detection Filter
 
-Identifies manuscript language and filters based on accepted languages using rule-based pattern matching or AI-assisted semantic detection. See [full documentation](filters/language.md).
+Identifies manuscript language and filters based on accepted languages using rule-based pattern matching or AI-assisted semantic detection. See [full documentation](../filters/language.md).
 
 ### Article Type Classification Filter
 
-Classifies manuscripts into multiple overlapping categories (traditional types, methodological types, and study scope). A single manuscript can belong to several types simultaneously. See [full documentation](filters/article-type.md).
+Classifies manuscripts into multiple overlapping categories (traditional types, methodological types, and study scope). A single manuscript can belong to several types simultaneously. See [full documentation](../filters/article-type.md).
 
 ### Topic Relevance Filter
 
-Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](filters/topic-relevance.md).
+Scores manuscripts based on their relevance to user-specified research topics using keyword matching, concept matching, and field relevance analysis. See [full documentation](../filters/topic-relevance.md).
 
 ## Filter Interaction and Processing Order
 
@@ -729,7 +713,7 @@ log_level = "high"  # Saves detailed log file
 
 ---
 
-For more information on systematic review workflows, see the [Review Support](review-support) documentation.
+For more information on systematic review workflows, see the [Review Support](../Review/review-workflow) documentation.
 
 
 <div id="wcb" class="carbonbadge"></div>
