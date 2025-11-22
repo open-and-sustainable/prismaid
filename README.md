@@ -74,7 +74,7 @@ Our tools support a comprehensive systematic review workflow following the stand
 ---
 
 ## Documentation
-All information on installation, usage, and development is available at [open-and-sustainable.github.io/prismaid](https://open-and-sustainable.github.io/prismaid/) and in the [prismAId User Manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf).
+All information on installation, usage, and development is available at [prismaid.review](https://prismaid.review/) and in the [prismAId User Manual](https://raw.githubusercontent.com/open-and-sustainable/prismaid_manual/main/prismaid_manual.pdf).
 
 ---
 

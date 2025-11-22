@@ -16,7 +16,7 @@ identifiers:
     value: 10.5281/zenodo.11210796
     description: This DOI represents all software versions.
 repository-code: 'https://github.com/open-and-sustainable/prismaid'
-url: 'https://open-and-sustainable.github.io/prismaid/'
+url: 'https://prismaid.review/'
 abstract: >-
   prismAId leverages generative AI models to screen and extract data from scientific literature. It provides efficient, replicable, and user-friendly methods for conducting systematic reviews. Designed in line with Open Science practices, prismAId requires no coding skills to use.
 keywords:
