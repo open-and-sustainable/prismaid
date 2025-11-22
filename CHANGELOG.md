@@ -15,7 +15,7 @@ Security: For vulnerabilities.
 - New documentation template release and structure
 
 ### Update
-- Documentation pages structure and composition to align with chnaged template structure
+- Documentation pages structure and composition to align with changed template structure
 
 ## [0.9.6] - 2025-10-03
 ### Fixed
