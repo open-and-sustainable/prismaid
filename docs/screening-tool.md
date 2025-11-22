@@ -7,22 +7,6 @@ layout: default
 
 ---
 
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#purpose-and-capabilities"><strong>Purpose and Capabilities</strong></a>: what the Screening tool does and why it's essential</li>
-  <li><a href="#usage-methods"><strong>Usage Methods</strong></a>: how to use the tool across different platforms and programming languages</li>
-  <li><a href="#configuration-file-structure"><strong>Configuration File Structure</strong></a>: detailed explanation of the TOML configuration</li>
-  <li><a href="#screening-filters"><strong>Screening Filters</strong></a>: available filters and their options</li>
-  <li><a href="#input-and-output-formats"><strong>Input and Output Formats</strong></a>: supported file formats and data structures</li>
-  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommendations for effective screening</li>
-  <li><a href="#workflow-integration"><strong>Workflow Integration</strong></a>: how the Screening tool fits into your systematic review process</li>
-  <li><a href="#troubleshooting"><strong>Troubleshooting</strong></a>: solutions to common issues</li>
-</ul>
-</details>
-
----
-
 ## Purpose and Capabilities
 
 The prismAId Screening tool automates the filtering phase of systematic literature reviews by identifying and tagging manuscripts for potential exclusion. This critical step occurs after the initial literature search but before downloading full texts, helping researchers focus on relevant literature by:
