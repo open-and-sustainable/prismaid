@@ -7,21 +7,6 @@ layout: default
 
 ---
 
-<details>
-<summary><strong>Page Contents</strong></summary>
-<ul>
-  <li><a href="#purpose-and-capabilities"><strong>Purpose and Capabilities</strong></a>: what the Download tool does and why it's useful</li>
-  <li><a href="#usage-methods"><strong>Usage Methods</strong></a>: how to use the tool across different platforms and programming languages</li>
-  <li><a href="#downloading-from-url-lists"><strong>Downloading from URL Lists</strong></a>: instructions for batch downloading papers from URLs</li>
-  <li><a href="#zotero-integration"><strong>Zotero Integration</strong></a>: comprehensive guide for using the Zotero Download functionality</li>
-  <li><a href="#best-practices"><strong>Best Practices</strong></a>: recommendations for effective use of the Download tool</li>
-  <li><a href="#troubleshooting"><strong>Troubleshooting</strong></a>: solutions to common Download tool issues</li>
-  <li><a href="#workflow-integration"><strong>Workflow Integration</strong></a>: how the Download tool fits into your systematic review process</li>
-</ul>
-</details>
-
----
-
 ## Purpose and Capabilities
 
 The prismAId Download tool is designed to streamline the literature acquisition phase of your systematic review. It offers two primary functionalities:
