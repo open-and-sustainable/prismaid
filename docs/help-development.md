@@ -1,9 +1,9 @@
 ---
-title: Help & Development
+title: Help
 layout: default
 ---
 
-# Help & Development
+# Help
 
 ---
 
