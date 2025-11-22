@@ -82,7 +82,7 @@ PrismAId.download_url_list("path/to/urls.txt")
 PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
 ```
 
-## Downloading from URL Lists
+## URL Lists
 
 The Download tool supports three input formats for batch downloading:
 
