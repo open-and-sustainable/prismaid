@@ -43,3 +43,5 @@ If you need assistance with any prismAId tool, you can:
 - **Response Format Errors**: Ensure your prompt and review sections are well-structured to guide the AI to produce correctly formatted outputs.
 - **Token Limits**: Very large documents may exceed model token limits; consider splitting or summarizing them.
 
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
