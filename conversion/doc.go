@@ -8,15 +8,28 @@
 //   - PDF: Extracts text from PDF files using the `github.com/ledongthuc/pdf` library.
 //   - DOCX: Converts DOCX files into plain text using the `github.com/fumiama/go-docx` library.
 //   - HTML: Strips HTML tags and extracts textual content using the `jaytaylor.com/html2text` package.
+//   - OCR Fallback: When standard methods fail, optionally uses Apache Tika server for OCR-based text extraction.
 //
 // # Exported Functions
 //
 // Convert: Processes files from the input directory and converts them into plain text format.
-// The function accepts an input directory path and a comma-separated list of formats to convert.
+// The function accepts an input directory path, a comma-separated list of formats to convert,
+// and an optional Tika server address for OCR fallback.
+//
+// When a Tika server address is provided (e.g., "localhost:9998"), files that fail standard conversion
+// will automatically be sent to the Tika server for OCR-based text extraction as a fallback.
+// Pass an empty string "" to disable OCR fallback.
 //
 // Example:
 //
-//	> err := conversion.Convert("/path/to/files", "pdf,docx,html")
+//	> // Without Tika OCR fallback
+//	> err := conversion.Convert("/path/to/files", "pdf,docx,html", "")
+//	> if err != nil {
+//	>     log.Fatalf("Conversion failed: %v", err)
+//	> }
+//
+//	> // With Tika OCR fallback
+//	> err := conversion.Convert("/path/to/files", "pdf,docx,html", "localhost:9998")
 //	> if err != nil {
 //	>     log.Fatalf("Conversion failed: %v", err)
 //	> }

@@ -1,5 +1,5 @@
-import platform
 import ctypes
+import platform
 from ctypes import CDLL, c_char_p
 from typing import cast
 
@@ -43,7 +43,7 @@ _DownloadURLListPython.argtypes = [c_char_p]
 _DownloadURLListPython.restype = c_char_p
 
 _ConvertPython = lib.ConvertPython
-_ConvertPython.argtypes = [c_char_p, c_char_p]
+_ConvertPython.argtypes = [c_char_p, c_char_p, c_char_p]
 _ConvertPython.restype = c_char_p
 
 _ScreeningPython = lib.ScreeningPython
@@ -53,6 +53,7 @@ _ScreeningPython.restype = c_char_p
 _FreeCString = lib.FreeCString
 _FreeCString.argtypes = [c_char_p]
 _FreeCString.restype = None
+
 
 # Python-friendly wrapper functions
 def review(toml_configuration: str) -> None:
@@ -65,13 +66,16 @@ def review(toml_configuration: str) -> None:
     Raises:
         Exception: If the review process fails
     """
-    result = cast(bytes | None, _RunReviewPython(toml_configuration.encode('utf-8')))
+    result = cast(bytes | None, _RunReviewPython(toml_configuration.encode("utf-8")))
     if result:
-        error_message = ctypes.string_at(result).decode('utf-8')
+        error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)
 
-def download_zotero_pdfs(username: str, api_key: str, collection_name: str, parent_dir: str) -> None:
+
+def download_zotero_pdfs(
+    username: str, api_key: str, collection_name: str, parent_dir: str
+) -> None:
     """
     Download PDFs from Zotero.
 
@@ -84,17 +88,21 @@ def download_zotero_pdfs(username: str, api_key: str, collection_name: str, pare
     Raises:
         Exception: If the download process fails
     """
-    result = cast(bytes | None, _DownloadZoteroPDFsPython(
-        username.encode('utf-8'),
-        api_key.encode('utf-8'),
-        collection_name.encode('utf-8'),
-        parent_dir.encode('utf-8')
-    ))
+    result = cast(
+        bytes | None,
+        _DownloadZoteroPDFsPython(
+            username.encode("utf-8"),
+            api_key.encode("utf-8"),
+            collection_name.encode("utf-8"),
+            parent_dir.encode("utf-8"),
+        ),
+    )
 
     if result:
-        error_message = ctypes.string_at(result).decode('utf-8')
+        error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)
+
 
 def download_url_list(path: str) -> None:
     """
@@ -106,32 +114,40 @@ def download_url_list(path: str) -> None:
     Raises:
         Exception: If the file cannot be opened or read
     """
-    result = cast(bytes | None, _DownloadURLListPython(path.encode('utf-8')))
+    result = cast(bytes | None, _DownloadURLListPython(path.encode("utf-8")))
     if result:
-        error_message = ctypes.string_at(result).decode('utf-8')
+        error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)
 
-def convert(input_dir: str, selected_formats: str) -> None:
+
+def convert(input_dir: str, selected_formats: str, tika_address: str = "") -> None:
     """
     Convert files to specified formats.
 
     Args:
         input_dir (str): Directory containing files to convert
         selected_formats (str): Comma-separated list of target formats
+        tika_address (str, optional): Tika server address for OCR fallback (e.g., 'localhost:9998').
+                                      Empty string disables OCR fallback. Defaults to "".
 
     Raises:
         Exception: If the conversion process fails
     """
-    result = cast(bytes | None, _ConvertPython(
-        input_dir.encode('utf-8'),
-        selected_formats.encode('utf-8')
-    ))
+    result = cast(
+        bytes | None,
+        _ConvertPython(
+            input_dir.encode("utf-8"),
+            selected_formats.encode("utf-8"),
+            tika_address.encode("utf-8"),
+        ),
+    )
 
     if result:
-        error_message = ctypes.string_at(result).decode('utf-8')
+        error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)
+
 
 def screening(toml_configuration: str) -> None:
     """
@@ -146,8 +162,8 @@ def screening(toml_configuration: str) -> None:
     Raises:
         Exception: If the screening process fails
     """
-    result = cast(bytes | None, _ScreeningPython(toml_configuration.encode('utf-8')))
+    result = cast(bytes | None, _ScreeningPython(toml_configuration.encode("utf-8")))
     if result:
-        error_message = ctypes.string_at(result).decode('utf-8')
+        error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)

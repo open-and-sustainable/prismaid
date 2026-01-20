@@ -5,6 +5,8 @@ message: >-
   Updated alembica to v0.1.1 with breaking changes (migrated to official OpenAI SDK).
   Added support for Perplexity AI provider and new models: OpenAI GPT-5 series,
   Anthropic Claude 4.5 series, Google AI Gemini 2.5/3 series, Cohere Command A Reasoning.
+  Added Apache Tika OCR fallback support for converting scanned PDFs and image-based documents
+  with automatic fallback when standard conversion methods fail or return empty text.
   Updated CI/CD to use macOS 15 runners.
 type: software
 doi: 10.5281/zenodo.11210796

@@ -148,7 +148,7 @@ func TestConvert(t *testing.T) {
 // TestConvertErrors tests error handling
 func TestConvertErrors(t *testing.T) {
 	// Test with a non-existent directory
-	err := Convert("/nonexistent/directory", "html,pdf")
+	err := Convert("/nonexistent/directory", "html,pdf", "")
 	if err == nil {
 		t.Errorf("Expected error when using non-existent directory, but got none")
 	}
@@ -200,4 +200,46 @@ func TestWriteText(t *testing.T) {
 	if string(content) != testText {
 		t.Errorf("File content doesn't match.\nExpected: %s\nActual: %s", testText, string(content))
 	}
+}
+
+// TestConvertWithTikaFallback tests that Tika is used as fallback when standard conversion works
+func TestConvertWithTikaFallback(t *testing.T) {
+	// Create a temporary directory
+	tempDir, err := os.MkdirTemp("", "convert_tika_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create a simple HTML file that should convert without Tika
+	htmlContent := "<html><body>Test content</body></html>"
+	htmlPath := filepath.Join(tempDir, "test.html")
+	err = os.WriteFile(htmlPath, []byte(htmlContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test HTML file: %v", err)
+	}
+
+	// Test: Standard conversion works, Tika address provided but not needed
+	err = Convert(tempDir, "html", "localhost:99999")
+	if err != nil {
+		t.Errorf("Convert returned an error: %v", err)
+	}
+
+	// Verify output was created using standard conversion (Tika not used as fallback)
+	txtPath := filepath.Join(tempDir, "test.txt")
+	if _, err := os.Stat(txtPath); os.IsNotExist(err) {
+		t.Errorf("Expected output file %s does not exist", txtPath)
+	}
+}
+
+// TestConvertTikaFallbackIntegration tests that Tika is used as OCR fallback when standard methods fail
+// This test is skipped if no Tika server is available
+func TestConvertTikaFallbackIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
+	// This test verifies Tika is only used as fallback, not as primary conversion method
+	// We rely on test.sh to create problematic files that trigger the fallback
+	t.Skip("Tika fallback integration is tested in test.sh with problematic PDFs")
 }

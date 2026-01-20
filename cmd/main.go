@@ -43,6 +43,7 @@ func main() {
 	convertPDFDir := flag.String("convert-pdf", "", "Directory containing PDF files to convert")
 	convertDOCXDir := flag.String("convert-docx", "", "Directory containing DOCX files to convert")
 	convertHTMLDir := flag.String("convert-html", "", "Directory containing HTML files to convert")
+	tikaServer := flag.String("tika-server", "", "Tika server address for OCR fallback (e.g., 'localhost:9998' or '0.0.0.0:9998')")
 
 	screeningConfigPath := flag.String("screening", "", "Path to the screening configuration TOML file")
 
@@ -56,19 +57,19 @@ func main() {
 	// PDF conversion
 	if *convertPDFDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertPDFDir, "pdf")
+		handleConversion(*convertPDFDir, "pdf", *tikaServer)
 	}
 
 	// DOCX conversion
 	if *convertDOCXDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertDOCXDir, "docx")
+		handleConversion(*convertDOCXDir, "docx", *tikaServer)
 	}
 
 	// HTML conversion
 	if *convertHTMLDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertHTMLDir, "html")
+		handleConversion(*convertHTMLDir, "html", *tikaServer)
 	}
 
 	// Zotero PDF download
@@ -126,6 +127,7 @@ func main() {
 
 // handleConversion processes files in the specified input directory
 // and converts them to text format based on the given source format.
+// If tikaServer is provided, uses Apache Tika as OCR fallback for failed conversions.
 //
 // It calls the conversion.Convert function to perform the actual conversion
 // and handles any errors that may occur during the process. If conversion
@@ -135,11 +137,12 @@ func main() {
 // Parameters:
 //   - inputDir: The directory containing files to be converted
 //   - format: The source format of the files (e.g., "pdf", "docx", "html")
+//   - tikaServer: Optional Tika server address (e.g., "localhost:9998"). Empty string disables OCR fallback.
 //
 // The function doesn't return anything as it handles errors internally
 // and terminates the program on failure.
-func handleConversion(inputDir, format string) {
-	err := conversion.Convert(inputDir, format)
+func handleConversion(inputDir, format, tikaServer string) {
+	err := conversion.Convert(inputDir, format, tikaServer)
 	if err != nil {
 		logger.Error("Error converting files in %s to %s: %v\n", inputDir, format, err)
 		os.Exit(1)

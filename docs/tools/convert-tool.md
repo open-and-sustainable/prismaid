@@ -32,15 +32,21 @@ The Convert tool can be accessed through multiple interfaces to accommodate diff
 
 # Convert all HTML files in a directory
 ./prismaid -convert-html ./papers
+
+# Convert with Tika OCR fallback for difficult files
+./prismaid -convert-pdf ./papers -tika-server localhost:9998
 ```
 
 ### Go Package
 
 ```go
-import "github.com/open-and-sustainable/prismaid"
+import "github.com/open-and-sustainable/prismaid/conversion"
 
-// Convert files of specified formats in a directory
-err := prismaid.Convert("./papers", "pdf,docx,html")
+// Convert files of specified formats in a directory (no OCR fallback)
+err := conversion.Convert("./papers", "pdf,docx,html", "")
+
+// Convert with Tika OCR fallback - just pass the server address
+err := conversion.Convert("./papers", "pdf,docx,html", "localhost:9998")
 ```
 
 ### Python Package
@@ -48,8 +54,11 @@ err := prismaid.Convert("./papers", "pdf,docx,html")
 ```python
 import prismaid
 
-# Convert files of specified formats in a directory
+# Convert files of specified formats in a directory (no OCR fallback)
 prismaid.convert("./papers", "pdf,docx,html")
+
+# Convert with Tika OCR fallback - pass server address as optional parameter
+prismaid.convert("./papers", "pdf,docx,html", "localhost:9998")
 ```
 
 ### R Package
@@ -57,8 +66,11 @@ prismaid.convert("./papers", "pdf,docx,html")
 ```r
 library(prismaid)
 
-# Convert files of specified formats in a directory
+# Convert files of specified formats in a directory (no OCR fallback)
 Convert("./papers", "pdf,docx,html")
+
+# Convert with Tika OCR fallback - pass server address as optional parameter
+Convert("./papers", "pdf,docx,html", "localhost:9998")
 ```
 
 ### Julia Package
@@ -66,8 +78,11 @@ Convert("./papers", "pdf,docx,html")
 ```julia
 using PrismAId
 
-# Convert files of specified formats in a directory
+# Convert files of specified formats in a directory (no OCR fallback)
 PrismAId.convert("./papers", "pdf,docx,html")
+
+# Convert with Tika OCR fallback - pass server address as optional parameter
+PrismAId.convert("./papers", "pdf,docx,html", "localhost:9998")
 ```
 
 ## Supported File Formats
@@ -114,12 +129,188 @@ The Convert tool follows a standardized process:
 3. **Text Processing**: Extracted text is processed to remove unnecessary elements and normalize formatting
 4. **Output Generation**: A plain text (.txt) file is created for each input document, maintaining the same filename but with a .txt extension
 
+## OCR Fallback with Apache Tika
+
+For challenging documents that fail standard conversion methods (such as scanned PDFs, image-based files, or corrupted documents), prismAId offers an optional OCR (Optical Character Recognition) fallback using Apache Tika.
+
+### What is Apache Tika?
+
+Apache Tika is a powerful content analysis toolkit that can extract text from over a thousand different file types. When configured with Tesseract OCR, it can:
+
+- Extract text from scanned PDF documents
+- Process image-based files (PNG, JPEG, TIFF, etc.)
+- Handle documents that fail with standard extraction methods
+- Provide more robust text extraction for complex or corrupted files
+
+### Setting Up Tika Server
+
+prismAId includes a helper script (`tika-service.sh` in the repository root) to start a local Tika server using Docker or Podman:
+
+```bash
+# Start Tika server with OCR support
+./tika-service.sh start
+
+# Check server status
+./tika-service.sh status
+
+# View server logs
+./tika-service.sh logs
+
+# Stop the server
+./tika-service.sh stop
+```
+
+The server will be available at `http://localhost:9998` by default.
+
+**Alternative Setup with Docker:**
+
+If you prefer to manage the container manually:
+
+```bash
+# Pull and run Tika server with OCR support
+docker run -d -p 9998:9998 --name tika-ocr apache/tika:latest-full
+
+# Or with Podman
+podman run -d -p 9998:9998 --name tika-ocr apache/tika:latest-full
+```
+
+### Using OCR Fallback
+
+Once the Tika server is running, enable OCR fallback by providing the server address:
+
+**Command Line:**
+```bash
+# Basic usage with single format
+./prismaid -convert-pdf ./papers -tika-server localhost:9998
+
+# Note: You can only convert one format at a time via CLI
+# To convert multiple formats, run the command multiple times:
+./prismaid -convert-pdf ./papers -tika-server localhost:9998
+./prismaid -convert-docx ./papers -tika-server localhost:9998
+./prismaid -convert-html ./papers -tika-server localhost:9998
+```
+
+**Go Package:**
+```go
+import "github.com/open-and-sustainable/prismaid/conversion"
+
+// Convert single format with Tika OCR fallback
+err := conversion.Convert("./papers", "pdf", "localhost:9998")
+
+// Convert multiple formats in one call
+err := conversion.Convert("./papers", "pdf,docx,html", "localhost:9998")
+
+// Disable Tika by passing empty string
+err := conversion.Convert("./papers", "pdf", "")
+```
+
+**Python Package:**
+```python
+import prismaid
+
+# Convert single format with Tika OCR fallback
+prismaid.convert("./papers", "pdf", "localhost:9998")
+
+# Convert multiple formats
+prismaid.convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# Disable Tika by passing empty string (default)
+prismaid.convert("./papers", "pdf", "")
+```
+
+**R Package:**
+```r
+library(prismaid)
+
+# Convert single format with Tika OCR fallback
+Convert("./papers", "pdf", "localhost:9998")
+
+# Convert multiple formats
+Convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# Disable Tika by passing empty string (default)
+Convert("./papers", "pdf", "")
+```
+
+**Julia Package:**
+```julia
+using PrismAId
+
+# Convert single format with Tika OCR fallback
+PrismAId.convert("./papers", "pdf", "localhost:9998")
+
+# Convert multiple formats
+PrismAId.convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# Disable Tika by passing empty string (default)
+PrismAId.convert("./papers", "pdf", "")
+```
+
+### How OCR Fallback Works
+
+When you specify a Tika server address:
+
+1. **Server Availability Check**: prismAId checks if the Tika server is reachable
+2. **Primary Conversion**: prismAId first attempts standard conversion methods (fast, no network)
+   - For PDFs: tries `ledongthuc/pdf` library, then falls back to `pdfcpu` library
+   - For DOCX: uses `go-docx` library
+   - For HTML: uses `html2text` library
+3. **Automatic Fallback**: If standard methods fail (error) OR return empty text, AND Tika is available, the file is automatically sent to the Tika server
+4. **OCR Processing**: Tika performs OCR on the document if needed (scanned PDFs, images, etc.)
+5. **Text Extraction**: Extracted text is saved as a .txt file
+
+The fallback is transparent - you'll see log messages indicating when Tika is being used:
+```
+Tika server available at localhost:9998 - will use as OCR fallback
+Standard conversion failed for scanned.pdf, attempting Tika OCR fallback
+Successfully extracted text from scanned.pdf using Tika OCR
+```
+
+**Graceful Degradation**: If you specify a Tika server but it's not available, prismAId will log an info message and continue with standard conversion only - it won't fail.
+
+### When to Use OCR Fallback
+
+Consider using the Tika OCR fallback when:
+
+- Working with older publications that may be scanned images
+- Dealing with documents from varied sources with inconsistent quality
+- Processing documents that failed standard conversion
+- Handling image-based files alongside text-based documents
+- Working with non-standard or corrupted PDF files
+
+### Performance Considerations
+
+OCR processing is computationally intensive:
+
+- **Processing Time**: OCR can take 10-60 seconds per page depending on image quality and page complexity
+- **Server Resources**: The Tika server requires approximately 2-4 GB of RAM
+- **Network**: Using a local Tika server (`localhost:9998`) is much faster than remote servers
+
+**Recommendation**: Start the Tika server before processing large batches of documents, and leave it running for your entire session.
+
+### Tika Server Address Format
+
+The Tika server address should be in the format `host:port` (without `http://`):
+
+**Valid formats:**
+- `localhost:9998` (most common for local server)
+- `127.0.0.1:9998`
+- `0.0.0.0:9998`
+- `192.168.1.100:9998` (remote server on your network)
+- `server.local:9998`
+
+**Invalid formats (will not work):**
+- `http://localhost:9998` ❌ (don't include protocol)
+- `localhost:9998/tika` ❌ (don't include path)
+- `localhost` ❌ (must include port)
+
 ## Best Practices
 
 To achieve optimal conversion results:
 
 1. **Pre-conversion check**:
-   - Ensure PDF files are text-based, not scanned images
+   - Check if PDF files are text-based or scanned images
+   - If dealing with scanned documents, set up Tika server for OCR support
    - Verify that documents are not password-protected or damaged
    - Check that files are complete and correctly formatted
 
@@ -151,7 +342,7 @@ To achieve optimal conversion results:
 2. **Text Recognition Issues**:
    - Non-standard fonts may cause character recognition problems
    - Ligatures and special characters might not be preserved correctly
-   - Text in images cannot be extracted (including scanned PDF documents)
+   - Text in images cannot be extracted without OCR (use Tika fallback for scanned PDFs)
 
 3. **Structural Information Loss**:
    - Formatting that conveys meaning (bold, italic, etc.) is lost in plain text
@@ -173,7 +364,7 @@ To achieve optimal conversion results:
      - The PDF is a scanned image without text layers
      - The document is corrupt or password-protected
      - The file contains primarily non-textual elements
-   - **Solution**: Use OCR software to convert image-based PDFs, or manually type/transcribe critical content
+   - **Solution**: Enable Tika OCR fallback with `-tika-server localhost:9998` - it will automatically trigger when standard methods return empty text
 
 2. **Garbled Text**:
    - **Issue**: Output contains random characters or illegible text

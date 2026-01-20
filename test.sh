@@ -145,11 +145,53 @@ if go run cmd/main.go --download-zotero projects/test/outputs/download/zotero_te
 else
     echo "    ✗ Zotero download test failed"
 fi
-# Clean up the temporary config
-rm -f projects/test/outputs/download/zotero_test_temp.toml
+echo "###### Testing CONVERSION ######"
+echo "==> Testing file conversion functionality..."
 
-#echo "###### Testing CONVERSION ######"
-# conversion is already tested in go tests
+# Check if Tika server is available
+TIKA_AVAILABLE=false
+if curl -s --max-time 2 http://localhost:9998/tika > /dev/null 2>&1; then
+    TIKA_AVAILABLE=true
+    echo "    ℹ Tika server detected - will be used as fallback when needed"
+else
+    echo "    ℹ Tika server not available (conversion will use standard methods only)"
+fi
+
+# Test PDF conversion on Zotero downloads (before cleanup)
+if [ -d "projects/test/outputs/download/zotero" ]; then
+    PDF_COUNT=$(ls projects/test/outputs/download/zotero/*.pdf 2>/dev/null | wc -l)
+    if [ "$PDF_COUNT" -gt 0 ]; then
+        echo "==> Converting $PDF_COUNT Zotero PDFs to TXT..."
+        if go run cmd/main.go --convert-pdf projects/test/outputs/download/zotero --tika-server localhost:9998 2>&1 | tee /tmp/conversion_output.log > /dev/null; then
+            TXT_COUNT=$(ls projects/test/outputs/download/zotero/*.txt 2>/dev/null | wc -l)
+            echo "    ✓ PDF conversion executed"
+            echo "    ✓ Converted $TXT_COUNT out of $PDF_COUNT PDFs to TXT"
+
+            # Check if Tika fallback was used
+            if grep -q "attempting Tika OCR fallback" /tmp/conversion_output.log; then
+                TIKA_USED=$(grep -c "attempting Tika OCR fallback" /tmp/conversion_output.log)
+                echo "    ✓ Tika OCR fallback triggered $TIKA_USED times"
+            fi
+
+            # Show text file sizes
+            for txtfile in projects/test/outputs/download/zotero/*.txt; do
+                if [ -f "$txtfile" ]; then
+                    SIZE=$(wc -c < "$txtfile")
+                    echo "    ✓ $(basename "$txtfile"): $SIZE bytes"
+                fi
+            done
+        else
+            echo "    ✗ PDF conversion failed"
+        fi
+    else
+        echo "    ℹ No PDFs found in Zotero download directory"
+    fi
+fi
+
+# Clean up the temporary config and conversion outputs
+rm -f projects/test/outputs/download/zotero_test_temp.toml
+rm -f /tmp/conversion_output.log
+echo "    ✓ Conversion tests completed"
 
 echo "###### Testing REVIEW ######"
 echo "==> Testing review functionality..."

@@ -10,29 +10,51 @@ import (
 
 	"github.com/open-and-sustainable/prismaid/conversion/doc"
 	"github.com/open-and-sustainable/prismaid/conversion/html"
+	"github.com/open-and-sustainable/prismaid/conversion/ocr"
 	"github.com/open-and-sustainable/prismaid/conversion/pdf"
 )
 
 // Convert processes files from the specified input directory and converts them to text format.
+// If standard conversion methods fail and a Tika server address is provided, it falls back to OCR.
 //
 // It scans the input directory for files with extensions matching the provided formats
 // (comma-separated) and converts them to .txt files. Special handling is provided for
-// .htm files when the html format is specified.
+// .htm files when the html format is specified. When tikaAddress is provided and other
+// methods fail, it uses Apache Tika server with OCR support as a fallback.
 //
 // Parameters:
 //   - inputDir: Path to the directory containing files to convert.
 //   - selectedFormats: Comma-separated list of formats to process (e.g., "pdf,docx,html").
+//   - tikaAddress: Optional Tika server address (e.g., "localhost:9998"). Empty string disables OCR fallback.
 //
 // Returns:
-//   - error: An error if directory reading, file conversion, or writing fails; nil otherwise.
+//   - error: An error if directory reading fails; individual file conversion errors are logged but don't stop processing.
 //
 // Example:
 //
-//	err := Convert("/path/to/documents", "pdf,docx,html")
+//	// Without Tika OCR fallback
+//	err := Convert("/path/to/documents", "pdf,docx,html", "")
 //	if err != nil {
 //	    log.Fatalf("Conversion failed: %v", err)
 //	}
-func Convert(inputDir, selectedFormats string) error {
+//
+//	// With Tika OCR fallback
+//	err := Convert("/path/to/documents", "pdf,docx,html", "localhost:9998")
+//	if err != nil {
+//	    log.Fatalf("Conversion failed: %v", err)
+//	}
+func Convert(inputDir, selectedFormats, tikaAddress string) error {
+	// Check Tika availability if address is provided
+	useTika := false
+	if tikaAddress != "" {
+		if ocr.IsTikaAvailable(tikaAddress) {
+			logger.Info("Tika server available at %s - will use as OCR fallback", tikaAddress)
+			useTika = true
+		} else {
+			logger.Info("Tika server not available at %s - OCR fallback disabled", tikaAddress)
+		}
+	}
+
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)
 	if err != nil {
@@ -50,6 +72,13 @@ func Convert(inputDir, selectedFormats string) error {
 
 			if filepath.Ext(file.Name()) == "."+format {
 				txt_content, err := readText(fullPath, format)
+
+				// Try Tika OCR fallback if standard methods failed or returned empty text
+				if (err != nil || txt_content == "") && useTika {
+					logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", file.Name())
+					txt_content, err = ocr.ReadWithTika(fullPath, tikaAddress)
+				}
+
 				if err == nil {
 					fileNameWithoutExt := strings.TrimSuffix(file.Name(), "."+format)
 					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
@@ -59,9 +88,18 @@ func Convert(inputDir, selectedFormats string) error {
 						logger.Error("Error: ", err)
 						return fmt.Errorf("error writing to file: %v", err)
 					}
+				} else {
+					logger.Error("Failed to convert %s: %v", file.Name(), err)
 				}
 			} else if filepath.Ext(file.Name()) == ".htm" && format == "html" { // FIXED: only process .htm when html is selected
 				txt_content, err := readText(fullPath, "html")
+
+				// Try Tika OCR fallback if standard methods failed or returned empty text
+				if (err != nil || txt_content == "") && useTika {
+					logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", file.Name())
+					txt_content, err = ocr.ReadWithTika(fullPath, tikaAddress)
+				}
+
 				if err == nil {
 					fileNameWithoutExt := strings.TrimSuffix(file.Name(), ".htm")
 					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
@@ -70,6 +108,8 @@ func Convert(inputDir, selectedFormats string) error {
 						logger.Error("Error: ", err)
 						return fmt.Errorf("error writing to file: %v", err)
 					}
+				} else {
+					logger.Error("Failed to convert %s: %v", file.Name(), err)
 				}
 			}
 		}

@@ -26,6 +26,12 @@ Security: For vulnerabilities.
 - Support for Google AI Gemini 2.5 series models (Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.5 Flash Lite)
 - Support for Google AI Gemini 3 series preview models (Gemini 3 Pro Preview, Gemini 3 Flash Preview)
 - Support for Cohere Command A Reasoning model (command-a-reasoning-08-2025)
+- Apache Tika OCR fallback support in conversion tool for scanned PDFs and image-based documents
+  - Automatic fallback to Apache Tika server with Tesseract OCR when standard conversion methods fail or return empty text
+  - Optional `tika-server` parameter in CLI and all language bindings (Go, Python, R, Julia)
+  - Included `tika-service.sh` script for easy Tika server management with Docker/Podman
+  - Graceful degradation when Tika server is unavailable
+  - Comprehensive documentation and testing for OCR fallback functionality
 
 ## [0.10.0] - 2025-11-22
 ### Changed

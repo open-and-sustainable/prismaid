@@ -182,20 +182,29 @@ DownloadURLList <- function(path) {
 #' This function converts files in a directory to specified formats.
 #'
 #' @description
-#' Converts files in the input directory to the requested formats.
+#' Converts files in the input directory to the requested formats. If standard conversion methods fail
+#' and a Tika server address is provided, files are automatically sent to the Tika server for OCR-based
+#' text extraction as a fallback.
 #'
 #' @param input_dir Directory containing files to convert
 #' @param selected_formats Comma-separated list of target formats (e.g., "pdf,docx,html")
+#' @param tika_address Tika server address for OCR fallback (e.g., "localhost:9998"). Empty string disables OCR fallback. Defaults to "".
 #' @return A string indicating the result of the conversion process
 #' @export
 #' @examples
 #' \dontrun{
+#' # Convert without Tika OCR
 #' Convert("/path/to/files", "pdf,docx")
+#'
+#' # Convert with Tika OCR fallback
+#' Convert("/path/to/files", "pdf", "localhost:9998")
 #' }
-Convert <- function(input_dir, selected_formats) {
-    result <- .Call("ConvertR_wrap", input_dir, selected_formats, PACKAGE = "prismaid")
+Convert <- function(input_dir, selected_formats, tika_address = "") {
+    result <- .Call("ConvertR_wrap", input_dir, selected_formats, tika_address, PACKAGE = "prismaid")
     return(result)
 }
+
+
 
 #' Screen Manuscripts for Systematic Review
 #'

@@ -61,11 +61,12 @@ SEXP DownloadURLListR_wrap(SEXP path) {
     return result;
 }
 
-SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats) {
+SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats, SEXP tikaAddress) {
     const char *c_inputDir = (const char*)inputDir;
     const char *c_selectedFormats = (const char*)selectedFormats;
+    const char *c_tikaAddress = (const char*)tikaAddress;
 
-    const char *c_result = ConvertR((char *)c_inputDir, (char *)c_selectedFormats);
+    const char *c_result = ConvertR((char *)c_inputDir, (char *)c_selectedFormats, (char *)c_tikaAddress);
 
     SEXP result = Rf_mkString(c_result);
     PROTECT(result);
@@ -108,7 +109,7 @@ SEXP DownloadURLListR_wrap(SEXP path) {
     return result;
 }
 
-SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats) {
+SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats, SEXP tikaAddress) {
     SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
     PROTECT(result);
     UNPROTECT(1);

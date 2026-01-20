@@ -40,10 +40,11 @@ func runDownloadURLList(path *C.char) error {
 	return prismaid.DownloadURLList(goPath)
 }
 
-func runConvert(inputDir, selectedFormats *C.char) error {
+func runConvert(inputDir, selectedFormats, tikaAddress *C.char) error {
 	goInputDir := C.GoString(inputDir)
 	goSelectedFormats := C.GoString(selectedFormats)
-	return prismaid.Convert(goInputDir, goSelectedFormats)
+	goTikaAddress := C.GoString(tikaAddress)
+	return prismaid.Convert(goInputDir, goSelectedFormats, goTikaAddress)
 }
 
 func runScreening(input *C.char) error {
@@ -81,9 +82,9 @@ func DownloadURLListPython(path *C.char) *C.char {
 }
 
 //export ConvertPython
-func ConvertPython(inputDir, selectedFormats *C.char) *C.char {
+func ConvertPython(inputDir, selectedFormats, tikaAddress *C.char) *C.char {
 	defer handlePanic()
-	if err := runConvert(inputDir, selectedFormats); err != nil {
+	if err := runConvert(inputDir, selectedFormats, tikaAddress); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -128,9 +129,9 @@ func DownloadURLListR(path *C.char) *C.char {
 }
 
 //export ConvertR
-func ConvertR(inputDir, selectedFormats *C.char) *C.char {
+func ConvertR(inputDir, selectedFormats, tikaAddress *C.char) *C.char {
 	defer handlePanic()
-	if err := runConvert(inputDir, selectedFormats); err != nil {
+	if err := runConvert(inputDir, selectedFormats, tikaAddress); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("Conversion completed successfully")
