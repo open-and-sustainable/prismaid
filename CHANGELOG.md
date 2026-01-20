@@ -9,7 +9,7 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.10.1] - Unreleased
+## [0.10.1] - 2026-01-20
 ### Changed
 - Updated CI/CD workflows to use macos-latest runner for ARM64 builds
   - Changed from macos-14 to macos-latest (currently macOS 15 ARM64)

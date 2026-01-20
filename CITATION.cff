@@ -1,8 +1,11 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.10.0 - Improved documentation website.
-  Improved documentation website formatting and content structure. New domain: https://prismaid.review
+  v0.10.1 - Updated dependencies and expanded LLM support.
+  Updated alembica to v0.1.1 with breaking changes (migrated to official OpenAI SDK).
+  Added support for Perplexity AI provider and new models: OpenAI GPT-5 series,
+  Anthropic Claude 4.5 series, Google AI Gemini 2.5/3 series, Cohere Command A Reasoning.
+  Updated CI/CD to use macOS 15 runners.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
