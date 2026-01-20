@@ -15,7 +15,7 @@ Key capabilities include:
 
 1. **Protocol-Based Extraction**: Implements structured, replicable protocols for consistent reviews
 2. **Configurable Analysis**: Allows precise definition of the information to be extracted
-3. **Multi-Provider Support**: Works with multiple AI providers (OpenAI, GoogleAI, Cohere, Anthropic, DeepSeek)
+3. **Multi-Provider Support**: Works with multiple AI providers (OpenAI, GoogleAI, Cohere, Anthropic, DeepSeek, Perplexity)
 4. **Ensemble Reviews**: Enables validation through multiple models for enhanced reliability
 5. **Structured Output**: Generates organized CSV or JSON results for further analysis
 6. **Chain-of-Thought Tracking**: Optional justification logs to track the AI's reasoning process
@@ -150,15 +150,16 @@ rpm_limit = 0
 - **`[project.llm]`** specifies model configurations for review execution. At least one model is required. When multiple models are configured, results will represent an 'ensemble' analysis.
 
 The **`[project.llm.#]`** fields manage LLM usage:
-- **`provider`**:  Supported providers are `OpenAI`, `GoogleAI`, `Cohere`, and `Anthropic`.
+- **`provider`**:  Supported providers are `OpenAI`, `GoogleAI`, `Cohere`, `Anthropic`, `DeepSeek`, and `Perplexity`.
 - **`api_key`**: Define project-specific keys here, or leave empty to default to environment variables.
 - **`model`**: select model:
     - Leave blank `''` for cost-efficient automatic model selection.
-    - **OpenAI**: Models include `o4-mini`, `o3-mini`, `o3`, `o1-mini`, `o1`, `gpt-4.1-nano`, `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
-    - **GoogleAI**: Choose from `gemini-2.0-flash-lite`, `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-1.0-pro`.
-    - **Cohere**: Options are `command-a-03-2025`, `command-r-08-2024`, `command-r7b-12-2024`, `command-r-plus`, `command-r`, `command-light`, `command`.
-    - **Anthropic**: Includes `claude-4-0-opus`, `claude-4-0-sonnet`, `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
+    - **OpenAI**: Models include `gpt-5-nano`, `gpt-5-mini`, `gpt-5.2`, `gpt-5.1`, `gpt-5`, `o4-mini`, `o3-mini`, `o3`, `o1-mini`, `o1`, `gpt-4.1-nano`, `gpt-4.1-mini`, `gpt-4.1`, `gpt-4o-mini`, `gpt-4o`, `gpt-4-turbo`, `gpt-3.5-turbo`.
+    - **GoogleAI**: Choose from `gemini-3-flash-preview`, `gemini-3-pro-preview`, `gemini-2.5-flash-lite`, `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-2.0-flash-lite`, `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-1.5-pro`.
+    - **Cohere**: Options are `command-a-reasoning-08-2025`, `command-a-03-2025`, `command-r-08-2024`, `command-r7b-12-2024`, `command-r-plus`, `command-r`, `command-light`, `command`.
+    - **Anthropic**: Includes `claude-4-5-haiku`, `claude-4-5-sonnet`, `claude-4-5-opus`, `claude-4-0-opus`, `claude-4-0-sonnet`, `claude-3-7-sonnet`, `claude-3-5-sonnet`, `claude-3-5-haiku`, `claude-3-opus`, `claude-3-sonnet`, `claude-3-haiku`.
     - **DeepSeek**: Provides `deepseek-chat`, and `deepseek-reasoner` version 3.
+    - **Perplexity**: Supports `sonar-deep-research`, `sonar-reasoning-pro`, `sonar-pro`, `sonar`.
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
 - **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay).
 - **`rpm_limit`**: Sets maximum requests per minute. Default is `0` (no limit).
@@ -302,7 +303,7 @@ Cost minimization considers both the cost of using the model for each unit (toke
   - Anthropic approximates token counts via OpenAI's tokenizer.
   - DeepSeek approximates token counts via OpenAI's tokenizer.
 
-Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), and [DeepSeek](https://platform.deepseek.com/usage).
+Concise prompts are cost-efficient. Check costs on the provider dashboards: [OpenAI](https://platform.openai.com/usage), [Google AI](https://console.cloud.google.com/billing), [Cohere](https://dashboard.cohere.com/billing), [Anthropic](https://console.anthropic.com/dashboard), [DeepSeek](https://platform.deepseek.com/usage), and [Perplexity](https://www.perplexity.ai/settings/api).
 
 **Note**: Cost estimates are approximate and subject to change. Users with strict budgets should verify all costs thoroughly before conducting reviews.
 
@@ -349,6 +350,14 @@ rpm_limit = 0
 provider = "DeepSeek"
 api_key = ""
 model = "deepseek-chat"
+temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
+
+[project.llm.6]
+provider = "Perplexity"
+api_key = ""
+model = "sonar-pro"
 temperature = 0.01
 tpm_limit = 0
 rpm_limit = 0

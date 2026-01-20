@@ -61,11 +61,12 @@ Our tools support a comprehensive systematic review workflow following the stand
   - Julia [package](https://github.com/JuliaRegistries/General/tree/master/P/PrismAId)
   - 'no-coding' [binaries](https://github.com/open-and-sustainable/prismaid/releases) for Windows, MacOS, and Linux (AMD64/ARM64)
 - **Supported LLMs**:
-    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, GPT-4o Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, o1, o1 Mini, o3, o3 Mini, and o4 Mini
-    2. **GoogleAI**: Gemini 1.0 Pro, Gemini 1.5 Pro, Gemini 1.5 Flash, Gemini 2.0 Flash, and Gemini 2.0 Flash Lite
-    3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), and Command A
-    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 sonnet, Claude 4.0 Sonnet, and Claude 4.0 Opus
+    1. **OpenAI**: GPT-3.5 Turbo, GPT-4 Turbo, GPT-4o, GPT-4o Mini, GPT-4.1, GPT-4.1 Mini, GPT-4.1 Nano, GPT-5, GPT-5.1, GPT-5.2, GPT-5 Mini, GPT-5 Nano, o1, o1 Mini, o3, o3 Mini, and o4 Mini
+    2. **GoogleAI**: Gemini 1.5 Pro, Gemini 1.5 Flash, Gemini 2.0 Flash, Gemini 2.0 Flash Lite, Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.5 Flash Lite, Gemini 3 Pro Preview, and Gemini 3 Flash Preview
+    3. **Cohere**: Command, Command Light, Command R, Command R+, Command R7B, Command R (August 2024), Command A, and Command A Reasoning
+    4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 4.0 Sonnet, Claude 4.0 Opus, Claude 4.5 Opus, Claude 4.5 Sonnet, and Claude 4.5 Haiku
     5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
+    6. **Perplexity**: Sonar, Sonar Pro, Sonar Reasoning Pro, and Sonar Deep Research
 - **Screening capabilities**: Deduplication, language filtering, article type classification, and off-topic detection
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required

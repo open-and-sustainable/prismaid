@@ -79,7 +79,7 @@ The input data must be structured in a TOML format with the following sections:
 \item Configuration for AI models, supporting multiple instances (llm.1, llm.2, etc.).
 \item Parameters for each LLM:
 \itemize{
-\item \code{provider}: LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
+\item \code{provider}: LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", "Anthropic", "DeepSeek", or "Perplexity".
 \item \code{api_key}: API key for the provider. If empty, environment variables will be checked.
 \item \code{model}: Model name (see RunReview documentation for available models per provider).
 \item \code{temperature}: Controls randomness (0-1, or 0-2 for GoogleAI).

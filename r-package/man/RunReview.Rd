@@ -46,14 +46,16 @@ This function interfaces with a shared library to perform a review process on th
 \item Configuration for LLMs, supporting multiple instances (llm.1, llm.2, etc.) for ensemble reviews.
 \item Parameters for each LLM include:
 \itemize{
-\item \code{provider}: The LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", or "Anthropic".
+\item \code{provider}: The LLM service provider. Options: "OpenAI", "GoogleAI", "Cohere", "Anthropic", "DeepSeek", or "Perplexity".
 \item \code{api_key}: API key for the provider. If empty, environment variables will be checked.
 \item \code{model}: Model name. Options vary by provider:
 \itemize{
-\item OpenAI: "gpt-3.5-turbo", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini", or "" (default for cost optimization).
-\item GoogleAI: "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro", or "" (default for cost optimization).
-\item Cohere: "command-r7b-12-2024", "command-r-plus", "command-r", "command-light", "command", or "" (default for cost optimization).
-\item Anthropic: "claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default for cost optimization).
+\item OpenAI: "gpt-5-nano", "gpt-5-mini", "gpt-5.2", "gpt-5.1", "gpt-5", "o4-mini", "o3-mini", "o3", "o1-mini", "o1", "gpt-4.1-nano", "gpt-4.1-mini", "gpt-4.1", "gpt-4o-mini", "gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo", or "" (default for cost optimization).
+\item GoogleAI: "gemini-3-flash-preview", "gemini-3-pro-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", or "" (default for cost optimization).
+\item Cohere: "command-a-reasoning-08-2025", "command-a-03-2025", "command-r-08-2024", "command-r7b-12-2024", "command-r-plus", "command-r", "command-light", "command", or "" (default for cost optimization).
+\item Anthropic: "claude-4-5-haiku", "claude-4-5-sonnet", "claude-4-5-opus", "claude-4-0-opus", "claude-4-0-sonnet", "claude-3-7-sonnet", "claude-3-5-sonnet", "claude-3-5-haiku", "claude-3-opus", "claude-3-sonnet", "claude-3-haiku", or "" (default for cost optimization).
+\item DeepSeek: "deepseek-chat", "deepseek-reasoner", or "" (default for cost optimization).
+\item Perplexity: "sonar-deep-research", "sonar-reasoning-pro", "sonar-pro", "sonar", or "" (default for cost optimization).
 }
 \item \code{temperature}: Controls model randomness. Range: 0 to 1 (0 to 2 for GoogleAI). Lower values reduce randomness.
 \item \code{tpm_limit}: Tokens per minute limit before delaying prompts. Default: 0 (no delay).

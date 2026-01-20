@@ -77,7 +77,7 @@ field_relevance = 0.2                        # Weight for journal/field relevanc
 ### Multiple LLMs can be configured for ensemble processing
 ### First LLM configuration
 [[filters.llm]]
-provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", or "DeepSeek"
+provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", "DeepSeek", or "Perplexity"
 api_key = ""                                  # API key (uses environment variable if empty)
 model = "gpt-4o-mini"                         # Model name (provider-specific)
 temperature = 0.01                            # Temperature (0-1 for most providers, 0-2 for GoogleAI)

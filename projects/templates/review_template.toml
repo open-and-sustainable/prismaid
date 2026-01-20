@@ -17,13 +17,15 @@ summary = "no"                              # Can be "yes" or "no" [default].  I
 ### The [project.llm] section, if more than 1 will be an ensemble project
 [project.llm]
 [project.llm.1]
-provider = "OpenAI"   # Can be 'OpenAI', 'GoogleAI', 'Cohere', or 'Anthropic'.
+provider = "OpenAI"   # Can be 'OpenAI', 'GoogleAI', 'Cohere', 'Anthropic', 'DeepSeek', or 'Perplexity'.
 api_key = ""          # If left empty, the tool will look for API key in env variables. Adding a key here is useful for tracking costs per prokect through project keys
 model = "gpt-4o-mini" # Depending on provider, options are (empty '' string indicate to dynamically choose the model that minimize the reviewing cost):
-# OpenAI: 'gpt-3.5-turbo', 'gpt-4-turbo', 'gpt-4o', 'gpt-4o-mini', or '' [default].
-# GoogleAI: 'gemini-1.5-flash', 'gemini-1.5-pro', or 'gemini-1.0-pro', or '' [default].
-# Cohere: 'command-r7b-12-2024', 'command-r-plus', 'command-r', 'command-light', 'command', or '' [default].
-# Anthropic: 'claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', or '' [default].
+# OpenAI: 'gpt-5-nano', 'gpt-5-mini', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3-mini', 'o3', 'o1-mini', 'o1', 'gpt-4.1-nano', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', or '' [default].
+# GoogleAI: 'gemini-3-flash-preview', 'gemini-3-pro-preview', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', or '' [default].
+# Cohere: 'command-a-reasoning-08-2025', 'command-a-03-2025', 'command-r-08-2024', 'command-r7b-12-2024', 'command-r-plus', 'command-r', 'command-light', 'command', or '' [default].
+# Anthropic: 'claude-4-5-haiku', 'claude-4-5-sonnet', 'claude-4-5-opus', 'claude-4-0-opus', 'claude-4-0-sonnet', 'claude-3-7-sonnet', 'claude-3-5-sonnet', 'claude-3-5-haiku', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku', or '' [default].
+# DeepSeek: 'deepseek-chat', 'deepseek-reasoner', or '' [default].
+# Perplexity: 'sonar-deep-research', 'sonar-reasoning-pro', 'sonar-pro', 'sonar', or '' [default].
 temperature = 0.01 # Between 0 and 1 for all but between 0 and 2 on GoogleAI. Lower model temperature to decrease randomness and ensure replicability
 tpm_limit = 0      # The maximum number of Tokens Per Minute before delaying prompts. If 0 [default], no delay in prompts.
 rpm_limit = 0      # The maximin number of Requests Per Minute before delaying prompts. If 0 [default], no delay in prompts.

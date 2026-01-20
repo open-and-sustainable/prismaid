@@ -9,6 +9,24 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.10.1] - Unreleased
+### Changed
+- Updated CI/CD workflows to use macos-latest runner for ARM64 builds
+  - Changed from macos-14 to macos-latest (currently macOS 15 ARM64)
+  - Note: macos-15-intel is available for Intel builds until August 2027
+- Updated alembica dependency from v0.0.8 to v0.1.1
+  - **BREAKING**: Migrated from community OpenAI SDK to official OpenAI SDK
+  - Updated Anthropic SDK from v1.2.1 to v1.19.0 with breaking changes
+  - Updated Cohere SDK from v2.14.1 to v2.16.1
+
+### Added
+- Support for Perplexity AI provider (Sonar, Sonar Pro, Sonar Reasoning Pro, Sonar Deep Research)
+- Support for OpenAI GPT-5 series models (GPT-5, GPT-5.1, GPT-5.2, GPT-5 Mini, GPT-5 Nano)
+- Support for Anthropic Claude 4.5 series models (Claude 4.5 Opus, Claude 4.5 Sonnet, Claude 4.5 Haiku)
+- Support for Google AI Gemini 2.5 series models (Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.5 Flash Lite)
+- Support for Google AI Gemini 3 series preview models (Gemini 3 Pro Preview, Gemini 3 Flash Preview)
+- Support for Cohere Command A Reasoning model (command-a-reasoning-08-2025)
+
 ## [0.10.0] - 2025-11-22
 ### Changed
 - New documentation domain

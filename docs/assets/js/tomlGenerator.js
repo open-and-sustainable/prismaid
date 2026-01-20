@@ -140,6 +140,11 @@ function addLLMProvider() {
     // Define the model options for each provider
     const modelOptions = {
         OpenAI: [
+            "gpt-5-nano",
+            "gpt-5-mini",
+            "gpt-5.2",
+            "gpt-5.1",
+            "gpt-5",
             "o4-mini",
             "o3-mini",
             "o3",
@@ -155,24 +160,32 @@ function addLLMProvider() {
             "",
         ],
         GoogleAI: [
+            "gemini-3-flash-preview",
+            "gemini-3-pro-preview",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-flash",
+            "gemini-2.5-pro",
             "gemini-2.0-flash-lite",
             "gemini-2.0-flash",
             "gemini-1.5-flash",
             "gemini-1.5-pro",
-            "gemini-1.0-pro",
             "",
         ],
         Cohere: [
+            "command-a-reasoning-08-2025",
             "command-a-03-2025",
+            "command-r-08-2024",
             "command-r7b-12-2024",
             "command-r-plus",
-            "command-r-08-2024",
             "command-r",
             "command-light",
             "command",
             "",
         ],
         Anthropic: [
+            "claude-4-5-haiku",
+            "claude-4-5-sonnet",
+            "claude-4-5-opus",
             "claude-4-0-opus",
             "claude-4-0-sonnet",
             "claude-3-7-sonnet",
@@ -183,7 +196,14 @@ function addLLMProvider() {
             "claude-3-haiku",
             "",
         ],
-        DeepSeek: ["deepseek-chat", ""],
+        DeepSeek: ["deepseek-chat", "deepseek-reasoner", ""],
+        Perplexity: [
+            "sonar-deep-research",
+            "sonar-reasoning-pro",
+            "sonar-pro",
+            "sonar",
+            "",
+        ],
     };
 
     // HTML content for the provider
@@ -196,6 +216,7 @@ function addLLMProvider() {
             <option value="Cohere">Cohere</option>
             <option value="Anthropic">Anthropic</option>
             <option value="DeepSeek">DeepSeek</option>
+            <option value="Perplexity">Perplexity</option>
         </select><br>
 
         <label class="form-label">API Key:</label>

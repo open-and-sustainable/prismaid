@@ -112,6 +112,8 @@ func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) 
 				llm.ApiKey = envReader.GetEnv("ANTHROPIC_API_KEY")
 			case "DeepSeek":
 				llm.ApiKey = envReader.GetEnv("DEEPSEEK_API_KEY")
+			case "Perplexity":
+				llm.ApiKey = envReader.GetEnv("PERPLEXITY_API_KEY")
 			}
 		}
 
