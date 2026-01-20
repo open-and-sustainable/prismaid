@@ -78,15 +78,15 @@ GNU AFFERO GENERAL PUBLIC LICENSE, Version 3
 ![license](https://www.gnu.org/graphics/agplv3-155x51.png)
 
 ## Citation
-Boero, R. (2026). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
+Boero, R. (2024). prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews. Zenodo. https://doi.org/10.5281/zenodo.11210796
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796)
 
 ```bibtex
-@software{boero2026prismaid,
+@software{boero2024prismaid,
   author  = {Boero, Riccardo},
   title   = {prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews},
-  year    = {2026},
+  year    = {2024},
   doi     = {10.5281/zenodo.11210796},
   url     = {https://doi.org/10.5281/zenodo.11210796}
 }
