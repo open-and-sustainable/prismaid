@@ -53,25 +53,41 @@ func DownloadZoteroPDFs(client HttpClient, username, apiKey, collectionName, par
 
 	// Construct the URL for the collection
 	collectionURL := fmt.Sprintf("%s/users/%s/collections/%s/items?format=json&itemType=attachment", baseURL, userID, collectionKey)
-	req, err := http.NewRequest("GET", collectionURL, nil)
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-
-	req.Header.Add("Zotero-API-Key", apiKey)
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
-	}
-
+	limit := 100
+	start := 0
 	var items []Item
-	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
-		return fmt.Errorf("error decoding JSON: %v", err)
+	for {
+		pagedURL := fmt.Sprintf("%s&limit=%d&start=%d", collectionURL, limit, start)
+		req, err := http.NewRequest("GET", pagedURL, nil)
+		if err != nil {
+			return fmt.Errorf("error creating request: %v", err)
+		}
+
+		req.Header.Add("Zotero-API-Key", apiKey)
+		resp, err := client.Do(req)
+		if err != nil {
+			return fmt.Errorf("error making request: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+		}
+
+		var pageItems []Item
+		if err := json.NewDecoder(resp.Body).Decode(&pageItems); err != nil {
+			resp.Body.Close()
+			return fmt.Errorf("error decoding JSON: %v", err)
+		}
+		resp.Body.Close()
+
+		if len(pageItems) == 0 {
+			break
+		}
+		items = append(items, pageItems...)
+		if len(pageItems) < limit {
+			break
+		}
+		start += limit
 	}
 
 	outputDir := parentDir + "/zotero"
@@ -338,25 +354,41 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		itemsURL = fmt.Sprintf("%s/groups/%s/items?format=json&itemType=attachment", baseURL, groupID)
 	}
 
-	req, err = http.NewRequest("GET", itemsURL, nil)
-	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
-	}
-	req.Header.Add("Zotero-API-Key", apiKey)
-
-	resp, err = client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
-	}
-
+	limit := 100
+	start := 0
 	var items []Item
-	if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
-		return fmt.Errorf("error decoding JSON: %v", err)
+	for {
+		pagedURL := fmt.Sprintf("%s&limit=%d&start=%d", itemsURL, limit, start)
+		req, err = http.NewRequest("GET", pagedURL, nil)
+		if err != nil {
+			return fmt.Errorf("error creating request: %v", err)
+		}
+		req.Header.Add("Zotero-API-Key", apiKey)
+
+		resp, err = client.Do(req)
+		if err != nil {
+			return fmt.Errorf("error making request: %v", err)
+		}
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+		}
+
+		var pageItems []Item
+		if err := json.NewDecoder(resp.Body).Decode(&pageItems); err != nil {
+			resp.Body.Close()
+			return fmt.Errorf("error decoding JSON: %v", err)
+		}
+		resp.Body.Close()
+
+		if len(pageItems) == 0 {
+			break
+		}
+		items = append(items, pageItems...)
+		if len(pageItems) < limit {
+			break
+		}
+		start += limit
 	}
 
 	outputDir := filepath.Join(parentDir, "zotero")
