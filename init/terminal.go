@@ -20,12 +20,18 @@ type ReviewItem struct {
 
 // ModelItem stores a single model configuration
 type ModelItem struct {
-	Provider    string
-	APIKey      string
-	Model       string
-	Temperature string
-	TpmLimit    string
-	RpmLimit    string
+	Provider     string
+	APIKey       string
+	Model        string
+	Temperature  string
+	TpmLimit     string
+	RpmLimit     string
+	BaseURL      string
+	EndpointType string
+	Region       string
+	ProjectID    string
+	Location     string
+	APIVersion   string
 }
 
 // RunInteractiveConfigCreation launches an interactive terminal session to collect project configuration
@@ -318,6 +324,10 @@ func collectModelItems() []ModelItem {
 					{Text: "Anthropic", Note: "Anthropic Claude models."},
 					{Text: "DeepSeek", Note: "DeepSeek models."},
 					{Text: "Perplexity", Note: "Perplexity Sonar models."},
+					{Text: "AWS Bedrock", Note: "AWS Bedrock cloud models."},
+					{Text: "Azure AI", Note: "Azure OpenAI Service."},
+					{Text: "Vertex AI", Note: "Google Cloud Vertex AI."},
+					{Text: "SelfHosted", Note: "Self-hosted OpenAI-compatible endpoint."},
 				},
 				choose.WithHelp(true))
 		checkErr(err)
@@ -436,15 +446,45 @@ func collectModelItems() []ModelItem {
 			"0",
 			input.WithHelp(true), input.WithValidateFunc(validateNonNegative))
 		checkErr(err)
+		fmt.Printf("Added model: %s %s\n", provider, model)
 
-		// Create a new ReviewItem and append it to the list
+		// Collect optional fields for cloud/self-hosted providers
+		var baseURL, endpointType, region, projectID, location, apiVersion string
+
+		if provider == "SelfHosted" {
+			baseURL, err = prompt.New().Ask("Enter base URL (e.g., http://localhost:8000/v1):").Input("")
+			checkErr(err)
+		} else if provider == "AWS Bedrock" {
+			endpointType = "bedrock"
+			region, err = prompt.New().Ask("Enter AWS region (e.g., us-east-1):").Input("us-east-1")
+			checkErr(err)
+		} else if provider == "Azure AI" {
+			endpointType = "azure"
+			baseURL, err = prompt.New().Ask("Enter Azure OpenAI endpoint (e.g., https://your-resource.openai.azure.com):").Input("")
+			checkErr(err)
+			apiVersion, err = prompt.New().Ask("Enter API version (e.g., 2024-02-15-preview):").Input("2024-02-15-preview")
+			checkErr(err)
+		} else if provider == "Vertex AI" {
+			endpointType = "vertex"
+			projectID, err = prompt.New().Ask("Enter Google Cloud project ID:").Input("")
+			checkErr(err)
+			location, err = prompt.New().Ask("Enter location (e.g., us-central1):").Input("us-central1")
+			checkErr(err)
+		}
+
 		modelItems = append(modelItems, ModelItem{
-			Provider:    provider,
-			APIKey:      apiKey,
-			Model:       model,
-			Temperature: temperature,
-			TpmLimit:    tpmLimit,
-			RpmLimit:    rpmLimit,
+			Provider:     provider,
+			APIKey:       apiKey,
+			Model:        model,
+			Temperature:  temperature,
+			TpmLimit:     tpmLimit,
+			RpmLimit:     rpmLimit,
+			BaseURL:      baseURL,
+			EndpointType: endpointType,
+			Region:       region,
+			ProjectID:    projectID,
+			Location:     location,
+			APIVersion:   apiVersion,
 		})
 
 		count++
@@ -475,6 +515,24 @@ func generateModelToml(modelsItems []ModelItem) string {
 		tomlModelsSection.WriteString(fmt.Sprintf("temperature = \"%s\"\n", item.Temperature))
 		tomlModelsSection.WriteString(fmt.Sprintf("tpm_limit = \"%s\"\n", item.TpmLimit))
 		tomlModelsSection.WriteString(fmt.Sprintf("rpm_limit = \"%s\"\n", item.RpmLimit))
+		if item.BaseURL != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("base_url = \"%s\"\n", item.BaseURL))
+		}
+		if item.EndpointType != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("endpoint_type = \"%s\"\n", item.EndpointType))
+		}
+		if item.Region != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("region = \"%s\"\n", item.Region))
+		}
+		if item.ProjectID != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("project_id = \"%s\"\n", item.ProjectID))
+		}
+		if item.Location != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("location = \"%s\"\n", item.Location))
+		}
+		if item.APIVersion != "" {
+			tomlModelsSection.WriteString(fmt.Sprintf("api_version = \"%s\"\n", item.APIVersion))
+		}
 		tomlModelsSection.WriteString("\n")
 	}
 

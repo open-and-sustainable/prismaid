@@ -150,7 +150,7 @@ rpm_limit = 0
 - **`[project.llm]`** specifies model configurations for review execution. At least one model is required. When multiple models are configured, results will represent an 'ensemble' analysis.
 
 The **`[project.llm.#]`** fields manage LLM usage:
-- **`provider`**:  Supported providers are `OpenAI`, `GoogleAI`, `Cohere`, `Anthropic`, `DeepSeek`, and `Perplexity`.
+- **`provider`**:  Supported providers are `OpenAI`, `GoogleAI`, `Cohere`, `Anthropic`, `DeepSeek`, `Perplexity`, `AWS Bedrock`, `Azure AI`, `Vertex AI`, and `SelfHosted` (for OpenAI-compatible endpoints).
 - **`api_key`**: Define project-specific keys here, or leave empty to default to environment variables.
 - **`model`**: select model:
     - Leave blank `''` for cost-efficient automatic model selection.
@@ -163,6 +163,14 @@ The **`[project.llm.#]`** fields manage LLM usage:
 - **`temperature`**: Controls response variability (range: 0 to 1 for most models); lower values increase consistency.
 - **`tpm_limit`**: Defines maximum tokens per minute. Default is `0` (no delay).
 - **`rpm_limit`**: Sets maximum requests per minute. Default is `0` (no limit).
+
+**Optional fields for cloud providers and self-hosted endpoints:**
+- **`base_url`**: Base URL for self-hosted OpenAI-compatible endpoints (e.g., `http://localhost:8000/v1`). Use with `provider = "SelfHosted"`.
+- **`endpoint_type`**: Cloud endpoint type. Options: `bedrock`, `azure`, `vertex`. Required for cloud providers.
+- **`region`**: AWS region for Bedrock (e.g., `us-east-1`). Required when using AWS Bedrock.
+- **`project_id`**: Google Cloud project ID for Vertex AI. Required when using Vertex AI.
+- **`location`**: Google Cloud location for Vertex AI (e.g., `us-central1`). Required when using Vertex AI.
+- **`api_version`**: API version for Azure OpenAI (e.g., `2024-02-15-preview`). Required when using Azure AI.
 
 ### Supported Models
 For comprehensive information on supported models, input token limits, and associated costs, please refer to the provider's official documentation. Additionally, you can find a detailed comparison of all supported models in the [`alembica` documentation](https://open-and-sustainable.github.io/alembica/supported-models.html).
@@ -359,6 +367,51 @@ provider = "Perplexity"
 api_key = ""
 model = "sonar-pro"
 temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
+
+# Example: AWS Bedrock
+[project.llm.7]
+provider = "AWS Bedrock"
+api_key = ""  # Uses AWS_ACCESS_KEY_ID from environment
+model = "anthropic.claude-3-sonnet-20240229-v1:0"
+temperature = 0.01
+endpoint_type = "bedrock"
+region = "us-east-1"
+tpm_limit = 0
+rpm_limit = 0
+
+# Example: Azure OpenAI
+[project.llm.8]
+provider = "Azure AI"
+api_key = ""  # Uses AZURE_OPENAI_API_KEY from environment
+model = "gpt-4o"
+temperature = 0.01
+endpoint_type = "azure"
+base_url = "https://your-resource.openai.azure.com"
+api_version = "2024-02-15-preview"
+tpm_limit = 0
+rpm_limit = 0
+
+# Example: Vertex AI
+[project.llm.9]
+provider = "Vertex AI"
+api_key = ""  # Uses GOOGLE_APPLICATION_CREDENTIALS from environment
+model = "gemini-1.5-pro"
+temperature = 0.01
+endpoint_type = "vertex"
+project_id = "your-gcp-project-id"
+location = "us-central1"
+tpm_limit = 0
+rpm_limit = 0
+
+# Example: Self-hosted OpenAI-compatible endpoint
+[project.llm.10]
+provider = "SelfHosted"
+api_key = "your-api-key"
+model = "llama-3-70b"
+temperature = 0.01
+base_url = "http://localhost:8000/v1"
 tpm_limit = 0
 rpm_limit = 0
 ```

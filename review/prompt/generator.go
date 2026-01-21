@@ -207,12 +207,18 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 	// Populate models
 	for _, llm := range config.Project.LLM {
 		jsonSchema.Models = append(jsonSchema.Models, definitions.Model{
-			Provider:    llm.Provider,
-			APIKey:      llm.ApiKey,
-			Model:       llm.Model,
-			Temperature: llm.Temperature,
-			TPMLimit:    int(llm.TpmLimit),
-			RPMLimit:    int(llm.RpmLimit),
+			Provider:     llm.Provider,
+			APIKey:       llm.ApiKey,
+			Model:        llm.Model,
+			Temperature:  llm.Temperature,
+			TPMLimit:     int(llm.TpmLimit),
+			RPMLimit:     int(llm.RpmLimit),
+			BaseURL:      llm.BaseURL,
+			EndpointType: llm.EndpointType,
+			Region:       llm.Region,
+			ProjectID:    llm.ProjectID,
+			Location:     llm.Location,
+			APIVersion:   llm.APIVersion,
 		})
 	}
 	logger.Info("Added %d models to input JSON.", len(jsonSchema.Models))

@@ -67,6 +67,8 @@ Our tools support a comprehensive systematic review workflow following the stand
     4. **Anthropic**: Claude 3 Sonnet, Claude 3 Opus, Claude 3 Haiku, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3.7 Sonnet, Claude 4.0 Sonnet, Claude 4.0 Opus, Claude 4.5 Opus, Claude 4.5 Sonnet, and Claude 4.5 Haiku
     5. **DeepSeek**: DeepSeek Chat v3, and DeepSeek Reasoner v3
     6. **Perplexity**: Sonar, Sonar Pro, Sonar Reasoning Pro, and Sonar Deep Research
+    7. **Cloud Providers**: AWS Bedrock, Azure AI, Vertex AI
+    8. **Self-Hosted**: OpenAI-compatible endpoints
 - **Screening capabilities**: Deduplication, language filtering, article type classification, and off-topic detection
 - **Output format**: Data in CSV or JSON formats
 - **Performance**: Efficiently processes extensive datasets with minimal setup and **no coding** required

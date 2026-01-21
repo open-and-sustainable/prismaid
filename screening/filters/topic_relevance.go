@@ -127,12 +127,18 @@ func BatchCalculateTopicRelevanceWithAI(manuscriptsData []map[string]string, top
 	for _, llmConfig := range llmConfigs {
 		if llm, ok := llmConfig.(map[string]any); ok {
 			model := definitions.Model{
-				Provider:    getStringValue(llm, "provider"),
-				APIKey:      getStringValue(llm, "api_key"),
-				Model:       getStringValue(llm, "model"),
-				Temperature: getFloatValue(llm, "temperature"),
-				TPMLimit:    getIntValue(llm, "tpm_limit"),
-				RPMLimit:    getIntValue(llm, "rpm_limit"),
+				Provider:     getStringValue(llm, "provider"),
+				APIKey:       getStringValue(llm, "api_key"),
+				Model:        getStringValue(llm, "model"),
+				Temperature:  getFloatValue(llm, "temperature"),
+				TPMLimit:     getIntValue(llm, "tpm_limit"),
+				RPMLimit:     getIntValue(llm, "rpm_limit"),
+				BaseURL:      getStringValue(llm, "base_url"),
+				EndpointType: getStringValue(llm, "endpoint_type"),
+				Region:       getStringValue(llm, "region"),
+				ProjectID:    getStringValue(llm, "project_id"),
+				Location:     getStringValue(llm, "location"),
+				APIVersion:   getStringValue(llm, "api_version"),
 			}
 			models = append(models, model)
 		}
@@ -270,12 +276,18 @@ func CalculateTopicRelevanceWithAI(manuscriptData map[string]string, topics []st
 	for _, llmConfig := range llmConfigs {
 		if llm, ok := llmConfig.(map[string]interface{}); ok {
 			model := definitions.Model{
-				Provider:    getStringValue(llm, "provider"),
-				APIKey:      getStringValue(llm, "api_key"),
-				Model:       getStringValue(llm, "model"),
-				Temperature: getFloatValue(llm, "temperature"),
-				TPMLimit:    getIntValue(llm, "tpm_limit"),
-				RPMLimit:    getIntValue(llm, "rpm_limit"),
+				Provider:     getStringValue(llm, "provider"),
+				APIKey:       getStringValue(llm, "api_key"),
+				Model:        getStringValue(llm, "model"),
+				Temperature:  getFloatValue(llm, "temperature"),
+				TPMLimit:     getIntValue(llm, "tpm_limit"),
+				RPMLimit:     getIntValue(llm, "rpm_limit"),
+				BaseURL:      getStringValue(llm, "base_url"),
+				EndpointType: getStringValue(llm, "endpoint_type"),
+				Region:       getStringValue(llm, "region"),
+				ProjectID:    getStringValue(llm, "project_id"),
+				Location:     getStringValue(llm, "location"),
+				APIVersion:   getStringValue(llm, "api_version"),
 			}
 			models = append(models, model)
 		}

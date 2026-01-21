@@ -7,7 +7,7 @@
 char* RunReviewR(char* input);
 char* DownloadZoteroPDFsR(char* username, char* apiKey, char* collectionName, char* parentDir);
 char* DownloadURLListR(char* path);
-char* ConvertR(char* inputDir, char* selectedFormats);
+char* ConvertR(char* inputDir, char* selectedFormats, char* tikaAddress);
 char* ScreeningR(char* input);
 void FreeCString(char* str);
 

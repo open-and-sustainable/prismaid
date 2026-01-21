@@ -57,6 +57,13 @@ function collectProviderData() {
         temperature: provider.querySelector(".temperature-input").value,
         tpm_limit: provider.querySelector(".tpm-limit-input").value,
         rpm_limit: provider.querySelector(".rpm-limit-input").value,
+        base_url: provider.querySelector(".base-url-input")?.value || "",
+        endpoint_type:
+            provider.querySelector(".endpoint-type-input")?.value || "",
+        region: provider.querySelector(".region-input")?.value || "",
+        project_id: provider.querySelector(".project-id-input")?.value || "",
+        location: provider.querySelector(".location-input")?.value || "",
+        api_version: provider.querySelector(".api-version-input")?.value || "",
     }));
     return data;
 }
@@ -104,6 +111,15 @@ function generateTOMLString(data) {
         toml.push(`temperature = ${provider.temperature}`);
         toml.push(`tpm_limit = ${provider.tpm_limit}`);
         toml.push(`rpm_limit = ${provider.rpm_limit}`);
+        if (provider.base_url) toml.push(`base_url = "${provider.base_url}"`);
+        if (provider.endpoint_type)
+            toml.push(`endpoint_type = "${provider.endpoint_type}"`);
+        if (provider.region) toml.push(`region = "${provider.region}"`);
+        if (provider.project_id)
+            toml.push(`project_id = "${provider.project_id}"`);
+        if (provider.location) toml.push(`location = "${provider.location}"`);
+        if (provider.api_version)
+            toml.push(`api_version = "${provider.api_version}"`);
     });
 
     toml.push("\n[prompt]");
@@ -204,6 +220,10 @@ function addLLMProvider() {
             "sonar",
             "",
         ],
+        "AWS Bedrock": [""],
+        "Azure AI": [""],
+        "Vertex AI": [""],
+        SelfHosted: [""],
     };
 
     // HTML content for the provider
@@ -217,6 +237,10 @@ function addLLMProvider() {
             <option value="Anthropic">Anthropic</option>
             <option value="DeepSeek">DeepSeek</option>
             <option value="Perplexity">Perplexity</option>
+            <option value="AWS Bedrock">AWS Bedrock</option>
+            <option value="Azure AI">Azure AI</option>
+            <option value="Vertex AI">Vertex AI</option>
+            <option value="SelfHosted">Self-Hosted</option>
         </select><br>
 
         <label class="form-label">API Key:</label>
@@ -233,6 +257,24 @@ function addLLMProvider() {
 
         <label class="form-label">Requests Per Minute:</label>
         <input type="number" class="form-input rpm-limit-input" value="0"><br>
+
+        <div class="optional-fields" style="display:none;">
+            <label class="form-label">Base URL (Self-Hosted):</label>
+            <input type="text" class="form-input base-url-input"><br>
+            <input type="hidden" class="endpoint-type-input">
+
+            <label class="form-label region-label" style="display:none;">AWS Region:</label>
+            <input type="text" class="form-input region-input" style="display:none;"><br>
+
+            <label class="form-label project-id-label" style="display:none;">Project ID:</label>
+            <input type="text" class="form-input project-id-input" style="display:none;"><br>
+
+            <label class="form-label location-label" style="display:none;">Location:</label>
+            <input type="text" class="form-input location-input" style="display:none;"><br>
+
+            <label class="form-label api-version-label" style="display:none;">API Version:</label>
+            <input type="text" class="form-input api-version-input" style="display:none;"><br>
+        </div>
     `;
 
     // Append the remove button
@@ -253,7 +295,7 @@ function addLLMProvider() {
     const providerSelect = providerDiv.querySelector(".provider-select");
     const modelSelect = providerDiv.querySelector(".model-input");
 
-    // Function to update model options based on the selected provider
+    // Function to update model options and optional fields based on the selected provider
     function updateModelOptions() {
         // Clear the current options
         modelSelect.innerHTML = "";
@@ -274,6 +316,68 @@ function addLLMProvider() {
                 option.selected = true; // Mark the "Default" option as selected
             }
         });
+
+        // Show/hide optional fields based on provider
+        const optionalFields = providerDiv.querySelector(".optional-fields");
+        const baseUrlInput = providerDiv.querySelector(".base-url-input");
+        const endpointTypeInput = providerDiv.querySelector(
+            ".endpoint-type-input",
+        );
+        const regionInput = providerDiv.querySelector(".region-input");
+        const regionLabel = providerDiv.querySelector(".region-label");
+        const projectIdInput = providerDiv.querySelector(".project-id-input");
+        const projectIdLabel = providerDiv.querySelector(".project-id-label");
+        const locationInput = providerDiv.querySelector(".location-input");
+        const locationLabel = providerDiv.querySelector(".location-label");
+        const apiVersionInput = providerDiv.querySelector(".api-version-input");
+        const apiVersionLabel = providerDiv.querySelector(".api-version-label");
+
+        // Hide all optional fields first
+        optionalFields.style.display = "none";
+        baseUrlInput.style.display = "none";
+        regionInput.style.display = "none";
+        regionLabel.style.display = "none";
+        projectIdInput.style.display = "none";
+        projectIdLabel.style.display = "none";
+        locationInput.style.display = "none";
+        locationLabel.style.display = "none";
+        apiVersionInput.style.display = "none";
+        apiVersionLabel.style.display = "none";
+
+        // Reset values
+        endpointTypeInput.value = "";
+        baseUrlInput.value = "";
+        regionInput.value = "";
+        projectIdInput.value = "";
+        locationInput.value = "";
+        apiVersionInput.value = "";
+
+        // Show relevant fields based on provider
+        if (selectedProvider === "SelfHosted") {
+            optionalFields.style.display = "block";
+            baseUrlInput.style.display = "inline-block";
+        } else if (selectedProvider === "AWS Bedrock") {
+            optionalFields.style.display = "block";
+            endpointTypeInput.value = "bedrock";
+            regionInput.style.display = "inline-block";
+            regionLabel.style.display = "inline";
+            regionInput.value = "us-east-1";
+        } else if (selectedProvider === "Azure AI") {
+            optionalFields.style.display = "block";
+            endpointTypeInput.value = "azure";
+            baseUrlInput.style.display = "inline-block";
+            apiVersionInput.style.display = "inline-block";
+            apiVersionLabel.style.display = "inline";
+            apiVersionInput.value = "2024-02-15-preview";
+        } else if (selectedProvider === "Vertex AI") {
+            optionalFields.style.display = "block";
+            endpointTypeInput.value = "vertex";
+            projectIdInput.style.display = "inline-block";
+            projectIdLabel.style.display = "inline";
+            locationInput.style.display = "inline-block";
+            locationLabel.style.display = "inline";
+            locationInput.value = "us-central1";
+        }
     }
 
     // Initialize the model options on creation

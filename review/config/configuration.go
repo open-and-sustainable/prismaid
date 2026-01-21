@@ -46,12 +46,18 @@ type ProjectConfiguration struct {
 
 // LLMConfig holds the configuration settings specific to the AI model being used.
 type LLMItem struct {
-	Provider    string  `toml:"provider"`
-	ApiKey      string  `toml:"api_key"`
-	Model       string  `toml:"model"`
-	Temperature float64 `toml:"temperature"`
-	TpmLimit    int64   `toml:"tpm_limit"`
-	RpmLimit    int64   `toml:"rpm_limit"`
+	Provider     string  `toml:"provider"`
+	ApiKey       string  `toml:"api_key"`
+	Model        string  `toml:"model"`
+	Temperature  float64 `toml:"temperature"`
+	TpmLimit     int64   `toml:"tpm_limit"`
+	RpmLimit     int64   `toml:"rpm_limit"`
+	BaseURL      string  `toml:"base_url,omitempty"`      // For self-hosted OpenAI-compatible endpoints
+	EndpointType string  `toml:"endpoint_type,omitempty"` // For cloud providers (AWS Bedrock, Azure, Vertex)
+	Region       string  `toml:"region,omitempty"`        // For AWS Bedrock
+	ProjectID    string  `toml:"project_id,omitempty"`    // For Vertex AI
+	Location     string  `toml:"location,omitempty"`      // For Vertex AI
+	APIVersion   string  `toml:"api_version,omitempty"`   // For Azure AI
 }
 
 // PromptConfig specifies the configurations related to task prompting.
@@ -114,6 +120,14 @@ func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) 
 				llm.ApiKey = envReader.GetEnv("DEEPSEEK_API_KEY")
 			case "Perplexity":
 				llm.ApiKey = envReader.GetEnv("PERPLEXITY_API_KEY")
+			case "AWS Bedrock":
+				llm.ApiKey = envReader.GetEnv("AWS_ACCESS_KEY_ID")
+			case "Azure AI":
+				llm.ApiKey = envReader.GetEnv("AZURE_OPENAI_API_KEY")
+			case "Vertex AI":
+				llm.ApiKey = envReader.GetEnv("GOOGLE_APPLICATION_CREDENTIALS")
+			case "SelfHosted":
+				llm.ApiKey = envReader.GetEnv("SELF_HOSTED_API_KEY")
 			}
 		}
 

@@ -9,6 +9,24 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.11.0] - 2026-01-21
+### Changed
+- Updated alembica dependency from v0.1.1 to v0.3.0
+  - Added support for cloud providers: AWS Bedrock, Azure AI, Vertex AI
+  - Added support for self-hosted OpenAI-compatible endpoints
+  - Extended configuration schema with optional fields for cloud/local deployments (base_url, endpoint_type, region, project_id, location, api_version)
+
+### Added
+- Cloud provider support in Review and Screening tools
+  - AWS Bedrock: Configure with endpoint_type="bedrock" and region
+  - Azure AI: Configure with endpoint_type="azure", base_url, and api_version
+  - Vertex AI: Configure with endpoint_type="vertex", project_id, and location
+  - Self-hosted: Configure with provider="SelfHosted" and base_url for OpenAI-compatible endpoints
+- Extended LLM configuration in terminal init to support cloud providers with guided prompts
+- Extended web review configurator to support cloud providers with dynamic field visibility
+- Updated documentation with cloud provider examples and configuration details
+- Updated README with cloud provider and self-hosted support in LLM list
+
 ## [0.10.1] - 2026-01-20
 ### Changed
 - Updated CI/CD workflows to use macos-latest runner for ARM64 builds
