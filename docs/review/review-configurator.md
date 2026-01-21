@@ -3,7 +3,7 @@ title: Config Generator
 layout: default
 ---
 
-<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="/assets/css/styles.css">
 
 # Generate Your Review Configuration File
 
@@ -151,7 +151,7 @@ This configurator helps you create a TOML configuration file for the prismAId Re
 ## Download Configuration
 <button type="button" id="downloadButton" style="background-color: #0056b3; color: #ffffff;">Download File</button>
 
-<script src="assets/js/tomlGenerator.js"></script>
+<script src="/assets/js/tomlGenerator.js"></script>
 
 
 <div id="wcb" class="carbonbadge"></div>
