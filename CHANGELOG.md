@@ -10,6 +10,8 @@ Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
 ## [0.11.2] - unreleased
+### Added
+- CLI PDF conversion retries OCR-only once for per-file errors or zero-byte outputs when Tika is available
 ### Fixed
 - Updated R shared-lib header to match new ConvertR signature used by bindings
 

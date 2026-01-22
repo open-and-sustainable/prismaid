@@ -233,14 +233,7 @@ func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool)
 			continue
 		}
 
-		cmd := exec.Command(exePath, "--convert-pdf", inputDir, "--single-file", fullPath)
-		if tikaServer != "" {
-			cmd.Args = append(cmd.Args, "--tika-server", tikaServer)
-		}
-		if ocrOnly {
-			cmd.Args = append(cmd.Args, "--ocr-only")
-		}
-		output, err := cmd.CombinedOutput()
+		output, err := runConvertCommand(exePath, inputDir, fullPath, tikaServer, ocrOnly)
 		status := "ok"
 		errMsg := ""
 		if err != nil {
@@ -249,6 +242,29 @@ func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool)
 		}
 		if len(output) > 0 {
 			errMsg = strings.TrimSpace(errMsg + " " + string(output))
+		}
+
+		zeroOutput := isZeroSizeFile(txtPath)
+		if (err != nil || zeroOutput) && tikaServer != "" && !ocrOnly {
+			if zeroOutput {
+				_ = os.Remove(txtPath)
+			}
+			retryOutput, retryErr := runConvertCommand(exePath, inputDir, fullPath, tikaServer, true)
+			if retryErr != nil {
+				status = "error"
+				errMsg = strings.TrimSpace(errMsg + " ocr-only retry failed: " + retryErr.Error())
+				if len(retryOutput) > 0 {
+					errMsg = strings.TrimSpace(errMsg + " " + string(retryOutput))
+				}
+			} else {
+				status = "ok"
+				if len(retryOutput) > 0 {
+					errMsg = strings.TrimSpace(errMsg + " ocr-only retry ok: " + string(retryOutput))
+				}
+			}
+		} else if zeroOutput {
+			status = "error"
+			errMsg = strings.TrimSpace(errMsg + " output txt is zero bytes")
 		}
 		errMsg = strings.ReplaceAll(errMsg, "\n", " ")
 		errMsg = truncateString(errMsg, 2000)
@@ -276,6 +292,25 @@ func truncateString(value string, maxLen int) string {
 		return value
 	}
 	return value[:maxLen] + "…"
+}
+
+var runConvertCommand = func(exePath, inputDir, fullPath, tikaServer string, ocrOnly bool) ([]byte, error) {
+	cmd := exec.Command(exePath, "--convert-pdf", inputDir, "--single-file", fullPath)
+	if tikaServer != "" {
+		cmd.Args = append(cmd.Args, "--tika-server", tikaServer)
+	}
+	if ocrOnly {
+		cmd.Args = append(cmd.Args, "--ocr-only")
+	}
+	return cmd.CombinedOutput()
+}
+
+func isZeroSizeFile(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return info.Size() == 0
 }
 
 // handleZoteroDownload processes a TOML configuration file containing Zotero credentials

@@ -155,6 +155,11 @@ The Convert tool follows a standardized process:
 3. **Text Processing**: Extracted text is processed to remove unnecessary elements and normalize formatting
 4. **Output Generation**: A plain text (.txt) file is created for each input document, maintaining the same filename but with a .txt extension
 
+### Notes on Process Isolation and OCR Retry
+
+- The CLI `-convert-pdf` command runs per-file conversions in separate processes. If a single-file conversion fails or produces a zero-byte `.txt`, it will retry once using OCR-only when Tika is available.
+- Library bindings (Go package, Python/Julia/R) run in-process and do not spawn isolated child processes. For those integrations, handle retries or post-checks in your own workflow if needed.
+
 ## OCR Fallback with Apache Tika
 
 For challenging documents that fail standard conversion methods (such as scanned PDFs, image-based files, or corrupted documents), prismAId offers an optional OCR (Optical Character Recognition) fallback using Apache Tika.
