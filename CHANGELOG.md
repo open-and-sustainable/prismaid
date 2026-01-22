@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.11.2] - unreleased
+### Fixed
+- Updated R shared-lib header to match new ConvertR signature used by bindings
+
 ## [0.11.1] - 2026-01-22
 ### Added
 - PDF conversion now supports isolated per-file execution to reduce failures from process termination
