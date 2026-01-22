@@ -148,9 +148,45 @@ func TestConvert(t *testing.T) {
 // TestConvertErrors tests error handling
 func TestConvertErrors(t *testing.T) {
 	// Test with a non-existent directory
-	err := Convert("/nonexistent/directory", "html,pdf", "")
+	err := Convert("/nonexistent/directory", "html,pdf", ConvertOptions{})
 	if err == nil {
 		t.Errorf("Expected error when using non-existent directory, but got none")
+	}
+}
+
+func TestConvertPDFSingleFileExtensionMismatch(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "convert_single_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	htmlPath := filepath.Join(tempDir, "test.html")
+	err = os.WriteFile(htmlPath, []byte("<html><body>Test</body></html>"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to write test HTML file: %v", err)
+	}
+
+	err = Convert(tempDir, "pdf", ConvertOptions{
+		PDF: PDFOptions{SingleFile: htmlPath},
+	})
+	if err == nil {
+		t.Errorf("Expected error when single-file extension is not .pdf, but got none")
+	}
+}
+
+func TestConvertOCROnlyRequiresTika(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "convert_ocr_only_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	err = Convert(tempDir, "pdf", ConvertOptions{
+		PDF: PDFOptions{OCROnly: true},
+	})
+	if err == nil {
+		t.Errorf("Expected error when OCR-only is requested without a Tika server, but got none")
 	}
 }
 
@@ -220,7 +256,7 @@ func TestConvertWithTikaFallback(t *testing.T) {
 	}
 
 	// Test: Standard conversion works, Tika address provided but not needed
-	err = Convert(tempDir, "html", "localhost:99999")
+	err = Convert(tempDir, "html", ConvertOptions{TikaServer: "localhost:99999"})
 	if err != nil {
 		t.Errorf("Convert returned an error: %v", err)
 	}

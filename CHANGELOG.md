@@ -9,6 +9,13 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.11.1] - 2026-01-22
+### Added
+- PDF conversion now supports isolated per-file execution to reduce failures from process termination
+- Added PDF-only options for conversion: single-file conversion and OCR-only mode (CLI and language bindings)
+### Fixed
+- Pagination size and limit in Zotero API call by download tool
+
 ## [0.11.0] - 2026-01-21
 ### Changed
 - Updated alembica dependency from v0.1.1 to v0.3.0

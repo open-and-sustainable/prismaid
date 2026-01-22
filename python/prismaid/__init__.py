@@ -43,7 +43,7 @@ _DownloadURLListPython.argtypes = [c_char_p]
 _DownloadURLListPython.restype = c_char_p
 
 _ConvertPython = lib.ConvertPython
-_ConvertPython.argtypes = [c_char_p, c_char_p, c_char_p]
+_ConvertPython.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p, c_char_p]
 _ConvertPython.restype = c_char_p
 
 _ScreeningPython = lib.ScreeningPython
@@ -121,7 +121,13 @@ def download_url_list(path: str) -> None:
         raise Exception(error_message)
 
 
-def convert(input_dir: str, selected_formats: str, tika_address: str = "") -> None:
+def convert(
+    input_dir: str,
+    selected_formats: str,
+    tika_address: str = "",
+    single_file: str = "",
+    ocr_only: bool = False,
+) -> None:
     """
     Convert files to specified formats.
 
@@ -130,16 +136,22 @@ def convert(input_dir: str, selected_formats: str, tika_address: str = "") -> No
         selected_formats (str): Comma-separated list of target formats
         tika_address (str, optional): Tika server address for OCR fallback (e.g., 'localhost:9998').
                                       Empty string disables OCR fallback. Defaults to "".
+        single_file (str, optional): Convert only the specified PDF (PDF format only). Defaults to "".
+        ocr_only (bool, optional): Force OCR for PDFs via Tika (PDF format only). Requires tika_address.
+                                  Defaults to False.
 
     Raises:
         Exception: If the conversion process fails
     """
+    ocr_only_value = "true" if ocr_only else "false"
     result = cast(
         bytes | None,
         _ConvertPython(
             input_dir.encode("utf-8"),
             selected_formats.encode("utf-8"),
             tika_address.encode("utf-8"),
+            single_file.encode("utf-8"),
+            ocr_only_value.encode("utf-8"),
         ),
     )
 

@@ -35,6 +35,12 @@ The Convert tool can be accessed through multiple interfaces to accommodate diff
 
 # Convert with Tika OCR fallback for difficult files
 ./prismaid -convert-pdf ./papers -tika-server localhost:9998
+
+# Convert a single PDF (PDF-only flag)
+./prismaid -convert-pdf ./papers -single-file /path/to/file.pdf
+
+# OCR-only for a single PDF (requires Tika server)
+./prismaid -convert-pdf ./papers -single-file /path/to/file.pdf -ocr-only -tika-server localhost:9998
 ```
 
 ### Go Package
@@ -43,10 +49,21 @@ The Convert tool can be accessed through multiple interfaces to accommodate diff
 import "github.com/open-and-sustainable/prismaid/conversion"
 
 // Convert files of specified formats in a directory (no OCR fallback)
-err := conversion.Convert("./papers", "pdf,docx,html", "")
+err := conversion.Convert("./papers", "pdf,docx,html", conversion.ConvertOptions{})
 
-// Convert with Tika OCR fallback - just pass the server address
-err := conversion.Convert("./papers", "pdf,docx,html", "localhost:9998")
+// Convert with Tika OCR fallback
+err := conversion.Convert("./papers", "pdf,docx,html", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+})
+
+// PDF-specific options (single file and OCR-only)
+err := conversion.Convert("./papers", "pdf", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+    PDF: conversion.PDFOptions{
+        SingleFile: "/path/to/file.pdf",
+        OCROnly:    true,
+    },
+})
 ```
 
 ### Python Package
@@ -59,6 +76,9 @@ prismaid.convert("./papers", "pdf,docx,html")
 
 # Convert with Tika OCR fallback - pass server address as optional parameter
 prismaid.convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# OCR-only for PDFs
+prismaid.convert("./papers", "pdf", "localhost:9998", ocr_only=True)
 ```
 
 ### R Package
@@ -71,6 +91,9 @@ Convert("./papers", "pdf,docx,html")
 
 # Convert with Tika OCR fallback - pass server address as optional parameter
 Convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# OCR-only for PDFs
+Convert("./papers", "pdf", "localhost:9998", "", TRUE)
 ```
 
 ### Julia Package
@@ -83,6 +106,9 @@ PrismAId.convert("./papers", "pdf,docx,html")
 
 # Convert with Tika OCR fallback - pass server address as optional parameter
 PrismAId.convert("./papers", "pdf,docx,html", "localhost:9998")
+
+# OCR-only for PDFs
+PrismAId.convert("./papers", "pdf", "localhost:9998", "", true)
 ```
 
 ## Supported File Formats
@@ -195,13 +221,26 @@ Once the Tika server is running, enable OCR fallback by providing the server add
 import "github.com/open-and-sustainable/prismaid/conversion"
 
 // Convert single format with Tika OCR fallback
-err := conversion.Convert("./papers", "pdf", "localhost:9998")
+err := conversion.Convert("./papers", "pdf", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+})
 
 // Convert multiple formats in one call
-err := conversion.Convert("./papers", "pdf,docx,html", "localhost:9998")
+err := conversion.Convert("./papers", "pdf,docx,html", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+})
 
-// Disable Tika by passing empty string
-err := conversion.Convert("./papers", "pdf", "")
+// Disable Tika by leaving TikaServer empty
+err := conversion.Convert("./papers", "pdf", conversion.ConvertOptions{})
+
+// OCR-only for a single PDF
+err := conversion.Convert("./papers", "pdf", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+    PDF: conversion.PDFOptions{
+        SingleFile: "/path/to/file.pdf",
+        OCROnly:    true,
+    },
+})
 ```
 
 **Python Package:**
@@ -258,6 +297,27 @@ When you specify a Tika server address:
 3. **Automatic Fallback**: If standard methods fail (error) OR return empty text, AND Tika is available, the file is automatically sent to the Tika server
 4. **OCR Processing**: Tika performs OCR on the document if needed (scanned PDFs, images, etc.)
 5. **Text Extraction**: Extracted text is saved as a .txt file
+
+### OCR-Only Full Directory Example
+
+Use this when you want to force OCR for every PDF in a directory (no standard PDF extraction):
+
+**Command Line:**
+```bash
+./prismaid -convert-pdf ./papers -ocr-only -tika-server localhost:9998
+```
+
+**Go Package:**
+```go
+import "github.com/open-and-sustainable/prismaid/conversion"
+
+err := conversion.Convert("./papers", "pdf", conversion.ConvertOptions{
+    TikaServer: "localhost:9998",
+    PDF: conversion.PDFOptions{
+        OCROnly: true,
+    },
+})
+```
 
 The fallback is transparent - you'll see log messages indicating when Tika is being used:
 ```

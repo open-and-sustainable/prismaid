@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
@@ -40,6 +43,8 @@ func main() {
 	downloadURLPath := flag.String("download-URL", "", "Path to a text file containing URLs to download")
 	downloadZoteroPath := flag.String("download-zotero", "", "Path to a TOML file containing Zotero credentials")
 
+	singleFilePath := flag.String("single-file", "", "Path to a single PDF file to convert")
+	ocrOnly := flag.Bool("ocr-only", false, "Use Tika OCR only (PDF conversion)")
 	convertPDFDir := flag.String("convert-pdf", "", "Directory containing PDF files to convert")
 	convertDOCXDir := flag.String("convert-docx", "", "Directory containing DOCX files to convert")
 	convertHTMLDir := flag.String("convert-html", "", "Directory containing HTML files to convert")
@@ -57,19 +62,23 @@ func main() {
 	// PDF conversion
 	if *convertPDFDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertPDFDir, "pdf", *tikaServer)
+		if *singleFilePath != "" {
+			handleConversionFile(*singleFilePath, *tikaServer, *ocrOnly)
+		} else {
+			handleConversionIsolated(*convertPDFDir, "pdf", *tikaServer, *ocrOnly)
+		}
 	}
 
 	// DOCX conversion
 	if *convertDOCXDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertDOCXDir, "docx", *tikaServer)
+		handleConversion(*convertDOCXDir, "docx", *tikaServer, false)
 	}
 
 	// HTML conversion
 	if *convertHTMLDir != "" {
 		logger.SetupLogging(logger.Stdout, "")
-		handleConversion(*convertHTMLDir, "html", *tikaServer)
+		handleConversion(*convertHTMLDir, "html", *tikaServer, false)
 	}
 
 	// Zotero PDF download
@@ -119,6 +128,11 @@ func main() {
 		terminal.RunInteractiveConfigCreation()
 	}
 
+	if *singleFilePath != "" && *convertPDFDir == "" {
+		logger.Error("Error: -single-file must be used with -convert-pdf")
+		os.Exit(1)
+	}
+
 	if *projectConfigPath == "" && !*initFlag && *downloadURLPath == "" && *downloadZoteroPath == "" && *convertPDFDir == "" && *convertDOCXDir == "" && *convertHTMLDir == "" && *screeningConfigPath == "" {
 		logger.Error("No valid options provided. Use -help for usage information.")
 		os.Exit(1)
@@ -141,13 +155,127 @@ func main() {
 //
 // The function doesn't return anything as it handles errors internally
 // and terminates the program on failure.
-func handleConversion(inputDir, format, tikaServer string) {
-	err := conversion.Convert(inputDir, format, tikaServer)
+func handleConversion(inputDir, format, tikaServer string, ocrOnly bool) {
+	err := conversion.Convert(inputDir, format, conversion.ConvertOptions{
+		TikaServer: tikaServer,
+		PDF: conversion.PDFOptions{
+			OCROnly: ocrOnly && format == "pdf",
+		},
+	})
 	if err != nil {
 		logger.Error("Error converting files in %s to %s: %v\n", inputDir, format, err)
 		os.Exit(1)
 	}
-	logger.Info("Successfully converted files in %s to %s format\n", inputDir, format)
+	logger.Info("Successfully converted files in %s to txt (source=%s)\n", inputDir, format)
+}
+
+func handleConversionFile(filePath, tikaServer string, ocrOnly bool) {
+	err := conversion.Convert(filepath.Dir(filePath), "pdf", conversion.ConvertOptions{
+		TikaServer: tikaServer,
+		PDF: conversion.PDFOptions{
+			SingleFile: filePath,
+			OCROnly:    ocrOnly,
+		},
+	})
+	if err != nil {
+		logger.Error("Error converting file %s to pdf: %v\n", filePath, err)
+		os.Exit(1)
+	}
+	logger.Info("Successfully converted file %s to txt (source=pdf)\n", filePath)
+}
+
+func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool) {
+	reportPath := filepath.Join(inputDir, "conversion_report.csv")
+	reportFile, err := os.OpenFile(reportPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		logger.Error("Error opening report file: %v\n", err)
+		os.Exit(1)
+	}
+	defer reportFile.Close()
+
+	stat, err := reportFile.Stat()
+	if err != nil {
+		logger.Error("Error stating report file: %v\n", err)
+		os.Exit(1)
+	}
+	writer := csv.NewWriter(reportFile)
+	if stat.Size() == 0 {
+		if err := writer.Write([]string{"file", "status", "error"}); err != nil {
+			logger.Error("Error writing report header: %v\n", err)
+			os.Exit(1)
+		}
+		writer.Flush()
+	}
+
+	files, err := os.ReadDir(inputDir)
+	if err != nil {
+		logger.Error("Error reading input directory: %v\n", err)
+		os.Exit(1)
+	}
+
+	exePath, err := os.Executable()
+	if err != nil {
+		logger.Error("Error resolving executable path: %v\n", err)
+		os.Exit(1)
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(file.Name())
+		if !matchesFormat(ext, format) {
+			continue
+		}
+		fullPath := filepath.Join(inputDir, file.Name())
+		txtPath := filepath.Join(inputDir, strings.TrimSuffix(file.Name(), ext)+".txt")
+		if info, err := os.Stat(txtPath); err == nil && info.Size() > 0 {
+			continue
+		}
+
+		cmd := exec.Command(exePath, "--convert-pdf", inputDir, "--single-file", fullPath)
+		if tikaServer != "" {
+			cmd.Args = append(cmd.Args, "--tika-server", tikaServer)
+		}
+		if ocrOnly {
+			cmd.Args = append(cmd.Args, "--ocr-only")
+		}
+		output, err := cmd.CombinedOutput()
+		status := "ok"
+		errMsg := ""
+		if err != nil {
+			status = "error"
+			errMsg = err.Error()
+		}
+		if len(output) > 0 {
+			errMsg = strings.TrimSpace(errMsg + " " + string(output))
+		}
+		errMsg = strings.ReplaceAll(errMsg, "\n", " ")
+		errMsg = truncateString(errMsg, 2000)
+
+		if err := writer.Write([]string{file.Name(), status, errMsg}); err != nil {
+			logger.Error("Error writing report row for %s: %v\n", file.Name(), err)
+			os.Exit(1)
+		}
+		writer.Flush()
+	}
+	logger.Info("Conversion report written to %s\n", reportPath)
+}
+
+func matchesFormat(ext, format string) bool {
+	ext = strings.TrimPrefix(strings.ToLower(ext), ".")
+	format = strings.ToLower(format)
+	if ext == format {
+		return true
+	}
+	return ext == "htm" && format == "html"
+}
+
+func truncateString(value string, maxLen int) string {
+	if len(value) <= maxLen {
+		return value
+	}
+	return value[:maxLen] + "…"
 }
 
 // handleZoteroDownload processes a TOML configuration file containing Zotero credentials

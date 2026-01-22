@@ -134,7 +134,7 @@ The Convert tool transforms downloaded documents into analyzable text:
 
 # Using Go
 import "github.com/open-and-sustainable/prismaid"
-prismaid.Convert("./papers", "pdf,docx,html")
+prismaid.Convert("./papers", "pdf,docx,html", prismaid.ConvertOptions{})
 
 # Using Python
 import prismaid

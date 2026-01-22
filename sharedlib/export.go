@@ -7,6 +7,7 @@ import "C"
 
 import (
 	"fmt"
+	"strings"
 	"unsafe"
 
 	"github.com/open-and-sustainable/prismaid"
@@ -40,11 +41,20 @@ func runDownloadURLList(path *C.char) error {
 	return prismaid.DownloadURLList(goPath)
 }
 
-func runConvert(inputDir, selectedFormats, tikaAddress *C.char) error {
+func runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.char) error {
 	goInputDir := C.GoString(inputDir)
 	goSelectedFormats := C.GoString(selectedFormats)
 	goTikaAddress := C.GoString(tikaAddress)
-	return prismaid.Convert(goInputDir, goSelectedFormats, goTikaAddress)
+	goSingleFile := C.GoString(singleFile)
+	goOcrOnly := strings.TrimSpace(strings.ToLower(C.GoString(ocrOnly)))
+	ocrOnlyEnabled := goOcrOnly == "1" || goOcrOnly == "true" || goOcrOnly == "yes"
+	return prismaid.Convert(goInputDir, goSelectedFormats, prismaid.ConvertOptions{
+		TikaServer: goTikaAddress,
+		PDF: prismaid.PDFOptions{
+			SingleFile: goSingleFile,
+			OCROnly:    ocrOnlyEnabled,
+		},
+	})
 }
 
 func runScreening(input *C.char) error {
@@ -82,9 +92,9 @@ func DownloadURLListPython(path *C.char) *C.char {
 }
 
 //export ConvertPython
-func ConvertPython(inputDir, selectedFormats, tikaAddress *C.char) *C.char {
+func ConvertPython(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.char) *C.char {
 	defer handlePanic()
-	if err := runConvert(inputDir, selectedFormats, tikaAddress); err != nil {
+	if err := runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -129,9 +139,9 @@ func DownloadURLListR(path *C.char) *C.char {
 }
 
 //export ConvertR
-func ConvertR(inputDir, selectedFormats, tikaAddress *C.char) *C.char {
+func ConvertR(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.char) *C.char {
 	defer handlePanic()
-	if err := runConvert(inputDir, selectedFormats, tikaAddress); err != nil {
+	if err := runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("Conversion completed successfully")

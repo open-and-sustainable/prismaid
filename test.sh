@@ -183,6 +183,18 @@ if [ -d "projects/test/outputs/download/zotero" ]; then
         else
             echo "    ✗ PDF conversion failed"
         fi
+
+        if [ "$TIKA_AVAILABLE" = true ]; then
+            FIRST_PDF=$(ls projects/test/outputs/download/zotero/*.pdf 2>/dev/null | head -1)
+            if [ -n "$FIRST_PDF" ]; then
+                echo "==> OCR-only conversion for a single PDF..."
+                if go run cmd/main.go --convert-pdf projects/test/outputs/download/zotero --single-file "$FIRST_PDF" --ocr-only --tika-server localhost:9998 > /dev/null 2>&1; then
+                    echo "    ✓ OCR-only single-file conversion executed"
+                else
+                    echo "    ✗ OCR-only single-file conversion failed"
+                fi
+            fi
+        fi
     else
         echo "    ℹ No PDFs found in Zotero download directory"
     fi

@@ -37,6 +37,12 @@ prismaid.download_url_list("urls.txt")
 # Convert files to text
 prismaid.convert("./papers", "pdf,docx,html")
 
+# Convert with Tika OCR fallback
+prismaid.convert("./papers", "pdf", "localhost:9998")
+
+# OCR-only for PDFs
+prismaid.convert("./papers", "pdf", "localhost:9998", ocr_only=True)
+
 # Run a systematic review
 with open("project.toml", "r") as file:
     toml_config = file.read()

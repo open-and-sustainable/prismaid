@@ -37,6 +37,10 @@ No coding is required. Use the command line interface to access all tools:
 ./prismaid -convert-docx ./papers
 ./prismaid -convert-html ./papers
 
+# PDF-only options
+./prismaid -convert-pdf ./papers -single-file /path/to/file.pdf
+./prismaid -convert-pdf ./papers -ocr-only -tika-server localhost:9998
+
 # Initialize a new project configuration interactively
 ./prismaid -init
 

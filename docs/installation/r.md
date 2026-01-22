@@ -36,6 +36,12 @@ DownloadURLList("urls.txt")
 # Convert files to text
 Convert("./papers", "pdf,docx,html")  # Note the capitalization
 
+# Convert with Tika OCR fallback
+Convert("./papers", "pdf", "localhost:9998")
+
+# OCR-only for PDFs
+Convert("./papers", "pdf", "localhost:9998", "", TRUE)
+
 # Run a systematic review
 toml_content <- paste(readLines("project.toml"), collapse = "\n")
 RunReview(toml_content)  # Note the capitalization
@@ -44,4 +50,3 @@ RunReview(toml_content)  # Note the capitalization
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
-

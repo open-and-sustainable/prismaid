@@ -10,6 +10,12 @@ import (
 	screening "github.com/open-and-sustainable/prismaid/screening/logic"
 )
 
+// ConvertOptions exposes conversion options for the public API.
+type ConvertOptions = conversion.ConvertOptions
+
+// PDFOptions exposes PDF-specific conversion options for the public API.
+type PDFOptions = conversion.PDFOptions
+
 // Review processes a systematic literature review based on the provided TOML configuration.
 //
 // The tomlConfiguration parameter should contain a valid TOML string with all the
@@ -54,20 +60,20 @@ func DownloadURLList(path string) error {
 // Parameters:
 //   - inputDir: Path to the directory containing files to be converted
 //   - selectedFormats: Comma-separated list of formats to process (e.g., "pdf,docx,html")
-//   - tikaAddress: Optional Apache Tika server address for OCR fallback (e.g., "localhost:9998").
-//     Pass empty string "" to disable OCR fallback.
+//   - options: Conversion options including optional Apache Tika server address for OCR fallback
+//     (e.g., ConvertOptions{TikaServer: "localhost:9998"}).
 //
 // The function will scan the input directory for files with extensions matching the
 // selected formats and convert each to a corresponding .txt file with the same base name.
 // Currently supported formats include "pdf", "docx", and "html" (which also processes .htm files).
 //
-// When tikaAddress is provided and standard conversion methods fail, files are automatically
-// sent to the Tika server for OCR-based text extraction as a fallback.
+// When options.TikaServer is provided and standard conversion methods fail, files are
+// automatically sent to the Tika server for OCR-based text extraction as a fallback.
 //
 // Returns an error if the conversion process fails for any reason, such as inaccessible
 // files, unsupported formats, or file system permission issues.
-func Convert(inputDir, selectedFormats, tikaAddress string) error {
-	return conversion.Convert(inputDir, selectedFormats, tikaAddress)
+func Convert(inputDir, selectedFormats string, options conversion.ConvertOptions) error {
+	return conversion.Convert(inputDir, selectedFormats, options)
 }
 
 // Screening processes a list of manuscripts to identify items for exclusion based on various criteria.

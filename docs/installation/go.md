@@ -30,7 +30,7 @@ err := prismaid.Screening(tomlConfigString)
 err := prismaid.DownloadZoteroPDFs(username, apiKey, collectionName, parentDir)
 
 // Convert files to text
-err := prismaid.Convert(inputDir, "pdf,docx,html")
+err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.ConvertOptions{})
 
 // Run a systematic review
 err := prismaid.Review(tomlConfigString)

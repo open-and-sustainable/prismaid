@@ -4,12 +4,19 @@
 \alias{Convert}
 \title{Convert Files to Different Formats}
 \usage{
-Convert(input_dir, selected_formats)
+Convert(input_dir, selected_formats, tika_address = "", single_file = "",
+  ocr_only = FALSE)
 }
 \arguments{
 \item{input_dir}{Directory containing files to convert}
 
 \item{selected_formats}{Comma-separated list of target formats (e.g., "pdf,docx,html")}
+
+\item{tika_address}{Tika server address for OCR fallback (e.g., "localhost:9998"). Empty string disables OCR fallback. Defaults to "".}
+
+\item{single_file}{Convert only the specified PDF (PDF format only). Defaults to "".}
+
+\item{ocr_only}{Force OCR for PDFs via Tika (PDF format only). Defaults to FALSE.}
 }
 \value{
 A string indicating the result of the conversion process
@@ -23,5 +30,9 @@ This function converts files in a directory to specified formats.
 \examples{
 \dontrun{
 Convert("/path/to/files", "pdf,docx")
+
+Convert("/path/to/files", "pdf", "localhost:9998")
+
+Convert("/path/to/files", "pdf", "localhost:9998", "", TRUE)
 }
 }

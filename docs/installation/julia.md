@@ -38,6 +38,12 @@ PrismAId.download_url_list("urls.txt")
 # Convert files to text
 PrismAId.convert("./papers", "pdf,docx,html")
 
+# Convert with Tika OCR fallback
+PrismAId.convert("./papers", "pdf", "localhost:9998")
+
+# OCR-only for PDFs
+PrismAId.convert("./papers", "pdf", "localhost:9998", "", true)
+
 # Run a systematic review
 toml_config = read("project.toml", String)
 PrismAId.run_review(toml_config)  # Correct function name

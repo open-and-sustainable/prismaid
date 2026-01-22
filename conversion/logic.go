@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
 
@@ -25,7 +26,7 @@ import (
 // Parameters:
 //   - inputDir: Path to the directory containing files to convert.
 //   - selectedFormats: Comma-separated list of formats to process (e.g., "pdf,docx,html").
-//   - tikaAddress: Optional Tika server address (e.g., "localhost:9998"). Empty string disables OCR fallback.
+//   - options: Conversion options including Tika server and PDF-specific behavior.
 //
 // Returns:
 //   - error: An error if directory reading fails; individual file conversion errors are logged but don't stop processing.
@@ -33,26 +34,37 @@ import (
 // Example:
 //
 //	// Without Tika OCR fallback
-//	err := Convert("/path/to/documents", "pdf,docx,html", "")
+//	err := Convert("/path/to/documents", "pdf,docx,html", ConvertOptions{})
 //	if err != nil {
 //	    log.Fatalf("Conversion failed: %v", err)
 //	}
 //
 //	// With Tika OCR fallback
-//	err := Convert("/path/to/documents", "pdf,docx,html", "localhost:9998")
+//	err := Convert("/path/to/documents", "pdf,docx,html", ConvertOptions{
+//	    TikaServer: "localhost:9998",
+//	})
 //	if err != nil {
 //	    log.Fatalf("Conversion failed: %v", err)
 //	}
-func Convert(inputDir, selectedFormats, tikaAddress string) error {
-	// Check Tika availability if address is provided
-	useTika := false
-	if tikaAddress != "" {
-		if ocr.IsTikaAvailable(tikaAddress) {
-			logger.Info("Tika server available at %s - will use as OCR fallback", tikaAddress)
-			useTika = true
-		} else {
-			logger.Info("Tika server not available at %s - OCR fallback disabled", tikaAddress)
-		}
+// PDFOptions controls PDF-specific conversion behavior.
+type PDFOptions struct {
+	SingleFile string
+	OCROnly    bool
+}
+
+// ConvertOptions controls format-specific conversion behavior.
+type ConvertOptions struct {
+	TikaServer string
+	PDF        PDFOptions
+}
+
+// Convert processes files from the specified input directory and converts them to text format.
+// If PDF.OCROnly is true, it skips standard PDF conversion and uses Tika OCR directly.
+// If PDF.SingleFile is set, only that PDF is processed for the pdf format.
+func Convert(inputDir, selectedFormats string, options ConvertOptions) error {
+	useTika := resolveUseTika(options.TikaServer)
+	if options.PDF.OCROnly && !useTika {
+		return fmt.Errorf("ocr-only requested but Tika server not available at %s", options.TikaServer)
 	}
 
 	// Load files from the input directory
@@ -67,52 +79,134 @@ func Convert(inputDir, selectedFormats, tikaAddress string) error {
 
 	// parse files
 	for _, format := range formats { // FIXED: use value, not index
-		for _, file := range files {
-			fullPath := filepath.Join(inputDir, file.Name())
-
-			if filepath.Ext(file.Name()) == "."+format {
-				txt_content, err := readText(fullPath, format)
-
-				// Try Tika OCR fallback if standard methods failed or returned empty text
-				if (err != nil || txt_content == "") && useTika {
-					logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", file.Name())
-					txt_content, err = ocr.ReadWithTika(fullPath, tikaAddress)
-				}
-
-				if err == nil {
-					fileNameWithoutExt := strings.TrimSuffix(file.Name(), "."+format)
-					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
-
-					err = writeText(txt_content, txtPath)
-					if err != nil {
-						logger.Error("Error: ", err)
-						return fmt.Errorf("error writing to file: %v", err)
-					}
-				} else {
-					logger.Error("Failed to convert %s: %v", file.Name(), err)
-				}
-			} else if filepath.Ext(file.Name()) == ".htm" && format == "html" { // FIXED: only process .htm when html is selected
-				txt_content, err := readText(fullPath, "html")
-
-				// Try Tika OCR fallback if standard methods failed or returned empty text
-				if (err != nil || txt_content == "") && useTika {
-					logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", file.Name())
-					txt_content, err = ocr.ReadWithTika(fullPath, tikaAddress)
-				}
-
-				if err == nil {
-					fileNameWithoutExt := strings.TrimSuffix(file.Name(), ".htm")
-					txtPath := filepath.Join(inputDir, fileNameWithoutExt+".txt")
-					err = writeText(txt_content, txtPath)
-					if err != nil {
-						logger.Error("Error: ", err)
-						return fmt.Errorf("error writing to file: %v", err)
-					}
-				} else {
-					logger.Error("Failed to convert %s: %v", file.Name(), err)
-				}
-			}
+		format = strings.TrimSpace(format)
+		if format == "" {
+			continue
 		}
+		switch format {
+		case "pdf":
+			if err := convertPDF(inputDir, files, useTika, options.PDF, options.TikaServer); err != nil {
+				return err
+			}
+		case "docx":
+			if err := convertDOCX(inputDir, files, useTika, options.TikaServer); err != nil {
+				return err
+			}
+		case "html":
+			if err := convertHTML(inputDir, files, useTika, options.TikaServer); err != nil {
+				return err
+			}
+		default:
+			logger.Error("Unsupported document type: ", format)
+			return fmt.Errorf("unsupported document type: %s", format)
+		}
+	}
+	return nil
+}
+
+func resolveUseTika(tikaAddress string) bool {
+	if tikaAddress == "" {
+		return false
+	}
+	if ocr.IsTikaAvailable(tikaAddress) {
+		logger.Info("Tika server available at %s - will use as OCR fallback", tikaAddress)
+		return true
+	}
+	logger.Info("Tika server not available at %s - OCR fallback disabled", tikaAddress)
+	return false
+}
+
+func convertPDF(inputDir string, files []os.DirEntry, useTika bool, options PDFOptions, tikaAddress string) error {
+	if options.SingleFile != "" {
+		ext := filepath.Ext(options.SingleFile)
+		if !strings.EqualFold(ext, ".pdf") {
+			return fmt.Errorf("file extension %s does not match format pdf", ext)
+		}
+		return convertSingle(options.SingleFile, "pdf", ext, useTika, tikaAddress, options.OCROnly)
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(file.Name())
+		if !strings.EqualFold(ext, ".pdf") {
+			continue
+		}
+		fullPath := filepath.Join(inputDir, file.Name())
+		if err := convertSingle(fullPath, "pdf", ext, useTika, tikaAddress, options.OCROnly); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func convertDOCX(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) error {
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(file.Name())
+		if !strings.EqualFold(ext, ".docx") {
+			continue
+		}
+		fullPath := filepath.Join(inputDir, file.Name())
+		if err := convertSingle(fullPath, "docx", ext, useTika, tikaAddress, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func convertHTML(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) error {
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		ext := filepath.Ext(file.Name())
+		if !strings.EqualFold(ext, ".html") && !strings.EqualFold(ext, ".htm") {
+			continue
+		}
+		fullPath := filepath.Join(inputDir, file.Name())
+		if err := convertSingle(fullPath, "html", ext, useTika, tikaAddress, false); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func convertSingle(fullPath, format, ext string, useTika bool, tikaAddress string, ocrOnly bool) error {
+	start := time.Now()
+	usedTika := false
+	logger.Info("Starting conversion: %s (format=%s)", fullPath, format)
+
+	var txtContent string
+	var err error
+	if ocrOnly {
+		usedTika = true
+		txtContent, err = ocr.ReadWithTika(fullPath, tikaAddress)
+	} else {
+		txtContent, err = readText(fullPath, format)
+	}
+
+	// Try Tika OCR fallback if standard methods failed or returned empty text
+	if !ocrOnly && (err != nil || txtContent == "") && useTika {
+		usedTika = true
+		logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", filepath.Base(fullPath))
+		txtContent, err = ocr.ReadWithTika(fullPath, tikaAddress)
+	}
+
+	if err == nil {
+		fileNameWithoutExt := strings.TrimSuffix(filepath.Base(fullPath), ext)
+		txtPath := filepath.Join(filepath.Dir(fullPath), fileNameWithoutExt+".txt")
+
+		err = writeText(txtContent, txtPath)
+		if err != nil {
+			logger.Error("Error: ", err)
+			return fmt.Errorf("error writing to file: %v", err)
+		}
+		logger.Info("Finished conversion: %s (format=%s, tika=%t, duration=%s)", fullPath, format, usedTika, time.Since(start))
+	} else {
+		logger.Error("Failed to convert %s (tika=%t, duration=%s): %v", fullPath, usedTika, time.Since(start), err)
 	}
 	return nil
 }
@@ -173,6 +267,6 @@ func writeText(text string, txtPath string) error {
 		return fmt.Errorf("error writing to file: %v", err)
 	}
 
-	logger.Info("Successfully wrote to %s\n", txtPath)
+	logger.Info("Successfully wrote to %s", txtPath)
 	return nil
 }

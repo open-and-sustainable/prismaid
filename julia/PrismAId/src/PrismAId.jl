@@ -83,7 +83,7 @@ function download_url_list(path::String)
     throw(ErrorException(result))
 end
 
-function convert(input_dir::String, selected_formats::String, tika_address::String="")
+function convert(input_dir::String, selected_formats::String, tika_address::String="", single_file::String="", ocr_only::Bool=false)
     # Validate inputs
     if isempty(input_dir)
         throw(ArgumentError("Input directory cannot be empty"))
@@ -94,11 +94,12 @@ function convert(input_dir::String, selected_formats::String, tika_address::Stri
     end
 
     # tika_address can be empty string to disable OCR fallback
+    ocr_only_value = ocr_only ? "true" : "false"
 
     # Call the C function
     c_output = ccall((:ConvertPython, library_path), Cstring,
-                    (Cstring, Cstring, Cstring),
-                    input_dir, selected_formats, tika_address)
+                    (Cstring, Cstring, Cstring, Cstring, Cstring),
+                    input_dir, selected_formats, tika_address, single_file, ocr_only_value)
 
     if c_output == C_NULL
         return nothing  # Success case returns NULL/nil in Python interface

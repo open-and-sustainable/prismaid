@@ -76,6 +76,16 @@ PrismAId.convert("/path/to/files", "pdf,docx,html")
 
 This will process all files with the specified extensions in the directory and create corresponding .txt files.
 
+To enable OCR fallback with Tika or force OCR for PDFs:
+
+```julia
+# Use Tika OCR fallback
+PrismAId.convert("/path/to/files", "pdf", "localhost:9998")
+
+# OCR-only for PDFs
+PrismAId.convert("/path/to/files", "pdf", "localhost:9998", "", true)
+```
+
 ### Screening Manuscripts
 
 To filter manuscripts for systematic reviews based on various criteria:
