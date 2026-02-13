@@ -23,10 +23,9 @@ function run_review(input::String)
     end
 
     # Call the C function, passing the String directly
-    c_output = ccall((:RunReviewPython, library_path), Cstring, (Cstring,), input)
+    c_output = ccall((:RunReviewPython, library_path), Ptr{Cchar}, (Cstring,), input)
     if c_output == C_NULL
-        # throw(RuntimeError("The C shared library returned a null pointer."))
-        throw(ErrorException("The C shared library returned a null pointer."))
+        return nothing
     end
 
     result = unsafe_string(c_output)
@@ -44,7 +43,7 @@ function download_zotero_pdfs(username::String, api_key::String, collection_name
     end
 
     # Call the C function
-    c_output = ccall((:DownloadZoteroPDFsPython, library_path), Cstring,
+    c_output = ccall((:DownloadZoteroPDFsPython, library_path), Ptr{Cchar},
                     (Cstring, Cstring, Cstring, Cstring),
                     username, api_key, collection_name, parent_dir)
 
@@ -68,7 +67,7 @@ function download_url_list(path::String)
     end
 
     # Call the C function
-    c_output = ccall((:DownloadURLListPython, library_path), Cstring, (Cstring,), path)
+    c_output = ccall((:DownloadURLListPython, library_path), Ptr{Cchar}, (Cstring,), path)
 
     if c_output == C_NULL
         return nothing  # Success case returns NULL/nil in Python interface
@@ -97,7 +96,7 @@ function convert(input_dir::String, selected_formats::String, tika_address::Stri
     ocr_only_value = ocr_only ? "true" : "false"
 
     # Call the C function
-    c_output = ccall((:ConvertPython, library_path), Cstring,
+    c_output = ccall((:ConvertPython, library_path), Ptr{Cchar},
                     (Cstring, Cstring, Cstring, Cstring, Cstring),
                     input_dir, selected_formats, tika_address, single_file, ocr_only_value)
 
@@ -121,7 +120,7 @@ function screening(input::String)
     end
 
     # Call the C function
-    c_output = ccall((:ScreeningPython, library_path), Cstring, (Cstring,), input)
+    c_output = ccall((:ScreeningPython, library_path), Ptr{Cchar}, (Cstring,), input)
 
     if c_output == C_NULL
         return nothing  # Success case returns NULL/nil in Python interface

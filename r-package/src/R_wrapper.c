@@ -27,6 +27,9 @@ SEXP RunReviewR_wrap(SEXP input) {
     const char *c_input = (const char*)input;
     const char *c_result = RunReviewR((char *)c_input);
     SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
     PROTECT(result);
     UNPROTECT(1);
     return result;
@@ -46,6 +49,9 @@ SEXP DownloadZoteroPDFsR_wrap(SEXP username, SEXP apiKey, SEXP collectionName, S
     );
 
     SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
     PROTECT(result);
     UNPROTECT(1);
     return result;
@@ -56,6 +62,9 @@ SEXP DownloadURLListR_wrap(SEXP path) {
     const char *c_result = DownloadURLListR((char *)c_path);
 
     SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
     PROTECT(result);
     UNPROTECT(1);
     return result;
@@ -71,6 +80,9 @@ SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats, SEXP tikaAddress, SEXP s
     const char *c_result = ConvertR((char *)c_inputDir, (char *)c_selectedFormats, (char *)c_tikaAddress, (char *)c_singleFile, (char *)c_ocrOnly);
 
     SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
     PROTECT(result);
     UNPROTECT(1);
     return result;
@@ -81,6 +93,9 @@ SEXP ScreeningR_wrap(SEXP input) {
     const char *c_result = ScreeningR((char *)c_input);
     
     SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
     PROTECT(result);
     UNPROTECT(1);
     return result;

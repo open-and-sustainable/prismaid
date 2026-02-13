@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.11.1 - Added isolated per-file PDF conversion plus OCR-only and single-file options.
+  v0.11.2 - Multiple bug fixes across conversion wrappers and bindings.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

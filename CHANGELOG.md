@@ -9,11 +9,13 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.11.2] - unreleased
+## [0.11.2] - 2026-02-13
 ### Added
 - CLI PDF conversion retries OCR-only once for per-file errors or zero-byte outputs when Tika is available
 ### Fixed
 - Updated R shared-lib header to match new ConvertR signature used by bindings
+- Fixed Julia wrapper FFI pointer handling for exported calls
+- Added Julia regression tests for wrapper pointer-conversion safety
 
 ## [0.11.1] - 2026-01-22
 ### Added
