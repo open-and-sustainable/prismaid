@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }} | {{ site.title }}</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+    <!-- Favicon -->
+    <link rel="icon" href="{{ site.favicon | relative_url }}" type="image/x-icon">
+    <script defer src="https://stats.bojafa.us/script.js" data-website-id="b4ee585d-b6ac-453c-be4a-204613377155"></script>
+    <style>
+        :root {
+            --color-accent: {{ site.nav_background_color | default: '#2f8f3a' }};
+            --color-bg: #ffffff;
+            --color-fg: #222222;
+            --color-muted: #f7f7f7;
+            --color-border: #e2e2e2;
+            --color-sidebar-bg: #fafafa;
+            --color-sidebar-border: #dcdcdc;
+            --color-code-bg: #f4f6f8;
+            --color-callout-note: #e8f4ff;
+            --color-callout-info: #eef7f1;
+            --color-callout-warn: #fff4e5;
+            --color-callout-border: #cfd4da;
+        }
+    </style>
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+        <div class="site-width header-container">
+            <a class="site-home-link" href="{{ '/' | relative_url }}" aria-label="{{ site.title }} home">
+                <img src="{{ site.logo | relative_url }}" alt="Logo" class="site-logo">
+                <h1 class="site-title">{{ site.title }}</h1>
+            </a>
+        </div>
+    </header>
+
+    <nav class="main-nav">
+        <div class="site-width nav-inner">
+            <button class="nav-toggle" aria-expanded="false" aria-label="Toggle navigation">Menu</button>
+            <ul class="nav-links">
+                {% assign nav_groups = site.nav_links | default: [] %}
+                {% assign current_group = '' %}
+                {% assign submenu_open = false %}
+                {% for link in nav_groups %}
+                    {% assign trimmed_name = link.name | strip | replace_first: '/', '' %}
+                    {% assign parts = trimmed_name | split: '/' %}
+                    {% assign group_name = parts[0] %}
+                    {% assign label = '' %}
+                    {% for part in parts offset:1 %}
+                        {% if label == '' %}
+                            {% assign label = part %}
+                        {% else %}
+                            {% assign label = label | append: '/' | append: part %}
+                        {% endif %}
+                    {% endfor %}
+                    {% assign link_url = link.url | relative_url %}
+
+                    {% if parts.size > 1 %}
+                        {% if group_name != current_group %}
+                            {% if submenu_open %}
+                                    </ul>
+                                </li>
+                            {% endif %}
+                            {% assign current_group = group_name %}
+                            {% assign submenu_open = true %}
+                            {% assign group_active = false %}
+                            {% assign group_index = forloop.index0 %}
+                            {% comment %}
+                                Look ahead for active links in this group
+                            {% endcomment %}
+                            {% for future_link in nav_groups offset:forloop.index0 %}
+                                {% assign future_trimmed = future_link.name | strip | replace_first: '/', '' %}
+                                {% assign future_parts = future_trimmed | split: '/' %}
+                                {% if future_parts[0] != current_group %}
+                                    {% break %}
+                                {% endif %}
+                                {% assign future_url = future_link.url | relative_url %}
+                                {% if page.url == future_link.url or page.url == future_url %}
+                                    {% assign group_active = true %}
+                                {% endif %}
+                            {% endfor %}
+                            <li class="nav-item has-children{% if group_active %} is-active{% endif %}">
+                                <button class="nav-parent" aria-expanded="false" aria-controls="nav-group-{{ group_index }}">
+                                    <span class="nav-label">{{ group_name }}</span>
+                                    <span class="nav-caret" aria-hidden="true">▾</span>
+                                </button>
+                                <ul class="nav-submenu" id="nav-group-{{ group_index }}">
+                        {% endif %}
+                        <li><a href="{{ link_url }}"{% if page.url == link.url or page.url == link_url %} aria-current="page"{% endif %}>{{ label | default: group_name }}</a></li>
+                    {% else %}
+                        {% if submenu_open %}
+                                </ul>
+                            </li>
+                            {% assign submenu_open = false %}
+                            {% assign current_group = '' %}
+                        {% endif %}
+                        <li class="nav-item"><a href="{{ link_url }}"{% if page.url == link.url or page.url == link_url %} aria-current="page"{% endif %}>{{ group_name }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if submenu_open %}
+                        </ul>
+                    </li>
+                {% endif %}
+                <li class="nav-item"><a href="{{ site.github_repo }}">GitHub Repository</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="content-wrapper">
+        <button class="sidebar-reveal" aria-expanded="false" aria-controls="toc-panel" aria-label="Open page navigation">On this page</button>
+        <aside id="toc-panel" class="toc-sidebar" aria-label="On this page">
+            <div class="toc-header">
+                <h2>On this page</h2>
+                <button class="sidebar-toggle" aria-expanded="false" aria-label="Toggle table of contents">☰</button>
+            </div>
+            <div class="toc-body">
+                <!-- Include the TOC -->
+                <nav>
+                    {% include toc.html html=content %}
+                </nav>
+            </div>
+        </aside>
+        <main id="main-content" class="page-content">
+            {{ content }}
+        </main>
+    </div>
+
+    <footer>
+        <div class="site-width">
+            <p>&nbsp;&copy; {{ site.time | date: "%Y" }} Riccardo Boero.</p>
+        </div>
+    </footer>
+
+    <script>
+        (function () {
+            const navToggle = document.querySelector('.nav-toggle');
+            const navLinks = document.querySelector('.nav-links');
+
+            if (navToggle && navLinks) {
+                navToggle.addEventListener('click', () => {
+                    const isOpen = navLinks.classList.toggle('is-open');
+                    navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                });
+            }
+
+            const navParents = document.querySelectorAll('.nav-parent');
+            navParents.forEach((button) => {
+                const parentItem = button.closest('.has-children');
+                const submenu = parentItem?.querySelector('.nav-submenu');
+
+                button.addEventListener('click', () => {
+                    const willOpen = !parentItem?.classList.contains('is-open');
+                    parentItem?.classList.toggle('is-open', willOpen);
+                    button.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+
+                    if (!willOpen) {
+                        submenu?.querySelectorAll('a')?.forEach((link) => link.blur());
+                    }
+                });
+            });
+
+            const tocSidebar = document.querySelector('.toc-sidebar');
+            const sidebarReveal = document.querySelector('.sidebar-reveal');
+            const sidebarToggle = tocSidebar?.querySelector('.sidebar-toggle');
+            const tocLinks = tocSidebar?.querySelectorAll('nav a') || [];
+
+            const setSidebarState = (isOpen) => {
+                if (!tocSidebar) return;
+                tocSidebar.classList.toggle('is-open', isOpen);
+                sidebarReveal?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                sidebarToggle?.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            };
+
+            sidebarReveal?.addEventListener('click', () => {
+                const open = !tocSidebar?.classList.contains('is-open');
+                setSidebarState(open);
+            });
+
+            sidebarToggle?.addEventListener('click', () => {
+                const open = !tocSidebar?.classList.contains('is-open');
+                setSidebarState(open);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    setSidebarState(false);
+                }
+            });
+
+            tocLinks.forEach((link) => {
+                link.addEventListener('click', () => setSidebarState(false));
+            });
+
+            const headings = document.querySelectorAll(
+                '.page-content h1[id], .page-content h2[id], .page-content h3[id], .page-content h4[id]'
+            );
+
+            headings.forEach((heading) => {
+                const existing = heading.querySelector('.heading-anchor');
+                if (existing) {
+                    return;
+                }
+
+                const anchor = document.createElement('a');
+                anchor.href = `#${heading.id}`;
+                anchor.className = 'heading-anchor';
+                anchor.setAttribute('aria-label', `Link to ${heading.textContent}`);
+                anchor.innerText = '#';
+                heading.appendChild(anchor);
+            });
+
+            const tocItems = tocSidebar?.querySelectorAll('li') || [];
+            tocItems.forEach((item) => {
+                const childList = item.querySelector(':scope > ul');
+                if (childList) {
+                    item.classList.add('toc-expandable');
+                    const toggle = document.createElement('button');
+                    toggle.className = 'toc-toggle';
+                    toggle.setAttribute('aria-label', 'Toggle subsection');
+                    toggle.innerHTML = '▾';
+                    toggle.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const collapsed = item.classList.toggle('toc-collapsed');
+                        toggle.innerHTML = collapsed ? '▸' : '▾';
+                    });
+                    item.insertBefore(toggle, item.firstChild);
+                }
+            });
+
+            const tocLinkMap = new Map();
+            tocLinks.forEach((link) => {
+                const id = decodeURIComponent(link.getAttribute('href') || '').replace('#', '');
+                if (id) {
+                    tocLinkMap.set(id, link);
+                }
+            });
+
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            const targetId = entry.target.getAttribute('id');
+                            if (!targetId) return;
+
+                            tocLinks.forEach((link) => link.parentElement?.classList.remove('active'));
+                            const activeLink = tocLinkMap.get(targetId);
+                            activeLink?.parentElement?.classList.add('active');
+                            activeLink?.scrollIntoView({ block: 'nearest' });
+                        }
+                    });
+                },
+                {
+                    rootMargin: '-10% 0px -70% 0px',
+                    threshold: [0, 1],
+                }
+            );
+
+            headings.forEach((heading) => observer.observe(heading));
+        })();
+    </script>
+</body>
+</html>
