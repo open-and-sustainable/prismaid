@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +39,7 @@ func DuplicateInput(config *config.Config) error {
 			// Read the file content
 			content, err := os.ReadFile(filePath)
 			if err != nil {
-				logger.Error("Failed to read file %s: %v", file.Name(), err)
+				logger.Error(fmt.Sprintf("Failed to read file %s: %v", file.Name(), err))
 				return err
 			}
 
@@ -50,11 +51,11 @@ func DuplicateInput(config *config.Config) error {
 			// Write the duplicated content to the new file
 			err = os.WriteFile(newFilePath, content, 0644)
 			if err != nil {
-				logger.Error("Failed to write duplicated file %s: %v", newFileName, err)
+				logger.Error(fmt.Sprintf("Failed to write duplicated file %s: %v", newFileName, err))
 				return err
 			}
 
-			logger.Info("File %s duplicated as %s", file.Name(), newFileName)
+			logger.Info(fmt.Sprintf("File %s duplicated as %s", file.Name(), newFileName))
 		}
 	}
 
@@ -93,11 +94,11 @@ func RemoveDuplicateInput(config *config.Config) error {
 				// Remove the file
 				err := os.Remove(filePath)
 				if err != nil {
-					logger.Error("Failed to remove file %s: %v", file.Name(), err)
+					logger.Error(fmt.Sprintf("Failed to remove file %s: %v", file.Name(), err))
 					return err
 				}
 
-				logger.Info("Removed duplicated file: %s", file.Name())
+				logger.Info(fmt.Sprintf("Removed duplicated file: %s", file.Name()))
 			}
 		}
 	}

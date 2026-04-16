@@ -7,11 +7,11 @@ name = "Manuscript Screening Example"           # Project title
 author = "John Doe"                            # Project author
 version = "1.0"                                # Configuration version
 input_file = "/path/to/manuscripts.csv"        # Input CSV or TXT file with manuscript data
-output_file = "/path/to/screening_results"     # Output file path (without extension)
+output_file = "/path/to/screening_results"     # Base output path (without extension)
 text_column = "abstract"                       # Column name containing text or path to text files
 identifier_column = "doi"                      # Column name for unique identifiers (optional, auto-generated if empty)
 output_format = "csv"                          # Output format: "csv" or "json"
-log_level = "medium"                          # Log level: "low", "medium", or "high"
+log_level = "medium"                          # Log level: "low" (silent), "medium" (stdout), or "high" (<output_file>.log + <output_file>_screening_report.txt)
 
 ### The [filters] section configures which screening filters to apply
 [filters]
@@ -74,9 +74,7 @@ concept_match = 0.4                          # Weight for conceptual/phrase matc
 field_relevance = 0.2                        # Weight for journal/field relevance
 
 ### LLM configuration for AI-assisted screening (optional)
-### Multiple LLMs can be configured for ensemble processing
-### First LLM configuration
-[[filters.llm]]
+[filters.llm]
 provider = "OpenAI"                           # Provider: "OpenAI", "GoogleAI", "Cohere", "Anthropic", "DeepSeek", or "Perplexity"
 api_key = ""                                  # API key (uses environment variable if empty)
 model = "gpt-4o-mini"                         # Model name (provider-specific)
@@ -84,8 +82,8 @@ temperature = 0.01                            # Temperature (0-1 for most provid
 tpm_limit = 0                                 # Tokens per minute limit (0 = unlimited)
 rpm_limit = 0                                 # Requests per minute limit (0 = unlimited)
 
-### Additional LLM configurations (optional)
-# [[filters.llm]]
+### Only one LLM configuration is supported for screening
+# [filters.llm]
 # provider = "GoogleAI"
 # api_key = ""
 # model = "gemini-1.5-flash"

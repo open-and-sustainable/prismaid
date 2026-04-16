@@ -9,6 +9,15 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.11.3] - 2026-04-16
+### Changed
+- Screening now supports a single AI model configuration via `[filters.llm]` instead of multi-model screening syntax
+- Screening now rejects review-style AI configuration in screening TOML files with a clear error, including `[project.llm...]`, `[[filters.llm]]`, and numbered screening LLM tables
+
+### Fixed
+- Corrected screening and related CLI/review logger calls that passed printf-style placeholders to Alembica's println-style logger, preventing output such as `Total Records: %d 287`
+- Improved screening filter logs to state when each filter is using AI-assisted mode, rule-based mode, or rule-based fallback because `use_ai = true` was set without any configured LLMs
+
 ## [0.11.2] - 2026-02-13
 ### Added
 - CLI PDF conversion retries OCR-only once for per-file errors or zero-byte outputs when Tika is available

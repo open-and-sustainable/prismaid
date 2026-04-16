@@ -148,6 +148,7 @@ tpm_limit = 0
 rpm_limit = 0
 ```
 - **`[project.llm]`** specifies model configurations for review execution. At least one model is required. When multiple models are configured, results will represent an 'ensemble' analysis.
+- **Important**: Review and Screening do not use the same TOML shape for AI configuration. Review uses `[project.llm.1]`, `[project.llm.2]`, etc. Screening uses a single `[filters.llm]` table.
 
 The **`[project.llm.#]`** fields manage LLM usage:
 - **`provider`**:  Supported providers are `OpenAI`, `GoogleAI`, `Cohere`, `Anthropic`, `DeepSeek`, `Perplexity`, `AWS Bedrock`, `Azure AI`, `Vertex AI`, and `SelfHosted` (for OpenAI-compatible endpoints).

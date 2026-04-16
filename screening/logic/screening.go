@@ -41,7 +41,7 @@ type FiltersConfig struct {
 	Language       LanguageConfig       `toml:"language"`
 	ArticleType    ArticleTypeConfig    `toml:"article_type"`
 	TopicRelevance TopicRelevanceConfig `toml:"topic_relevance"`
-	LLM            []LLMConfig          `toml:"llm"`
+	LLM            *LLMConfig           `toml:"llm"`
 }
 
 // DeduplicationConfig for duplicate detection
@@ -122,15 +122,32 @@ type ScreeningResult struct {
 	ExcludedRecords int                `json:"excluded_records"`
 	Records         []ManuscriptRecord `json:"records"`
 	Statistics      map[string]int     `json:"statistics"`
-	LLMConfigs      []LLMConfig        `json:"-"` // Pass LLM configs through for filters
+	LLMConfig       *LLMConfig         `json:"-"` // Pass LLM config through for filters
 }
 
 // Screen performs the main screening process
 func Screen(tomlConfiguration string) error {
+	if strings.Contains(tomlConfiguration, "[project.llm") {
+		return fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
+	}
+	if strings.Contains(tomlConfiguration, "[[filters.llm]]") || strings.Contains(tomlConfiguration, "[filters.llm.") {
+		return fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of [[filters.llm]] or numbered tables")
+	}
+
 	// Parse TOML configuration
 	var config ScreeningConfig
-	if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
+	meta, err := toml.Decode(tomlConfiguration, &config)
+	if err != nil {
 		return fmt.Errorf("error parsing TOML configuration: %v", err)
+	}
+	for _, undecoded := range meta.Undecoded() {
+		key := undecoded.String()
+		if strings.HasPrefix(key, "project.llm") {
+			return fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
+		}
+		if strings.HasPrefix(key, "filters.llm.") {
+			return fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of numbered tables")
+		}
 	}
 
 	// Validate configuration
@@ -158,7 +175,7 @@ func Screen(tomlConfiguration string) error {
 		TotalRecords: len(manuscripts),
 		Records:      manuscripts,
 		Statistics:   make(map[string]int),
-		LLMConfigs:   config.Filters.LLM,
+		LLMConfig:    config.Filters.LLM,
 	}
 
 	// Apply filters
@@ -166,7 +183,7 @@ func Screen(tomlConfiguration string) error {
 
 	if config.Filters.Deduplication.Enabled {
 		// Check if we need to wait before this AI filter
-		if previousFilterUsedAI && config.Filters.Deduplication.UseAI && len(config.Filters.LLM) > 0 {
+		if previousFilterUsedAI && config.Filters.Deduplication.UseAI && hasLLMConfig(config.Filters.LLM) {
 			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
 			time.Sleep(30 * time.Second)
 		}
@@ -176,12 +193,12 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		// Update flag for next filter
-		previousFilterUsedAI = config.Filters.Deduplication.UseAI && len(config.Filters.LLM) > 0
+		previousFilterUsedAI = config.Filters.Deduplication.UseAI && hasLLMConfig(config.Filters.LLM)
 	}
 
 	if config.Filters.Language.Enabled {
 		// Check if we need to wait before this AI filter
-		if previousFilterUsedAI && config.Filters.Language.UseAI && len(config.Filters.LLM) > 0 {
+		if previousFilterUsedAI && config.Filters.Language.UseAI && hasLLMConfig(config.Filters.LLM) {
 			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
 			time.Sleep(30 * time.Second)
 		}
@@ -191,12 +208,12 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		// Update flag for next filter
-		previousFilterUsedAI = config.Filters.Language.UseAI && len(config.Filters.LLM) > 0
+		previousFilterUsedAI = config.Filters.Language.UseAI && hasLLMConfig(config.Filters.LLM)
 	}
 
 	if config.Filters.ArticleType.Enabled {
 		// Check if we need to wait before this AI filter
-		if previousFilterUsedAI && config.Filters.ArticleType.UseAI && len(config.Filters.LLM) > 0 {
+		if previousFilterUsedAI && config.Filters.ArticleType.UseAI && hasLLMConfig(config.Filters.LLM) {
 			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
 			time.Sleep(30 * time.Second)
 		}
@@ -206,12 +223,12 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		// Update flag for next filter
-		previousFilterUsedAI = config.Filters.ArticleType.UseAI && len(config.Filters.LLM) > 0
+		previousFilterUsedAI = config.Filters.ArticleType.UseAI && hasLLMConfig(config.Filters.LLM)
 	}
 
 	if config.Filters.TopicRelevance.Enabled {
 		// Check if we need to wait before this AI filter
-		if previousFilterUsedAI && config.Filters.TopicRelevance.UseAI && len(config.Filters.LLM) > 0 {
+		if previousFilterUsedAI && config.Filters.TopicRelevance.UseAI && hasLLMConfig(config.Filters.LLM) {
 			logger.Info("Waiting 30 seconds before next AI-assisted filter...")
 			time.Sleep(30 * time.Second)
 		}
@@ -230,7 +247,7 @@ func Screen(tomlConfiguration string) error {
 	}
 
 	// Log summary
-	logSummary(result, config.Project.LogLevel)
+	logSummary(result, config.Project.LogLevel, config.Project.OutputFile)
 
 	return nil
 }
@@ -326,7 +343,7 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 			if fileExists(textContent) {
 				content, err := os.ReadFile(textContent)
 				if err != nil {
-					logger.Error("Could not read file %s: %v", textContent, err)
+					logger.Error(fmt.Sprintf("Could not read file %s: %v", textContent, err))
 					manuscript.Text = textContent // Use as is if file can't be read
 				} else {
 					manuscript.Text = string(content)
@@ -427,6 +444,16 @@ func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 
 // applyDeduplicationFilter applies deduplication logic
 func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfig) error {
+	if config.UseAI {
+		if !hasLLMConfig(result.LLMConfig) {
+			logger.Info("Deduplication filter: AI requested but no LLM configuration was provided, using rule-based matching")
+		} else {
+			logger.Info("Deduplication filter: using AI-assisted matching")
+		}
+	} else {
+		logger.Info("Deduplication filter: using rule-based matching")
+	}
+
 	// Convert ManuscriptRecord to filters.ManuscriptData
 	manuscripts := make([]filters.ManuscriptData, len(result.Records))
 	for i, record := range result.Records {
@@ -442,7 +469,7 @@ func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfi
 	filterConfig := filters.DeduplicationConfig{
 		UseAI:         config.UseAI,
 		CompareFields: config.CompareFields,
-		LLMConfigs:    convertLLMConfigs(result.LLMConfigs),
+		LLMConfigs:    convertLLMConfig(result.LLMConfig),
 	}
 
 	duplicates := filters.FindDuplicates(manuscripts, filterConfig)
@@ -468,10 +495,20 @@ func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfi
 }
 
 // applyLanguageFilter applies language detection
-func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConfigs []LLMConfig) error {
+func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConfig *LLMConfig) error {
+	if config.UseAI {
+		if !hasLLMConfig(llmConfig) {
+			logger.Info("Language filter: AI requested but no LLM configuration was provided, using rule-based detection")
+		} else {
+			logger.Info("Language filter: using AI-assisted detection")
+		}
+	} else {
+		logger.Info("Language filter: using rule-based detection")
+	}
+
 	excludedCount := 0
 
-	if config.UseAI && len(llmConfigs) > 0 {
+	if config.UseAI && hasLLMConfig(llmConfig) {
 		// Batch AI processing for all included records
 		var manuscriptsToProcess []map[string]string
 		var recordIndices []int
@@ -486,10 +523,10 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 
 		if len(manuscriptsToProcess) > 0 {
 			// Convert LLMConfig to interface{} for filter function
-			llmInterfaces := convertLLMConfigs(llmConfigs)
+			llmInterfaces := convertLLMConfig(llmConfig)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for language detection with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for language detection with AI", len(manuscriptsToProcess)))
 			languages := filters.BatchDetectLanguagesWithAI(manuscriptsToProcess, llmInterfaces)
 
 			// Apply results
@@ -593,10 +630,20 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 }
 
 // applyArticleTypeFilter applies article type classification
-func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, llmConfigs []LLMConfig) error {
+func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, llmConfig *LLMConfig) error {
+	if config.UseAI {
+		if !hasLLMConfig(llmConfig) {
+			logger.Info("Article type filter: AI requested but no LLM configuration was provided, using rule-based classification")
+		} else {
+			logger.Info("Article type filter: using AI-assisted classification")
+		}
+	} else {
+		logger.Info("Article type filter: using rule-based classification")
+	}
+
 	excludedCount := 0
 
-	if config.UseAI && len(llmConfigs) > 0 {
+	if config.UseAI && hasLLMConfig(llmConfig) {
 		// Batch AI processing for all included records
 		var manuscriptsToProcess []map[string]string
 		var recordIndices []int
@@ -611,10 +658,10 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 
 		if len(manuscriptsToProcess) > 0 {
 			// Convert LLMConfig to interface{} for filter function
-			llmInterfaces := convertLLMConfigs(llmConfigs)
+			llmInterfaces := convertLLMConfig(llmConfig)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for article type classification with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for article type classification with AI", len(manuscriptsToProcess)))
 			classifications := filters.BatchClassifyArticleTypesWithAI(manuscriptsToProcess, llmInterfaces)
 
 			// Apply results
@@ -648,7 +695,7 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 			// Use rule-based classification with text
 			classification, err := filters.ClassifyArticleTypes(result.Records[i].Text, nil)
 			if err != nil {
-				logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
+				logger.Error(fmt.Sprintf("Article type classification failed for %s: %v", result.Records[i].ID, err))
 				continue
 			}
 
@@ -728,11 +775,20 @@ func checkArticleTypeExclusion(classification *filters.ArticleClassification, co
 }
 
 // applyTopicRelevanceFilter applies topic relevance scoring to filter off-topic manuscripts
-func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceConfig, llmConfigs []LLMConfig) error {
-	logger.Info("Applying topic relevance filter...")
+func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceConfig, llmConfig *LLMConfig) error {
+	if config.UseAI {
+		if !hasLLMConfig(llmConfig) {
+			logger.Info("Topic relevance filter: AI requested but no LLM configuration was provided, using rule-based scoring")
+		} else {
+			logger.Info("Topic relevance filter: using AI-assisted scoring")
+		}
+	} else {
+		logger.Info("Topic relevance filter: using rule-based scoring")
+	}
+
 	excludedCount := 0
 
-	if config.UseAI && len(llmConfigs) > 0 {
+	if config.UseAI && hasLLMConfig(llmConfig) {
 		// Batch AI processing for all included records
 		var manuscriptsToProcess []map[string]string
 		var recordIndices []int
@@ -747,10 +803,10 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 
 		if len(manuscriptsToProcess) > 0 {
 			// Convert LLMConfig to interface{} for filter function
-			llmInterfaces := convertLLMConfigs(llmConfigs)
+			llmInterfaces := convertLLMConfig(llmConfig)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for topic relevance with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for topic relevance with AI", len(manuscriptsToProcess)))
 			relevanceScores := filters.BatchCalculateTopicRelevanceWithAI(manuscriptsToProcess, config.Topics, config.MinScore, llmInterfaces)
 
 			// Apply results
@@ -776,11 +832,11 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 					)
 					excludedCount++
 
-					logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+					logger.Info(fmt.Sprintf("Excluded manuscript %s - relevance score: %.2f < %.2f",
 						result.Records[recordIdx].ID,
 						relevanceScore.OverallScore,
 						config.MinScore,
-					)
+					))
 				}
 			}
 		}
@@ -805,7 +861,7 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 			)
 
 			if err != nil {
-				logger.Error("Failed to calculate topic relevance for record %s: %v", result.Records[i].ID, err)
+				logger.Error(fmt.Sprintf("Failed to calculate topic relevance for record %s: %v", result.Records[i].ID, err))
 				// Don't exclude on error, just log and continue
 				continue
 			}
@@ -829,17 +885,17 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 				)
 				excludedCount++
 
-				logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+				logger.Info(fmt.Sprintf("Excluded manuscript %s - relevance score: %.2f < %.2f",
 					result.Records[i].ID,
 					relevanceScore.OverallScore,
 					config.MinScore,
-				)
+				))
 			}
 		}
 	}
 
 	result.Statistics["topic_relevance_excluded"] = excludedCount
-	logger.Info("Topic relevance filter: excluded %d manuscripts", excludedCount)
+	logger.Info(fmt.Sprintf("Topic relevance filter: excluded %d manuscripts", excludedCount))
 	return nil
 }
 
@@ -948,27 +1004,26 @@ func saveCSVResults(result *ScreeningResult, outputFile string) error {
 }
 
 // logSummary logs screening summary
-func logSummary(result *ScreeningResult, logLevel string) {
+func logSummary(result *ScreeningResult, logLevel, outputFile string) {
 	logger.Info("\n=== Screening Summary ===")
-	logger.Info("Total Records: %d", result.TotalRecords)
-	logger.Info("Included: %d", result.IncludedRecords)
-	logger.Info("Excluded: %d", result.ExcludedRecords)
+	logger.Info(fmt.Sprintf("Total Records: %d", result.TotalRecords))
+	logger.Info(fmt.Sprintf("Included: %d", result.IncludedRecords))
+	logger.Info(fmt.Sprintf("Excluded: %d", result.ExcludedRecords))
 
 	if logLevel == "medium" || logLevel == "high" {
 		logger.Info("\n--- Exclusion Statistics ---")
 		for key, value := range result.Statistics {
-			logger.Info("%s: %d", key, value)
+			logger.Info(fmt.Sprintf("%s: %d", key, value))
 		}
 	}
 
 	if logLevel == "high" {
-		// Could save detailed log to file
-		logFile := "screening_log.txt"
-		file, err := os.Create(logFile)
+		reportFile := outputFile + "_screening_report.txt"
+		file, err := os.Create(reportFile)
 		if err == nil {
 			defer file.Close()
-			fmt.Fprintf(file, "Detailed Screening Log\n")
-			fmt.Fprintf(file, "======================\n\n")
+			fmt.Fprintf(file, "Screening Report\n")
+			fmt.Fprintf(file, "================\n\n")
 			for _, record := range result.Records {
 				fmt.Fprintf(file, "ID: %s\n", record.ID)
 				fmt.Fprintf(file, "Include: %v\n", record.Include)
@@ -977,7 +1032,7 @@ func logSummary(result *ScreeningResult, logLevel string) {
 				}
 				fmt.Fprintf(file, "Tags: %v\n\n", record.Tags)
 			}
-			logger.Info("\nDetailed log saved to: %s", logFile)
+			logger.Info(fmt.Sprintf("\nScreening report saved to: %s", reportFile))
 		}
 	}
 }
@@ -1012,18 +1067,24 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-// convertLLMConfigs converts LLMConfig to interface{} for filter usage
-func convertLLMConfigs(configs []LLMConfig) []any {
-	result := make([]any, len(configs))
-	for i, config := range configs {
-		result[i] = map[string]any{
+func hasLLMConfig(config *LLMConfig) bool {
+	return config != nil && config.Provider != ""
+}
+
+// convertLLMConfig converts a screening LLMConfig to the filter interface shape.
+func convertLLMConfig(config *LLMConfig) []any {
+	if !hasLLMConfig(config) {
+		return nil
+	}
+
+	return []any{
+		map[string]any{
 			"provider":    config.Provider,
 			"api_key":     config.APIKey,
 			"model":       config.Model,
 			"temperature": config.Temperature,
 			"tpm_limit":   config.TPMLimit,
 			"rpm_limit":   config.RPMLimit,
-		}
+		},
 	}
-	return result
 }

@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.11.2 - Multiple bug fixes across conversion wrappers and bindings.
+  v0.11.3 - Fixed incorrectly formatted logger calls and improved screening logs for AI vs rule-based filtering.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

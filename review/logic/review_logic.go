@@ -119,7 +119,7 @@ func Review(tomlConfiguration string) error {
 	// run review
 	reviewResults, err := extraction.Extract(jsonString)
 
-	logger.Info("Results:\n%s", reviewResults)
+	logger.Info(fmt.Sprintf("Results:\n%s", reviewResults))
 
 	// save results
 	keys := prompt.SortReviewKeysAlphabetically(config)

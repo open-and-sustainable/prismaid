@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"fmt"
 	"flag"
 	"os"
 	"os/exec"
@@ -163,10 +164,10 @@ func handleConversion(inputDir, format, tikaServer string, ocrOnly bool) {
 		},
 	})
 	if err != nil {
-		logger.Error("Error converting files in %s to %s: %v\n", inputDir, format, err)
+		logger.Error(fmt.Sprintf("Error converting files in %s to %s: %v", inputDir, format, err))
 		os.Exit(1)
 	}
-	logger.Info("Successfully converted files in %s to txt (source=%s)\n", inputDir, format)
+	logger.Info(fmt.Sprintf("Successfully converted files in %s to txt (source=%s)", inputDir, format))
 }
 
 func handleConversionFile(filePath, tikaServer string, ocrOnly bool) {
@@ -178,30 +179,30 @@ func handleConversionFile(filePath, tikaServer string, ocrOnly bool) {
 		},
 	})
 	if err != nil {
-		logger.Error("Error converting file %s to pdf: %v\n", filePath, err)
+		logger.Error(fmt.Sprintf("Error converting file %s to pdf: %v", filePath, err))
 		os.Exit(1)
 	}
-	logger.Info("Successfully converted file %s to txt (source=pdf)\n", filePath)
+	logger.Info(fmt.Sprintf("Successfully converted file %s to txt (source=pdf)", filePath))
 }
 
 func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool) {
 	reportPath := filepath.Join(inputDir, "conversion_report.csv")
 	reportFile, err := os.OpenFile(reportPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
-		logger.Error("Error opening report file: %v\n", err)
+		logger.Error(fmt.Sprintf("Error opening report file: %v", err))
 		os.Exit(1)
 	}
 	defer reportFile.Close()
 
 	stat, err := reportFile.Stat()
 	if err != nil {
-		logger.Error("Error stating report file: %v\n", err)
+		logger.Error(fmt.Sprintf("Error stating report file: %v", err))
 		os.Exit(1)
 	}
 	writer := csv.NewWriter(reportFile)
 	if stat.Size() == 0 {
 		if err := writer.Write([]string{"file", "status", "error"}); err != nil {
-			logger.Error("Error writing report header: %v\n", err)
+			logger.Error(fmt.Sprintf("Error writing report header: %v", err))
 			os.Exit(1)
 		}
 		writer.Flush()
@@ -209,13 +210,13 @@ func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool)
 
 	files, err := os.ReadDir(inputDir)
 	if err != nil {
-		logger.Error("Error reading input directory: %v\n", err)
+		logger.Error(fmt.Sprintf("Error reading input directory: %v", err))
 		os.Exit(1)
 	}
 
 	exePath, err := os.Executable()
 	if err != nil {
-		logger.Error("Error resolving executable path: %v\n", err)
+		logger.Error(fmt.Sprintf("Error resolving executable path: %v", err))
 		os.Exit(1)
 	}
 
@@ -270,12 +271,12 @@ func handleConversionIsolated(inputDir, format, tikaServer string, ocrOnly bool)
 		errMsg = truncateString(errMsg, 2000)
 
 		if err := writer.Write([]string{file.Name(), status, errMsg}); err != nil {
-			logger.Error("Error writing report row for %s: %v\n", file.Name(), err)
+			logger.Error(fmt.Sprintf("Error writing report row for %s: %v", file.Name(), err))
 			os.Exit(1)
 		}
 		writer.Flush()
 	}
-	logger.Info("Conversion report written to %s\n", reportPath)
+	logger.Info(fmt.Sprintf("Conversion report written to %s", reportPath))
 }
 
 func matchesFormat(ext, format string) bool {
@@ -333,7 +334,7 @@ func handleZoteroDownload(configPath string) {
 	var config ZoteroConfig
 	_, err := toml.DecodeFile(configPath, &config)
 	if err != nil {
-		logger.Error("Error reading Zotero configuration: %v\n", err)
+		logger.Error(fmt.Sprintf("Error reading Zotero configuration: %v", err))
 		os.Exit(1)
 	}
 
@@ -345,7 +346,7 @@ func handleZoteroDownload(configPath string) {
 	configDir := filepath.Dir(configPath)
 	err = prismaid.DownloadZoteroPDFs(config.User, config.APIKey, config.Group, configDir)
 	if err != nil {
-		logger.Error("Error downloading Zotero PDFs: %v\n", err)
+		logger.Error(fmt.Sprintf("Error downloading Zotero PDFs: %v", err))
 		os.Exit(1)
 	}
 

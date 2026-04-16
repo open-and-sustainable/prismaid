@@ -145,7 +145,7 @@ func saveJSON(filePath string, resultsString string, filenames []string) error {
 func saveCSV(filePath string, resultsString string, filenames []string, keys []string) error {
 	outputFile, err := os.Create(filePath)
 	if err != nil {
-		logger.Error("Error creating CSV file: %v", err)
+		logger.Error(fmt.Sprintf("Error creating CSV file: %v", err))
 		return err
 	}
 	defer outputFile.Close()
@@ -156,7 +156,7 @@ func saveCSV(filePath string, resultsString string, filenames []string, keys []s
 	// Parse JSON results
 	var parsedResults definitions.Output
 	if err := json.Unmarshal([]byte(resultsString), &parsedResults); err != nil {
-		logger.Error("Error parsing results JSON: %v", err)
+		logger.Error(fmt.Sprintf("Error parsing results JSON: %v", err))
 		return err
 	}
 
@@ -164,7 +164,7 @@ func saveCSV(filePath string, resultsString string, filenames []string, keys []s
 	for i, response := range parsedResults.Responses {
 		// Skip justifications & summaries (SequenceNumber > 1)
 		if response.SequenceNumber > 1 {
-			logger.Info("Skipping justification/summary in CSV (SeqNum: %d)", response.SequenceNumber)
+			logger.Info(fmt.Sprintf("Skipping justification/summary in CSV (SeqNum: %d)", response.SequenceNumber))
 			continue
 		}
 
@@ -177,7 +177,7 @@ func saveCSV(filePath string, resultsString string, filenames []string, keys []s
 		}
 	}
 
-	logger.Info("CSV results successfully saved to: %s", filePath)
+	logger.Info(fmt.Sprintf("CSV results successfully saved to: %s", filePath))
 	return nil
 }
 
@@ -222,7 +222,7 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 	// Unmarshal results JSON
 	var parsedResults definitions.Output
 	if err := json.Unmarshal([]byte(resultsString), &parsedResults); err != nil {
-		logger.Error("Error parsing results JSON: %v", err)
+		logger.Error(fmt.Sprintf("Error parsing results JSON: %v", err))
 		return err
 	}
 
@@ -257,7 +257,7 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 		// Identify filename mapping
 		seqIndex, err := strconv.Atoi(seqID)
 		if err != nil || seqIndex < 1 || seqIndex > len(filenames) {
-			logger.Error("Invalid sequence ID mapping for file: %s", seqID)
+			logger.Error(fmt.Sprintf("Invalid sequence ID mapping for file: %s", seqID))
 			continue
 		}
 
@@ -273,10 +273,10 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 					justificationFilePath := baseFilename + "_justification.txt"
 					justificationContent := response.ModelResponses[0] // Correctly extract model output
 					if err := os.WriteFile(justificationFilePath, []byte(justificationContent), 0644); err != nil {
-						logger.Error("Error writing justification file: %v", err)
+						logger.Error(fmt.Sprintf("Error writing justification file: %v", err))
 						return err
 					}
-					logger.Info("Saved justification to: %s", justificationFilePath)
+					logger.Info(fmt.Sprintf("Saved justification to: %s", justificationFilePath))
 					break
 				}
 			}
@@ -289,10 +289,10 @@ func saveJustificationsAndSummaries(config *config.Config, resultsFileName strin
 					summaryFilePath := baseFilename + "_summary.txt"
 					summaryContent := response.ModelResponses[0] // Correctly extract model output
 					if err := os.WriteFile(summaryFilePath, []byte(summaryContent), 0644); err != nil {
-						logger.Error("Error writing summary file: %v", err)
+						logger.Error(fmt.Sprintf("Error writing summary file: %v", err))
 						return err
 					}
-					logger.Info("Saved summary to: %s", summaryFilePath)
+					logger.Info(fmt.Sprintf("Saved summary to: %s", summaryFilePath))
 					break
 				}
 			}

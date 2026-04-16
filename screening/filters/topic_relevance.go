@@ -209,7 +209,7 @@ Respond with a JSON object containing:
 		return results
 	}
 
-	logger.Info("Prepared %d manuscripts for batch topic relevance assessment", len(prompts))
+	logger.Info(fmt.Sprintf("Prepared %d manuscripts for batch topic relevance assessment", len(prompts)))
 
 	// Prepare the input for alembica with all prompts
 	input := definitions.Input{
@@ -224,22 +224,22 @@ Respond with a JSON object containing:
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		return results
 	}
 
 	// Call alembica once with all prompts
-	logger.Info("Calling AI model with batch of %d topic relevance requests", len(prompts))
+	logger.Info(fmt.Sprintf("Calling AI model with batch of %d topic relevance requests", len(prompts)))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		return results
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		return results
 	}
 
@@ -251,7 +251,7 @@ Respond with a JSON object containing:
 			// Try to parse JSON response
 			var relevanceResponse TopicRelevanceScore
 			if err := json.Unmarshal([]byte(response), &relevanceResponse); err != nil {
-				logger.Error("Failed to parse relevance response for manuscript %d: %v", manuscriptIdx, err)
+				logger.Error(fmt.Sprintf("Failed to parse relevance response for manuscript %d: %v", manuscriptIdx, err))
 				continue
 			}
 
@@ -358,7 +358,7 @@ Respond with a JSON object containing:
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		return nil, err
 	}
 
@@ -366,7 +366,7 @@ Respond with a JSON object containing:
 	logger.Info("Calling AI model for topic relevance assessment")
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		// Fall back to non-AI method
 		return CalculateTopicRelevance(manuscriptData, topics, ScoreWeights{
 			KeywordMatch:   0.4,
@@ -378,7 +378,7 @@ Respond with a JSON object containing:
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		// Fall back to non-AI method
 		return CalculateTopicRelevance(manuscriptData, topics, ScoreWeights{
 			KeywordMatch:   0.4,
@@ -394,7 +394,7 @@ Respond with a JSON object containing:
 		// Try to parse JSON response
 		var relevanceResponse TopicRelevanceScore
 		if err := json.Unmarshal([]byte(response), &relevanceResponse); err != nil {
-			logger.Error("Failed to parse relevance response: %v", err)
+			logger.Error(fmt.Sprintf("Failed to parse relevance response: %v", err))
 			// Fall back to non-AI method
 			return CalculateTopicRelevance(manuscriptData, topics, ScoreWeights{
 				KeywordMatch:   0.4,
@@ -723,7 +723,7 @@ func BatchCalculateTopicRelevance(manuscripts []map[string]string, config TopicR
 		}
 
 		if err != nil {
-			logger.Error("Failed to calculate relevance for manuscript: %v", err)
+			logger.Error(fmt.Sprintf("Failed to calculate relevance for manuscript: %v", err))
 			// Add a zero score for failed manuscripts
 			scores = append(scores, TopicRelevanceScore{
 				OverallScore: 0,

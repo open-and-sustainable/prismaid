@@ -193,7 +193,7 @@ func SortReviewKeysAlphabetically(config *config.Config) []string {
 func PrepareInput(config *config.Config) (string, []string, error) {
 	prompts, filenames := parsePrompts(config)
 
-	logger.Info("Generating input JSON with %d prompts.", len(prompts))
+	logger.Info(fmt.Sprintf("Generating input JSON with %d prompts.", len(prompts)))
 
 	// Populate metadata
 	jsonSchema := definitions.Input{
@@ -221,7 +221,7 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 			APIVersion:   llm.APIVersion,
 		})
 	}
-	logger.Info("Added %d models to input JSON.", len(jsonSchema.Models))
+	logger.Info(fmt.Sprintf("Added %d models to input JSON.", len(jsonSchema.Models)))
 
 	// Populate prompts
 	for i, promptText := range prompts {
@@ -255,17 +255,17 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 		}
 	}
 
-	logger.Info("Total prompts generated: %d", len(jsonSchema.Prompts))
+	logger.Info(fmt.Sprintf("Total prompts generated: %d", len(jsonSchema.Prompts)))
 
 	// Log each generated prompt (only in debug mode to avoid excessive logs in production)
 	for _, prompt := range jsonSchema.Prompts {
-		logger.Info("Generated prompt: %s (SeqID: %s, SeqNum: %d)", prompt.PromptContent, prompt.SequenceID, prompt.SequenceNumber)
+		logger.Info(fmt.Sprintf("Generated prompt: %s (SeqID: %s, SeqNum: %d)", prompt.PromptContent, prompt.SequenceID, prompt.SequenceNumber))
 	}
 
 	// Convert to JSON string
 	jsonData, err := json.MarshalIndent(jsonSchema, "", "  ")
 	if err != nil {
-		logger.Error("Error marshaling JSON: %v", err)
+		logger.Error(fmt.Sprintf("Error marshaling JSON: %v", err))
 		return "", nil, err
 	}
 

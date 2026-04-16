@@ -205,7 +205,7 @@ Provide classification as JSON:
 		return results
 	}
 
-	logger.Info("Prepared %d manuscripts for batch article type classification", len(prompts))
+	logger.Info(fmt.Sprintf("Prepared %d manuscripts for batch article type classification", len(prompts)))
 
 	// Prepare the input for alembica with all prompts
 	input := definitions.Input{
@@ -220,22 +220,22 @@ Provide classification as JSON:
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		return results
 	}
 
 	// Call alembica once with all prompts
-	logger.Info("Calling AI model with batch of %d article type classification requests", len(prompts))
+	logger.Info(fmt.Sprintf("Calling AI model with batch of %d article type classification requests", len(prompts)))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		return results
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		return results
 	}
 
@@ -254,7 +254,7 @@ Provide classification as JSON:
 			}
 
 			if err := json.Unmarshal([]byte(response), &aiResult); err != nil {
-				logger.Error("Failed to parse AI classification for manuscript %d: %v", manuscriptIdx, err)
+				logger.Error(fmt.Sprintf("Failed to parse AI classification for manuscript %d: %v", manuscriptIdx, err))
 				continue
 			}
 
@@ -1241,7 +1241,7 @@ Example response for a research article with empirical data from multiple partic
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		// Fall back to rule-based
 		text := title + " " + abstract
 		return classifyArticleComprehensive(text), nil
@@ -1251,7 +1251,7 @@ Example response for a research article with empirical data from multiple partic
 	logger.Info("Calling AI model for article type classification")
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		// Fall back to rule-based
 		text := title + " " + abstract
 		return classifyArticleComprehensive(text), nil
@@ -1260,7 +1260,7 @@ Example response for a research article with empirical data from multiple partic
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		// Fall back to rule-based
 		text := title + " " + abstract
 		return classifyArticleComprehensive(text), nil
@@ -1279,7 +1279,7 @@ Example response for a research article with empirical data from multiple partic
 		}
 
 		if err := json.Unmarshal([]byte(response), &aiClassification); err != nil {
-			logger.Error("Failed to parse AI classification response: %v", err)
+			logger.Error(fmt.Sprintf("Failed to parse AI classification response: %v", err))
 			// Fall back to rule-based
 			text := title + " " + abstract
 			return classifyArticleComprehensive(text), nil
@@ -1326,7 +1326,7 @@ Example response for a research article with empirical data from multiple partic
 			}
 		}
 
-		logger.Info("AI classification successful: primary=%s, all=%v", classification.PrimaryType, classification.AllTypes)
+		logger.Info(fmt.Sprintf("AI classification successful: primary=%s, all=%v", classification.PrimaryType, classification.AllTypes))
 		return classification, nil
 	}
 
