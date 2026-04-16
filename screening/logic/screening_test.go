@@ -415,13 +415,11 @@ func TestAILanguageDetectionConfiguration(t *testing.T) {
 	}
 
 	// Test with mock LLM config structure
-	mockLLMConfigs := []LLMConfig{
-		{
-			Provider:    "test",
-			APIKey:      "",
-			Model:       "test-model",
-			Temperature: 0.01,
-		},
+	mockLLMConfig := &LLMConfig{
+		Provider:    "test",
+		APIKey:      "",
+		Model:       "test-model",
+		Temperature: 0.01,
 	}
 
 	result2 := &ScreeningResult{
@@ -430,7 +428,7 @@ func TestAILanguageDetectionConfiguration(t *testing.T) {
 	}
 
 	// This will attempt AI detection but fail and fall back
-	err = applyLanguageFilter(result2, config, mockLLMConfigs)
+	err = applyLanguageFilter(result2, config, mockLLMConfig)
 	if err != nil {
 		t.Fatalf("Language filter with mock LLM failed: %v", err)
 	}
@@ -438,6 +436,82 @@ func TestAILanguageDetectionConfiguration(t *testing.T) {
 	// Should have attempted AI and fallen back
 	if result2.Records[0].Tags["detected_language"] == nil {
 		t.Error("Should have detected language with fallback")
+	}
+}
+
+func TestScreeningRejectsReviewStyleLLMConfig(t *testing.T) {
+	config := `
+[project]
+name = "Wrong Screening Config"
+author = "Test"
+version = "1.0"
+input_file = "./projects/test/inputs/screening/screening_test_input.csv"
+output_file = "./projects/test/outputs/screening/test_screening_output"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "low"
+
+[filters]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = true
+
+[project.llm.1]
+provider = "OpenAI"
+api_key = ""
+model = "gpt-4o-mini"
+temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
+`
+
+	err := Screen(config)
+	if err == nil {
+		t.Fatal("expected screening to reject review-style [project.llm.1] syntax")
+	}
+	if !strings.Contains(err.Error(), "screening uses [filters.llm]") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestScreeningRejectsMultipleLLMConfigSyntax(t *testing.T) {
+	config := `
+[project]
+name = "Wrong Screening Config"
+author = "Test"
+version = "1.0"
+input_file = "./projects/test/inputs/screening/screening_test_input.csv"
+output_file = "./projects/test/outputs/screening/test_screening_output"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "low"
+
+[filters]
+
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+use_ai = true
+
+[[filters.llm]]
+provider = "OpenAI"
+api_key = ""
+model = "gpt-4o-mini"
+temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
+`
+
+	err := Screen(config)
+	if err == nil {
+		t.Fatal("expected screening to reject multi-model [[filters.llm]] syntax")
+	}
+	if !strings.Contains(err.Error(), "single AI model") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

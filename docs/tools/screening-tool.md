@@ -89,11 +89,11 @@ name = "Manuscript Screening Example"       # Project title
 author = "John Doe"                        # Project author
 version = "1.0"                           # Configuration version
 input_file = "/path/to/manuscripts.csv"    # Input CSV or TXT file
-output_file = "/path/to/results"          # Output path (without extension)
+output_file = "/path/to/results"          # Base output path (without extension)
 text_column = "abstract"                  # Column with text/file paths
 identifier_column = "doi"                 # Column with unique IDs
 output_format = "csv"                     # "csv" or "json"
-log_level = "medium"                      # "low", "medium", or "high"
+log_level = "medium"                      # "low" (silent), "medium" (stdout), or "high" (files)
 ```
 
 ### Filters Section
@@ -159,7 +159,7 @@ field_relevance = 0.2                    # Weight for journal/field relevance
 For AI-assisted screening:
 
 ```toml
-[filters.llm.1]
+[filters.llm]
 provider = "OpenAI"                       # AI provider
 api_key = ""                              # API key (uses env if empty)
 model = "gpt-4o-mini"                     # Model name
@@ -346,14 +346,12 @@ use_ai = false                            # Using rule-based classification
 exclude_reviews = false                   # Keep reviews for literature review
 exclude_editorials = true
 exclude_letters = true
-exclude_case_reports = false
-exclude_commentary = false
-exclude_perspectives = false
 exclude_theoretical = false
 exclude_empirical = false
 exclude_methods = false
 exclude_single_case = true                # Focus on studies with multiple subjects
 exclude_sample = false
+include_types = []
 ```
 
 ### Example 2: Multi-Language Screening with AI
@@ -363,8 +361,14 @@ exclude_sample = false
 ```toml
 [project]
 name = "Latin American Climate Research"
+author = "Research Team"
+version = "1.0"
 input_file = "./la_climate_papers.csv"
 output_file = "./filtered_papers"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "medium"
 
 [filters.deduplication]
 enabled = true
@@ -381,12 +385,21 @@ enabled = true
 use_ai = true  # AI classification for better accuracy
 exclude_reviews = false
 exclude_editorials = true
+exclude_letters = false
+exclude_theoretical = false
+exclude_empirical = false
+exclude_methods = false
+exclude_single_case = false
+exclude_sample = false
+include_types = []
 
-[filters.llm.1]
+[filters.llm]
 provider = "OpenAI"
 api_key = ""  # Uses OPENAI_API_KEY env variable
 model = "gpt-4o-mini"
 temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
 ```
 
 ### Example 3: Strict Deduplication for Systematic Review
@@ -396,7 +409,14 @@ temperature = 0.01
 ```toml
 [project]
 name = "Systematic Review Screening"
-log_level = "high"  # Detailed logging for audit trail
+author = "Review Team"
+version = "1.0"
+input_file = "./systematic_review_candidates.csv"
+output_file = "./systematic_review_screened"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "high"  # Saves runtime logs and a screening report file
 
 [filters.deduplication]
 enabled = true
@@ -414,15 +434,13 @@ use_ai = false                            # Using rule-based classification
 exclude_reviews = true                    # No reviews (includes systematic reviews and meta-analyses)
 exclude_editorials = true                 # No editorials
 exclude_letters = true                    # No letters
-exclude_case_reports = true               # No case reports
-exclude_commentary = true                 # No commentary
-exclude_perspectives = true               # No perspectives
 exclude_theoretical = true                # Only empirical work
 exclude_empirical = false                 # Keep empirical studies
 exclude_methods = false                   # Keep methods papers
 exclude_single_case = true                # Only studies with samples
 exclude_sample = false                    # Keep sample studies
 include_types = ["empirical_study", "sample_study"]  # Focus on empirical research with samples
+```
 
 ### Example 3b: Same Screening with AI Classification
 
@@ -431,6 +449,13 @@ include_types = ["empirical_study", "sample_study"]  # Focus on empirical resear
 ```toml
 [project]
 name = "Systematic Review Screening with AI"
+author = "Review Team"
+version = "1.0"
+input_file = "./systematic_review_candidates.csv"
+output_file = "./systematic_review_ai_screened"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
 log_level = "high"
 
 [filters.deduplication]
@@ -449,18 +474,20 @@ use_ai = true  # AI for comprehensive type classification
 exclude_reviews = true
 exclude_editorials = true
 exclude_letters = true
-exclude_case_reports = true
-exclude_commentary = true
-exclude_perspectives = true
 exclude_theoretical = true
+exclude_empirical = false
+exclude_methods = false
 exclude_single_case = true
+exclude_sample = false
 include_types = ["empirical_study", "sample_study"]
 
-[filters.llm.1]
+[filters.llm]
 provider = "OpenAI"
 api_key = ""
 model = "gpt-4o-mini"
 temperature = 0.01
+tpm_limit = 0
+rpm_limit = 0
 ```
 
 ### Example 4: Minimal Filtering for Broad Inclusion
@@ -470,6 +497,14 @@ temperature = 0.01
 ```toml
 [project]
 name = "Broad Literature Search"
+author = "Research Team"
+version = "1.0"
+input_file = "./broad_search_results.csv"
+output_file = "./broad_search_screened"
+text_column = "abstract"
+identifier_column = "doi"
+output_format = "csv"
+log_level = "medium"
 
 [filters.deduplication]
 enabled = true
@@ -692,24 +727,31 @@ Accept multiple languages:
 accepted_languages = ["en", "es", "pt", "fr", "it"]
 ```
 
-### Ensemble AI Screening
-Use multiple models for consensus:
+### AI-Assisted Screening
+Configure a single model for AI-assisted screening:
 ```toml
-[filters.llm.1]
+[filters.llm]
 provider = "OpenAI"
 model = "gpt-4o-mini"
-
-[filters.llm.2]
-provider = "GoogleAI"
-model = "gemini-1.5-flash"
 ```
 
 ### Detailed Logging
 High verbosity for debugging:
 ```toml
 [project]
-log_level = "high"  # Saves detailed log file
+log_level = "high"  # Saves runtime logs to <output_file>.log and a report to <output_file>_screening_report.txt
 ```
+
+Log behavior by level:
+
+- `low`: No runtime logs are emitted.
+- `medium`: Runtime logs are printed to stdout.
+- `high`: Runtime logs are saved to `<output_file>.log` and a screening report is saved to `<output_file>_screening_report.txt`.
+
+Result files remain separate from logs:
+
+- `output_format = "csv"` writes results to `<output_file>.csv`
+- `output_format = "json"` writes results to `<output_file>.json`
 
 ---
 
