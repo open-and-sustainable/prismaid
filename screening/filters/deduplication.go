@@ -29,7 +29,7 @@ type DeduplicationConfig struct {
 // Returns a map where key is manuscript ID and value is a tuple (isDuplicate, originalID)
 func FindDuplicates(records []ManuscriptData, config DeduplicationConfig) map[string][2]interface{} {
 	if config.UseAI && len(config.LLMConfigs) > 0 {
-		logger.Info("Using AI-based deduplication with %d models", len(config.LLMConfigs))
+		logger.Info(fmt.Sprintf("Using AI-based deduplication with %d models", len(config.LLMConfigs)))
 		return findAIMatches(records, config)
 	}
 	logger.Info("Using simple matching for deduplication")
@@ -296,7 +296,7 @@ func getFieldValueWithMapping(data map[string]string, lowerMap map[string]string
 func findAIMatches(manuscripts []ManuscriptData, config DeduplicationConfig) map[string][2]interface{} {
 	duplicates := make(map[string][2]interface{})
 
-	logger.Info("Starting AI-based duplicate detection for %d manuscripts", len(manuscripts))
+	logger.Info(fmt.Sprintf("Starting AI-based duplicate detection for %d manuscripts", len(manuscripts)))
 
 	// Initialize all as non-duplicates
 	for _, manuscript := range manuscripts {
@@ -331,7 +331,7 @@ func findAIMatches(manuscripts []ManuscriptData, config DeduplicationConfig) map
 		return findSimpleMatches(manuscripts, config.CompareFields)
 	}
 
-	logger.Info("Configured %d AI models for deduplication", len(models))
+	logger.Info(fmt.Sprintf("Configured %d AI models for deduplication", len(models)))
 
 	// Build all comparison prompts
 	type ComparisonPair struct {
@@ -409,7 +409,7 @@ Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}`, f
 		return duplicates
 	}
 
-	logger.Info("Prepared %d comparison prompts for batch processing", len(comparisons))
+	logger.Info(fmt.Sprintf("Prepared %d comparison prompts for batch processing", len(comparisons)))
 
 	// Create all prompts for batch processing
 	var prompts []definitions.Prompt
@@ -430,22 +430,22 @@ Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}`, f
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		return duplicates
 	}
 
 	// Call alembica once with all prompts
-	logger.Info("Calling AI model with batch of %d comparisons", len(comparisons))
+	logger.Info(fmt.Sprintf("Calling AI model with batch of %d comparisons", len(comparisons)))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		return duplicates
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		return duplicates
 	}
 
@@ -455,8 +455,8 @@ Respond with ONLY a JSON object: {"duplicate": true} or {"duplicate": false}`, f
 			var response map[string]interface{}
 			if err := json.Unmarshal([]byte(output.Responses[idx].ModelResponses[0]), &response); err == nil {
 				if duplicate, ok := response["duplicate"].(bool); ok && duplicate {
-					logger.Info("AI detected duplicate: manuscript %s is duplicate of %s",
-						manuscripts[comp.Index2].ID, manuscripts[comp.Index1].ID)
+					logger.Info(fmt.Sprintf("AI detected duplicate: manuscript %s is duplicate of %s",
+						manuscripts[comp.Index2].ID, manuscripts[comp.Index1].ID))
 					duplicates[manuscripts[comp.Index2].ID] = [2]interface{}{true, manuscripts[comp.Index1].ID}
 				}
 			}

@@ -326,7 +326,7 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 			if fileExists(textContent) {
 				content, err := os.ReadFile(textContent)
 				if err != nil {
-					logger.Error("Could not read file %s: %v", textContent, err)
+					logger.Error(fmt.Sprintf("Could not read file %s: %v", textContent, err))
 					manuscript.Text = textContent // Use as is if file can't be read
 				} else {
 					manuscript.Text = string(content)
@@ -427,6 +427,16 @@ func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 
 // applyDeduplicationFilter applies deduplication logic
 func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfig) error {
+	if config.UseAI {
+		if len(result.LLMConfigs) == 0 {
+			logger.Info("Deduplication filter: AI requested but no LLM configuration was provided, using rule-based matching")
+		} else {
+			logger.Info("Deduplication filter: using AI-assisted matching")
+		}
+	} else {
+		logger.Info("Deduplication filter: using rule-based matching")
+	}
+
 	// Convert ManuscriptRecord to filters.ManuscriptData
 	manuscripts := make([]filters.ManuscriptData, len(result.Records))
 	for i, record := range result.Records {
@@ -469,6 +479,16 @@ func applyDeduplicationFilter(result *ScreeningResult, config DeduplicationConfi
 
 // applyLanguageFilter applies language detection
 func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConfigs []LLMConfig) error {
+	if config.UseAI {
+		if len(llmConfigs) == 0 {
+			logger.Info("Language filter: AI requested but no LLM configuration was provided, using rule-based detection")
+		} else {
+			logger.Info("Language filter: using AI-assisted detection")
+		}
+	} else {
+		logger.Info("Language filter: using rule-based detection")
+	}
+
 	excludedCount := 0
 
 	if config.UseAI && len(llmConfigs) > 0 {
@@ -489,7 +509,7 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 			llmInterfaces := convertLLMConfigs(llmConfigs)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for language detection with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for language detection with AI", len(manuscriptsToProcess)))
 			languages := filters.BatchDetectLanguagesWithAI(manuscriptsToProcess, llmInterfaces)
 
 			// Apply results
@@ -594,6 +614,16 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 
 // applyArticleTypeFilter applies article type classification
 func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, llmConfigs []LLMConfig) error {
+	if config.UseAI {
+		if len(llmConfigs) == 0 {
+			logger.Info("Article type filter: AI requested but no LLM configuration was provided, using rule-based classification")
+		} else {
+			logger.Info("Article type filter: using AI-assisted classification")
+		}
+	} else {
+		logger.Info("Article type filter: using rule-based classification")
+	}
+
 	excludedCount := 0
 
 	if config.UseAI && len(llmConfigs) > 0 {
@@ -614,7 +644,7 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 			llmInterfaces := convertLLMConfigs(llmConfigs)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for article type classification with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for article type classification with AI", len(manuscriptsToProcess)))
 			classifications := filters.BatchClassifyArticleTypesWithAI(manuscriptsToProcess, llmInterfaces)
 
 			// Apply results
@@ -648,7 +678,7 @@ func applyArticleTypeFilter(result *ScreeningResult, config ArticleTypeConfig, l
 			// Use rule-based classification with text
 			classification, err := filters.ClassifyArticleTypes(result.Records[i].Text, nil)
 			if err != nil {
-				logger.Error("Article type classification failed for %s: %v", result.Records[i].ID, err)
+				logger.Error(fmt.Sprintf("Article type classification failed for %s: %v", result.Records[i].ID, err))
 				continue
 			}
 
@@ -729,7 +759,16 @@ func checkArticleTypeExclusion(classification *filters.ArticleClassification, co
 
 // applyTopicRelevanceFilter applies topic relevance scoring to filter off-topic manuscripts
 func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceConfig, llmConfigs []LLMConfig) error {
-	logger.Info("Applying topic relevance filter...")
+	if config.UseAI {
+		if len(llmConfigs) == 0 {
+			logger.Info("Topic relevance filter: AI requested but no LLM configuration was provided, using rule-based scoring")
+		} else {
+			logger.Info("Topic relevance filter: using AI-assisted scoring")
+		}
+	} else {
+		logger.Info("Topic relevance filter: using rule-based scoring")
+	}
+
 	excludedCount := 0
 
 	if config.UseAI && len(llmConfigs) > 0 {
@@ -750,7 +789,7 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 			llmInterfaces := convertLLMConfigs(llmConfigs)
 
 			// Batch process all manuscripts
-			logger.Info("Processing %d manuscripts for topic relevance with AI", len(manuscriptsToProcess))
+			logger.Info(fmt.Sprintf("Processing %d manuscripts for topic relevance with AI", len(manuscriptsToProcess)))
 			relevanceScores := filters.BatchCalculateTopicRelevanceWithAI(manuscriptsToProcess, config.Topics, config.MinScore, llmInterfaces)
 
 			// Apply results
@@ -776,11 +815,11 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 					)
 					excludedCount++
 
-					logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+					logger.Info(fmt.Sprintf("Excluded manuscript %s - relevance score: %.2f < %.2f",
 						result.Records[recordIdx].ID,
 						relevanceScore.OverallScore,
 						config.MinScore,
-					)
+					))
 				}
 			}
 		}
@@ -805,7 +844,7 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 			)
 
 			if err != nil {
-				logger.Error("Failed to calculate topic relevance for record %s: %v", result.Records[i].ID, err)
+				logger.Error(fmt.Sprintf("Failed to calculate topic relevance for record %s: %v", result.Records[i].ID, err))
 				// Don't exclude on error, just log and continue
 				continue
 			}
@@ -829,17 +868,17 @@ func applyTopicRelevanceFilter(result *ScreeningResult, config TopicRelevanceCon
 				)
 				excludedCount++
 
-				logger.Info("Excluded manuscript %s - relevance score: %.2f < %.2f",
+				logger.Info(fmt.Sprintf("Excluded manuscript %s - relevance score: %.2f < %.2f",
 					result.Records[i].ID,
 					relevanceScore.OverallScore,
 					config.MinScore,
-				)
+				))
 			}
 		}
 	}
 
 	result.Statistics["topic_relevance_excluded"] = excludedCount
-	logger.Info("Topic relevance filter: excluded %d manuscripts", excludedCount)
+	logger.Info(fmt.Sprintf("Topic relevance filter: excluded %d manuscripts", excludedCount))
 	return nil
 }
 
@@ -950,14 +989,14 @@ func saveCSVResults(result *ScreeningResult, outputFile string) error {
 // logSummary logs screening summary
 func logSummary(result *ScreeningResult, logLevel string) {
 	logger.Info("\n=== Screening Summary ===")
-	logger.Info("Total Records: %d", result.TotalRecords)
-	logger.Info("Included: %d", result.IncludedRecords)
-	logger.Info("Excluded: %d", result.ExcludedRecords)
+	logger.Info(fmt.Sprintf("Total Records: %d", result.TotalRecords))
+	logger.Info(fmt.Sprintf("Included: %d", result.IncludedRecords))
+	logger.Info(fmt.Sprintf("Excluded: %d", result.ExcludedRecords))
 
 	if logLevel == "medium" || logLevel == "high" {
 		logger.Info("\n--- Exclusion Statistics ---")
 		for key, value := range result.Statistics {
-			logger.Info("%s: %d", key, value)
+			logger.Info(fmt.Sprintf("%s: %d", key, value))
 		}
 	}
 
@@ -977,7 +1016,7 @@ func logSummary(result *ScreeningResult, logLevel string) {
 				}
 				fmt.Fprintf(file, "Tags: %v\n\n", record.Tags)
 			}
-			logger.Info("\nDetailed log saved to: %s", logFile)
+			logger.Info(fmt.Sprintf("\nDetailed log saved to: %s", logFile))
 		}
 	}
 }

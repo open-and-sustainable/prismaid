@@ -155,7 +155,7 @@ Common codes: en (English), es (Spanish), fr (French), de (German), it (Italian)
 		return results
 	}
 
-	logger.Info("Prepared %d manuscripts for batch language detection", len(prompts))
+	logger.Info(fmt.Sprintf("Prepared %d manuscripts for batch language detection", len(prompts)))
 
 	// Prepare the input for alembica with all prompts
 	input := definitions.Input{
@@ -170,22 +170,22 @@ Common codes: en (English), es (Spanish), fr (French), de (German), it (Italian)
 	// Convert to JSON
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
-		logger.Error("Failed to marshal input for AI: %v", err)
+		logger.Error(fmt.Sprintf("Failed to marshal input for AI: %v", err))
 		return results
 	}
 
 	// Call alembica once with all prompts
-	logger.Info("Calling AI model with batch of %d language detection requests", len(prompts))
+	logger.Info(fmt.Sprintf("Calling AI model with batch of %d language detection requests", len(prompts)))
 	result, err := extraction.Extract(string(jsonInput))
 	if err != nil {
-		logger.Error("AI extraction failed: %v", err)
+		logger.Error(fmt.Sprintf("AI extraction failed: %v", err))
 		return results
 	}
 
 	// Parse the response
 	var output definitions.Output
 	if err := json.Unmarshal([]byte(result), &output); err != nil {
-		logger.Error("Failed to parse AI response: %v", err)
+		logger.Error(fmt.Sprintf("Failed to parse AI response: %v", err))
 		return results
 	}
 
@@ -198,7 +198,7 @@ Common codes: en (English), es (Spanish), fr (French), de (German), it (Italian)
 			var langResponse map[string]string
 			if err := json.Unmarshal([]byte(response), &langResponse); err != nil {
 				// Try to extract language code from plain text
-				logger.Info("Failed to parse JSON response for manuscript %d, attempting text extraction", manuscriptIdx)
+				logger.Info(fmt.Sprintf("Failed to parse JSON response for manuscript %d, attempting text extraction", manuscriptIdx))
 				response = strings.ToLower(response)
 				// Look for common language codes in the response
 				languageCodes := []string{"en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ar", "nl", "sv", "no", "da", "fi", "pl", "cs", "hu", "ro", "el", "tr", "he", "ko"}

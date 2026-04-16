@@ -9,6 +9,11 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.11.3] - 2026-04-16
+### Fixed
+- Corrected screening and related CLI/review logger calls that passed printf-style placeholders to Alembica's println-style logger, preventing output such as `Total Records: %d 287`
+- Improved screening filter logs to state when each filter is using AI-assisted mode, rule-based mode, or rule-based fallback because `use_ai = true` was set without any configured LLMs
+
 ## [0.11.2] - 2026-02-13
 ### Added
 - CLI PDF conversion retries OCR-only once for per-file errors or zero-byte outputs when Tika is available
