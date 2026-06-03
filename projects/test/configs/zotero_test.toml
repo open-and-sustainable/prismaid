@@ -1,3 +1,5 @@
+[zotero]
 user = "10444796"
 api_key = "JvFEMPG896eLZxuOHyEKPHdt"
 group = "test"
+output_dir = "projects/test/outputs/download/zotero"

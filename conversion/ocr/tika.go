@@ -29,7 +29,7 @@ func ReadWithTika(path string, tikaAddress string) (string, error) {
 	// Open the file
 	file, err := os.Open(path)
 	if err != nil {
-		logger.Error("Failed to open file for Tika OCR: %v", err)
+		logger.Error("Failed to open file for Tika OCR:", err)
 		return "", fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
@@ -37,7 +37,7 @@ func ReadWithTika(path string, tikaAddress string) (string, error) {
 	// Read file content
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
-		logger.Error("Failed to read file content for Tika OCR: %v", err)
+		logger.Error("Failed to read file content for Tika OCR:", err)
 		return "", fmt.Errorf("failed to read file content: %w", err)
 	}
 
@@ -45,7 +45,7 @@ func ReadWithTika(path string, tikaAddress string) (string, error) {
 	tikaURL := fmt.Sprintf("http://%s/tika", tikaAddress)
 	req, err := http.NewRequest("PUT", tikaURL, bytes.NewReader(fileContent))
 	if err != nil {
-		logger.Error("Failed to create Tika request: %v", err)
+		logger.Error("Failed to create Tika request:", err)
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -61,7 +61,7 @@ func ReadWithTika(path string, tikaAddress string) (string, error) {
 	// Send request
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Failed to connect to Tika server at %s: %v", tikaAddress, err)
+		logger.Error("Failed to connect to Tika server at", tikaAddress+":", err)
 		return "", fmt.Errorf("failed to connect to Tika server: %w", err)
 	}
 	defer resp.Body.Close()
@@ -69,18 +69,18 @@ func ReadWithTika(path string, tikaAddress string) (string, error) {
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		logger.Error("Tika server returned error: %d - %s", resp.StatusCode, string(bodyBytes))
+		logger.Error("Tika server returned error:", resp.StatusCode, "-", string(bodyBytes))
 		return "", fmt.Errorf("tika server returned status %d", resp.StatusCode)
 	}
 
 	// Read response body
 	textContent, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("Failed to read Tika response: %v", err)
+		logger.Error("Failed to read Tika response:", err)
 		return "", fmt.Errorf("failed to read response: %w", err)
 	}
 
-	logger.Info("Successfully extracted text from %s using Tika OCR", path)
+	logger.Info("Successfully extracted text from", path, "using Tika OCR")
 	return string(textContent), nil
 }
 

@@ -95,31 +95,33 @@ PrismAId.download_url_list("list_of_urls.txt")
 ```
 
 #### From Zotero:
-For Zotero integration, you'll need your username, API key, and collection name:
+For Zotero integration, you'll need your username, API key, collection name, and output directory:
 
 ```bash
 # Using the binary (requires a TOML config file)
 # First create a file zotero_config.toml with:
+#   [zotero]
 #   user = "your_username"
 #   api_key = "your_api_key"
 #   group = "Your Collection"
+#   output_dir = "papers/zotero"
 ./prismaid -download-zotero zotero_config.toml
 
 # Using Go
 import "github.com/open-and-sustainable/prismaid"
-prismaid.DownloadZoteroPDFs("username", "apiKey", "collectionName", "./papers")
+prismaid.DownloadZotero(zoteroTomlConfig)
 
 # Using Python
 import prismaid
-prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
+prismaid.download_zotero(zotero_config)
 
 # Using R
 library(prismaid)
-DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")
+DownloadZotero(zotero_config)
 
 # Using Julia
 using PrismAId
-PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
+PrismAId.download_zotero(zotero_config)
 ```
 
 ### 3. Convert Tool

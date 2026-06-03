@@ -136,6 +136,30 @@ summary = "no"
     - `no`: Default.
     - `yes`: A summary is generated for each manuscript and saved in the same directory.
 
+### RevAIse Documentation (Optional)
+
+The review tool can optionally update a shared RevAIse review record with a `data_extraction` stage. Reusing the same `record_file` updates the same RevAIse document; distinct extraction runs should use distinct `run_id` values.
+
+```toml
+[revaise]
+enabled = true
+record_file = "review.revaise.json"
+
+[revaise.stage]
+stage_type = "data_extraction"
+stage_label = "Pilot AI-assisted extraction"
+
+[revaise.extraction_run]
+run_id = "pilot_extraction_001"
+label = "Pilot extraction on calibration papers"
+form_id = "extraction_form_v1"
+form_name = "Extraction form"
+form_version = "1"
+extractor_id = "prismaid"
+```
+
+See [RevAIse Integration](../review/revaise-integration.md) for the full workflow and backup behavior.
+
 ### LLM Configuration
 ```toml
 [project.llm]

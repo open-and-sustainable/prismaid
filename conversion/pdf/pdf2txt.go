@@ -34,7 +34,7 @@ func ReadPdf(path string) (string, error) {
 	// Open the PDF file
 	f, r, err := pdf.Open(path)
 	if err != nil {
-		logger.Error("Failed to open PDF: %v", err)
+		logger.Error("Failed to open PDF:", err)
 		return "", err
 	}
 	defer f.Close()
@@ -48,28 +48,28 @@ func ReadPdf(path string) (string, error) {
 	for pageIndex := 1; pageIndex <= totalPage; pageIndex++ {
 		p := r.Page(pageIndex)
 		if p.V.IsNull() {
-			logger.Error("Page %d is null or not available", pageIndex)
+			logger.Error("Page", pageIndex, "is null or not available")
 			continue
 		}
 
 		rows, err := p.GetTextByRow()
 		if err != nil {
-			logger.Error("Error retrieving text for page %d: %v", pageIndex, err)
+			logger.Error("Error retrieving text for page", pageIndex, ":", err)
 			continue
 		}
 		if len(rows) == 0 {
-			logger.Error("No text rows found on page %d", pageIndex)
+			logger.Error("No text rows found on page", pageIndex)
 			continue
 		}
 
 		for _, row := range rows {
 			if len(row.Content) == 0 {
-				logger.Error("Empty content on page %d", pageIndex)
+				logger.Error("Empty content on page", pageIndex)
 				continue
 			}
 			line := textsToString(row.Content)
 			if line == "" {
-				logger.Error("Converted text is empty on page %d", pageIndex)
+				logger.Error("Converted text is empty on page", pageIndex)
 			}
 			text += line + "\n"
 		}
@@ -135,7 +135,7 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 
 	// Optimize the PDF context to fix minor issues
 	if err := api.OptimizeContext(ctx); err != nil {
-		logger.Error("Optimization failed: %v", err)
+		logger.Error("Optimization failed:", err)
 	}
 
 	var extractedText string
@@ -143,13 +143,13 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 	for i := 1; i <= ctx.PageCount; i++ {
 		pageDict, _, _, err := ctx.PageDict(i, false)
 		if err != nil {
-			logger.Error("Error extracting page %d: %v", i, err)
+			logger.Error("Error extracting page", i, ":", err)
 			continue
 		}
 
 		contentsEntry, ok := pageDict.Find("Contents")
 		if !ok {
-			logger.Error("No content stream found for page %d", i)
+			logger.Error("No content stream found for page", i)
 			continue
 		}
 
@@ -160,13 +160,13 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 			// Single content stream
 			streamDict, found, err := ctx.DereferenceStreamDict(obj)
 			if err != nil || !found {
-				logger.Error("Failed to dereference single content stream for page %d: %v", i, err)
+				logger.Error("Failed to dereference single content stream for page", i, ":", err)
 				continue
 			}
 
 			err = streamDict.Decode()
 			if err != nil {
-				logger.Error("Failed to decode single content stream for page %d: %v", i, err)
+				logger.Error("Failed to decode single content stream for page", i, ":", err)
 				continue
 			}
 
@@ -178,31 +178,31 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 				// Check if the element is an indirect reference
 				indirectRef, ok := element.(pdfTypes.IndirectRef)
 				if !ok {
-					logger.Error("Invalid content stream reference (not IndirectRef) for page %d: %T", i, element)
+					logger.Error("Invalid content stream reference (not IndirectRef) for page", i, ":", element)
 					continue
 				}
 
 				// Dereference the indirect reference
 				obj, err := ctx.Dereference(indirectRef)
 				if err != nil {
-					logger.Error("Failed to dereference object in array for page %d: %v", i, err)
+					logger.Error("Failed to dereference object in array for page", i, ":", err)
 					continue
 				}
 				if obj == nil {
-					logger.Error("Dereferenced object is nil for page %d", i)
+					logger.Error("Dereferenced object is nil for page", i)
 					continue
 				}
 
 				// Check if the object is a StreamDict
 				streamDict, ok := obj.(pdfTypes.StreamDict)
 				if !ok {
-					logger.Error("Dereferenced object is not a StreamDict for page %d: %T", i, obj)
+					logger.Error("Dereferenced object is not a StreamDict for page", i, ":", obj)
 					continue
 				}
 
 				err = streamDict.Decode()
 				if err != nil {
-					logger.Error("Failed to decode stream for page %d: %v", i, err)
+					logger.Error("Failed to decode stream for page", i, ":", err)
 					continue
 				}
 
@@ -211,7 +211,7 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 				// Decode the stream content
 				err = streamDict.Decode()
 				if err != nil {
-					logger.Error("Failed to decode stream in array for page %d: %v", i, err)
+					logger.Error("Failed to decode stream in array for page", i, ":", err)
 					continue
 				}
 
@@ -222,14 +222,14 @@ func extractTextWithPdfCpu(filePath string) (string, error) {
 			// Direct content stream
 			err := obj.Decode()
 			if err != nil {
-				logger.Error("Failed to decode direct content stream for page %d: %v", i, err)
+				logger.Error("Failed to decode direct content stream for page", i, ":", err)
 				continue
 			}
 
 			contentData = append(contentData, obj.Content...)
 
 		default:
-			logger.Error("Unexpected type for 'Contents' entry on page %d: %T", i, obj)
+			logger.Error("Unexpected type for 'Contents' entry on page", i, ":", obj)
 			continue
 		}
 

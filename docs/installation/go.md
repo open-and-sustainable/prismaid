@@ -27,7 +27,7 @@ import "github.com/open-and-sustainable/prismaid"
 err := prismaid.Screening(tomlConfigString)
 
 // Download papers from Zotero
-err := prismaid.DownloadZoteroPDFs(username, apiKey, collectionName, parentDir)
+err := prismaid.DownloadZotero(zoteroTomlConfigString)
 
 // Convert files to text
 err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.ConvertOptions{})

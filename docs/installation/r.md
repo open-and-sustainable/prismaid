@@ -28,7 +28,8 @@ Screening(screening_content)  # Note the capitalization
 
 
 # Download papers from Zotero
-DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")  # Full name
+zotero_content <- paste(readLines("zotero.toml"), collapse = "\n")
+DownloadZotero(zotero_content)
 
 # Download from URL list
 DownloadURLList("urls.txt")

@@ -128,9 +128,21 @@ rm -rf "$TEMP_CSV_DIR"
 
 echo "###### Testing DOWNLOAD-ZOTERO ######"
 echo "==> Testing Zotero downloads..."
-# Copy the config to the output directory so files are downloaded there
+# Copy the config to the output directory; output_dir controls the download destination
 cp projects/test/configs/zotero_test.toml projects/test/outputs/download/zotero_test_temp.toml
-# Run the download with the config in the output directory
+REVAISE_RECORD="projects/test/outputs/download/zotero_revaise_record.json"
+cat >> projects/test/outputs/download/zotero_test_temp.toml <<EOF
+
+[revaise]
+enabled = true
+record_file = "$REVAISE_RECORD"
+format = "json"
+
+[revaise.stage]
+stage_type = "search"
+stage_label = "Live Zotero full-text download"
+EOF
+# Run the download with the TOML configuration
 if go run cmd/main.go --download-zotero projects/test/outputs/download/zotero_test_temp.toml; then
     echo "    ✓ Zotero download command executed"
     # Check if zotero directory was created in the output directory
@@ -141,6 +153,16 @@ if go run cmd/main.go --download-zotero projects/test/outputs/download/zotero_te
         echo "    ✓ Downloaded $FILE_COUNT files from Zotero"
     else
         echo "    ⚠ Warning: Zotero directory not found in expected location"
+    fi
+    if [ -f "$REVAISE_RECORD" ]; then
+        echo "    ✓ RevAIse record created for live Zotero download"
+        if grep -q '"kind": "fulltexts"' "$REVAISE_RECORD" && grep -q '"resource_uri": "file://' "$REVAISE_RECORD" && grep -q 'projects/test/outputs/download/zotero' "$REVAISE_RECORD"; then
+            echo "    ✓ RevAIse record includes Zotero full-text output"
+        else
+            echo "    ⚠ Warning: RevAIse record missing Zotero full-text output"
+        fi
+    else
+        echo "    ⚠ Warning: RevAIse record not created"
     fi
 else
     echo "    ✗ Zotero download test failed"

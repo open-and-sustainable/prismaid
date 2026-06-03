@@ -109,10 +109,10 @@ func resolveUseTika(tikaAddress string) bool {
 		return false
 	}
 	if ocr.IsTikaAvailable(tikaAddress) {
-		logger.Info("Tika server available at %s - will use as OCR fallback", tikaAddress)
+		logger.Info("Tika server available at", tikaAddress, "- will use as OCR fallback")
 		return true
 	}
-	logger.Info("Tika server not available at %s - OCR fallback disabled", tikaAddress)
+	logger.Info("Tika server not available at", tikaAddress, "- OCR fallback disabled")
 	return false
 }
 
@@ -177,7 +177,7 @@ func convertHTML(inputDir string, files []os.DirEntry, useTika bool, tikaAddress
 func convertSingle(fullPath, format, ext string, useTika bool, tikaAddress string, ocrOnly bool) error {
 	start := time.Now()
 	usedTika := false
-	logger.Info("Starting conversion: %s (format=%s)", fullPath, format)
+	logger.Info("Starting conversion:", fullPath, "(format=", format, ")")
 
 	var txtContent string
 	var err error
@@ -191,7 +191,7 @@ func convertSingle(fullPath, format, ext string, useTika bool, tikaAddress strin
 	// Try Tika OCR fallback if standard methods failed or returned empty text
 	if !ocrOnly && (err != nil || txtContent == "") && useTika {
 		usedTika = true
-		logger.Info("Standard conversion failed for %s, attempting Tika OCR fallback", filepath.Base(fullPath))
+		logger.Info("Standard conversion failed for", filepath.Base(fullPath), "attempting Tika OCR fallback")
 		txtContent, err = ocr.ReadWithTika(fullPath, tikaAddress)
 	}
 
@@ -204,9 +204,9 @@ func convertSingle(fullPath, format, ext string, useTika bool, tikaAddress strin
 			logger.Error("Error: ", err)
 			return fmt.Errorf("error writing to file: %v", err)
 		}
-		logger.Info("Finished conversion: %s (format=%s, tika=%t, duration=%s)", fullPath, format, usedTika, time.Since(start))
+		logger.Info("Finished conversion:", fullPath, "(format=", format, "tika=", usedTika, "duration=", time.Since(start), ")")
 	} else {
-		logger.Error("Failed to convert %s (tika=%t, duration=%s): %v", fullPath, usedTika, time.Since(start), err)
+		logger.Error("Failed to convert", fullPath, "(tika=", usedTika, "duration=", time.Since(start), "):", err)
 	}
 	return nil
 }
@@ -267,6 +267,6 @@ func writeText(text string, txtPath string) error {
 		return fmt.Errorf("error writing to file: %v", err)
 	}
 
-	logger.Info("Successfully wrote to %s", txtPath)
+	logger.Info("Successfully wrote to", txtPath)
 	return nil
 }

@@ -121,7 +121,7 @@ func parseExpectedResults(config *config.Config) string {
 	// Convert sorted map to JSON
 	reviewJSON, err := json.Marshal(sortedReviewItems)
 	if err != nil {
-		logger.Error("Error marshalling review items to JSON: %v", err)
+		logger.Error("Error marshalling review items to JSON:", err)
 	}
 
 	// Combine the expected result with the JSON-formatted review items

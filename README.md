@@ -33,9 +33,10 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 2. **Download** - Download papers from Zotero collections or from URL lists
 3. **Convert** - Convert files (PDF, DOCX, HTML) to plain text for analysis
 4. **Review** - Process systematic literature reviews based on TOML configurations
+5. **RevAIse documentation support** - Optionally document review stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records
 
 ### Workflow
-Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review
+Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review. RevAIse support can document Zotero download, screening, and review/extraction stages in one cumulative review record.
 
 <div style="text-align: center;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
@@ -54,6 +55,7 @@ Our tools support a comprehensive systematic review workflow following the stand
 
 ## Specifications
 - **Review protocol**: Supports any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
+- **Review documentation**: Optional [RevAIse](https://revaise-model.readthedocs.io/stable/) review-record support with cumulative updates and automatic backups; see the [RevAIse integration guide](https://prismaid.review/review/revaise-integration.html).
 - **Distribution**: Available as:
   - Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
   - Python [package](https://pypi.org/project/prismaid/)

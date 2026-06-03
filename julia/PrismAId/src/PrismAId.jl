@@ -36,16 +36,23 @@ function run_review(input::String)
     return result
 end
 
-function download_zotero_pdfs(username::String, api_key::String, collection_name::String, parent_dir::String)
-    # Validate inputs
-    if isempty(username) || isempty(api_key) || isempty(collection_name) || isempty(parent_dir)
-        throw(ArgumentError("All parameters must be non-empty strings"))
+"""
+    download_zotero(input::String)
+
+Download PDF attachments from a Zotero collection using a TOML configuration
+string. The configuration must include a `[zotero]` table with `user`,
+`api_key`, `group`, and `output_dir`; it may also include an optional
+`[revaise]` block to update a RevAIse review record. Returns `nothing` on
+success and throws an exception when the shared library reports an error.
+"""
+function download_zotero(input::String)
+    # Validate input
+    if isempty(input)
+        throw(ArgumentError("Input cannot be empty"))
     end
 
     # Call the C function
-    c_output = ccall((:DownloadZoteroPDFsPython, library_path), Ptr{Cchar},
-                    (Cstring, Cstring, Cstring, Cstring),
-                    username, api_key, collection_name, parent_dir)
+    c_output = ccall((:DownloadZoteroPython, library_path), Ptr{Cchar}, (Cstring,), input)
 
     if c_output == C_NULL
         return nothing  # Success case returns NULL/nil in Python interface
@@ -136,6 +143,6 @@ function screening(input::String)
 end
 
 # Export public functions
-export run_review, download_zotero_pdfs, download_url_list, convert, screening
+export run_review, download_zotero, download_url_list, convert, screening
 
 end # module PrismAId

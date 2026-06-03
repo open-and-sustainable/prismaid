@@ -30,7 +30,8 @@ screening_config = read("screening.toml", String)
 PrismAId.screening(screening_config)
 
 # Download papers from Zotero
-PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
+zotero_config = read("zotero.toml", String)
+PrismAId.download_zotero(zotero_config)
 
 # Download from URL list
 PrismAId.download_url_list("urls.txt")

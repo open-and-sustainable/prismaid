@@ -8,6 +8,7 @@ import (
 
 	"github.com/open-and-sustainable/alembica/extraction"
 	"github.com/open-and-sustainable/alembica/utils/logger"
+	"github.com/open-and-sustainable/prismaid/revaise"
 	"github.com/open-and-sustainable/prismaid/review/config"
 	"github.com/open-and-sustainable/prismaid/review/debug"
 	"github.com/open-and-sustainable/prismaid/review/prompt"
@@ -129,6 +130,11 @@ func Review(tomlConfiguration string) error {
 		return err
 	}
 
+	if err := updateRevAIseExtraction(config, reviewResults, filenames, keys); err != nil {
+		logger.Error("Error updating RevAIse record:", err)
+		return err
+	}
+
 	// cleanup eventual debugging temporary files
 	if config.Project.Configuration.Duplication == "yes" {
 		debug.RemoveDuplicateInput(config)
@@ -136,4 +142,45 @@ func Review(tomlConfiguration string) error {
 
 	logger.Info("Done!")
 	return nil
+}
+
+func updateRevAIseExtraction(config *config.Config, reviewResults string, filenames, keys []string) error {
+	if !config.RevAIse.IsEnabled() {
+		return nil
+	}
+
+	models := make([]revaise.AIAssistance, 0, len(config.Project.LLM))
+	for _, llm := range config.Project.LLM {
+		models = append(models, revaise.AIAssistance{
+			ID:          "prismaid_extraction_ai",
+			Provider:    llm.Provider,
+			Model:       llm.Model,
+			Version:     "unspecified",
+			Purpose:     []string{"EXTRACTION"},
+			Temperature: fmt.Sprintf("%g", llm.Temperature),
+			TPMLimit:    fmt.Sprintf("%d", llm.TpmLimit),
+			RPMLimit:    fmt.Sprintf("%d", llm.RpmLimit),
+		})
+	}
+
+	outputFormat := config.Project.Configuration.OutputFormat
+	outputPath := config.Project.Configuration.ResultsFileName + "." + outputFormat
+	return revaise.UpdateExtraction(config.RevAIse, revaise.ExtractionContribution{
+		Review: revaise.ReviewSeed{
+			ID:      config.Project.Name,
+			Title:   config.Project.Name,
+			Type:    "SYSTEMATIC_REVIEW",
+			Status:  "IN_PROGRESS",
+			Version: config.Project.Version,
+			Authors: []string{
+				config.Project.Author,
+			},
+		},
+		Results:      reviewResults,
+		Filenames:    filenames,
+		Fields:       keys,
+		Models:       models,
+		ResultPath:   outputPath,
+		ResultFormat: outputFormat,
+	})
 }

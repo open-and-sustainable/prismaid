@@ -1,8 +1,9 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.11.3 - Fixed incorrectly formatted logger calls and improved screening logs for AI vs rule-based filtering.
+  v0.12.0 - Added optional RevAIse review-record support and TOML-based Zotero download configuration across CLI and language bindings.
 type: software
+version: "0.12.0"
 doi: 10.5281/zenodo.11210796
 authors:
   - given-names: Riccardo

@@ -138,23 +138,23 @@ RunReview <- function(input_string) {
 
 #' Download PDFs from Zotero
 #'
-#' This function downloads PDFs from a Zotero collection to a specified directory.
+#' This function downloads PDFs from Zotero using a TOML configuration.
 #'
 #' @description
-#' Downloads PDF documents from a Zotero collection using the Zotero API.
+#' Downloads PDF documents from a Zotero collection using the Zotero API. The
+#' TOML configuration must contain a `[zotero]` table and may contain an
+#' optional `[revaise]` block to document the download in a RevAIse record.
 #'
-#' @param username Your Zotero username/user ID
-#' @param api_key Your Zotero API key
-#' @param collection_name The name of the Zotero collection
-#' @param parent_dir Directory where PDFs will be saved
+#' @param toml_content Zotero TOML configuration as a string
 #' @return A string indicating the result of the download process
 #' @export
 #' @examples
 #' \dontrun{
-#' DownloadZoteroPDFs("user123", "apikey456", "My Collection", "/path/to/pdfs")
+#' toml_content <- paste(readLines("zotero.toml"), collapse = "\n")
+#' DownloadZotero(toml_content)
 #' }
-DownloadZoteroPDFs <- function(username, api_key, collection_name, parent_dir) {
-    result <- .Call("DownloadZoteroPDFsR_wrap", username, api_key, collection_name, parent_dir, PACKAGE = "prismaid")
+DownloadZotero <- function(toml_content) {
+    result <- .Call("DownloadZoteroR_wrap", toml_content, PACKAGE = "prismaid")
     return(result)
 }
 

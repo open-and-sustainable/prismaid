@@ -9,6 +9,21 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.12.0] - 2026-06-03
+### Added
+- Added optional RevAIse review-record support for Zotero downloads, screening, and review/extraction workflows
+- Added RevAIse record parsing, merging, atomic saving, and automatic backups
+- Added RevAIse workflow documentation and live Zotero RevAIse checks in the root test script
+
+### Changed
+- Zotero downloads now use a TOML configuration with a `[zotero]` table and explicit `output_dir`
+- Updated Go, CLI, shared-library, Python, R, and Julia Zotero entry points to use the TOML-based download API
+- Updated package documentation, templates, and examples for the new Zotero configuration format
+- Updated Go dependencies and CI release workflows for Go 1.26
+
+### Removed
+- Removed the old direct-argument Zotero API and language-binding entry points
+
 ## [0.11.3] - 2026-04-16
 ### Changed
 - Screening now supports a single AI model configuration via `[filters.llm]` instead of multi-model screening syntax
