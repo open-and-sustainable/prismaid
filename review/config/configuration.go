@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/open-and-sustainable/prismaid/revaise"
 )
 
 // EnvReader is an interface for accessing environment variables.
@@ -22,6 +23,7 @@ type Config struct {
 	Project ProjectConfig         `toml:"project"`
 	Prompt  PromptConfig          `toml:"prompt"`
 	Review  map[string]ReviewItem `toml:"review"`
+	RevAIse revaise.Config        `toml:"revaise"`
 }
 
 // ProjectConfig holds details about the project, its metadata, and settings.

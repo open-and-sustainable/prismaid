@@ -168,6 +168,28 @@ tpm_limit = 0                             # Tokens per minute limit
 rpm_limit = 0                             # Requests per minute limit
 ```
 
+### RevAIse Documentation (Optional)
+
+Screening can optionally update a shared RevAIse review record. Reusing the same `record_file` across screening runs updates the same record; a new `round_id` appends a new screening round.
+
+```toml
+[revaise]
+enabled = true
+record_file = "review.revaise.json"
+
+[revaise.stage]
+stage_type = "screening_title_abstract"
+stage_label = "Title and abstract screening"
+
+[revaise.screening_round]
+round_id = "ta_pilot_001"
+round_type = "TITLE_ABSTRACT"
+round_number = 1
+round_label = "Pilot title and abstract screening"
+```
+
+See [RevAIse Integration](../review/revaise-integration.md) for the full workflow and backup behavior.
+
 ## Screening Filters
 
 The screening tool includes four main filters that can be applied in sequence:

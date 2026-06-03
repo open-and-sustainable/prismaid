@@ -24,9 +24,11 @@ No coding is required. Use the command line interface to access all tools:
 
 # Download papers from Zotero (requires a TOML config file)
 # First create a file zotero_config.toml with:
+#   [zotero]
 #   user = "your_username"
 #   api_key = "your_api_key"
 #   group = "Your Collection"
+#   output_dir = "papers/zotero"
 ./prismaid -download-zotero zotero_config.toml
 
 # Download papers from a URL list

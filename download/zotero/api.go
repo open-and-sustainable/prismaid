@@ -9,11 +9,27 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
+	"github.com/open-and-sustainable/prismaid/revaise"
 )
 
 type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
+}
+
+// Config represents the TOML configuration for Zotero downloads.
+type Config struct {
+	Zotero  ZoteroConfig   `toml:"zotero"`
+	RevAIse revaise.Config `toml:"revaise"`
+}
+
+// ZoteroConfig contains Zotero credentials, collection path, and output path.
+type ZoteroConfig struct {
+	User      string `toml:"user"`
+	APIKey    string `toml:"api_key"`
+	Group     string `toml:"group"`
+	OutputDir string `toml:"output_dir"`
 }
 
 type Item struct {
@@ -23,7 +39,69 @@ type Item struct {
 	} `json:"data"`
 }
 
-// DownloadZoteroPDFs downloads PDF attachments from a Zotero user's personal library or group library.
+// Download parses a Zotero TOML configuration and downloads matching PDF attachments.
+func Download(client HttpClient, tomlConfiguration string) error {
+	var config Config
+	if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
+		return fmt.Errorf("error parsing Zotero configuration: %v", err)
+	}
+	return DownloadWithConfig(client, config)
+}
+
+// DownloadWithConfig downloads matching Zotero PDF attachments using a parsed configuration.
+func DownloadWithConfig(client HttpClient, config Config) error {
+	if err := validateConfig(config); err != nil {
+		return err
+	}
+
+	if err := downloadPDFs(client, config.Zotero.User, config.Zotero.APIKey, config.Zotero.Group, config.Zotero.OutputDir); err != nil {
+		return err
+	}
+
+	if err := updateRevAIse(config); err != nil {
+		return fmt.Errorf("error updating RevAIse record: %v", err)
+	}
+	return nil
+}
+
+func validateConfig(config Config) error {
+	if config.Zotero.User == "" {
+		return fmt.Errorf("zotero.user is required")
+	}
+	if config.Zotero.APIKey == "" {
+		return fmt.Errorf("zotero.api_key is required")
+	}
+	if config.Zotero.Group == "" {
+		return fmt.Errorf("zotero.group is required")
+	}
+	if config.Zotero.OutputDir == "" {
+		return fmt.Errorf("zotero.output_dir is required")
+	}
+	return nil
+}
+
+func updateRevAIse(config Config) error {
+	return revaise.UpdateStageOutputs(config.RevAIse, revaise.OutputContribution{
+		Review: revaise.ReviewSeed{
+			ID:      config.Zotero.Group,
+			Title:   config.Zotero.Group,
+			Type:    "SYSTEMATIC_REVIEW",
+			Status:  "IN_PROGRESS",
+			Authors: []string{config.Zotero.User},
+		},
+		StageType:  "search",
+		StageLabel: "Zotero full-text download",
+		StageOutputs: []revaise.StageOutput{
+			{
+				Kind:        "fulltexts",
+				ResourceURI: config.Zotero.OutputDir,
+				Format:      "directory",
+			},
+		},
+	})
+}
+
+// downloadPDFs downloads PDF attachments from a Zotero user's personal library or group library.
 // It first attempts to find a collection in the user's personal library by the given path. If that fails,
 // it attempts to interpret the collection name as a group path in the format "GroupName/Collection/Path".
 //
@@ -32,21 +110,17 @@ type Item struct {
 //   - username: Zotero username for API authentication
 //   - apiKey: Zotero API key for authorization
 //   - collectionName: Name of the collection or path in format "Collection/Subcollection" or "Group/Collection"
-//   - parentDir: Local directory where files will be saved (a "zotero" subdirectory will be created)
+//   - outputDir: Local directory where files will be saved
 //
 // Returns:
 //   - An error if any step in the process fails, nil on successful completion
-//
-// Example:
-//
-//	err := DownloadZoteroPDFs(client, "user123", "api_key", "Research/Papers", "/downloads")
-func DownloadZoteroPDFs(client HttpClient, username, apiKey, collectionName, parentDir string) error {
+func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir string) error {
 	const baseURL = "https://api.zotero.org"
 	userID := username
 
 	collectionKey, err := getCollectionKey(client, username, apiKey, collectionName)
 	if err != nil {
-		return downloadPDFsFromGroup(client, username, apiKey, collectionName, parentDir)
+		return downloadPDFsFromGroup(client, username, apiKey, collectionName, outputDir)
 	} else {
 		logger.Info("Collection key:", collectionKey)
 	}
@@ -90,7 +164,6 @@ func DownloadZoteroPDFs(client HttpClient, username, apiKey, collectionName, par
 		start += limit
 	}
 
-	outputDir := parentDir + "/zotero"
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating directory: %v", err)
 	}
@@ -99,34 +172,34 @@ func DownloadZoteroPDFs(client HttpClient, username, apiKey, collectionName, par
 		downloadURL := fmt.Sprintf("%s/users/%s/items/%s/file", baseURL, userID, item.Key)
 		req, err := http.NewRequest("GET", downloadURL, nil)
 		if err != nil {
-			logger.Error("Error creating request for file: %v\n", err)
+			logger.Error("Error creating request for file:", err)
 			continue
 		}
 		req.Header.Add("Zotero-API-Key", apiKey)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			logger.Error("Error downloading file: %v\n", err)
+			logger.Error("Error downloading file:", err)
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			logger.Error("Error: received non-200 response status for file: %s\n", resp.Status)
+			logger.Error("Error: received non-200 response status for file:", resp.Status)
 			continue
 		}
 
 		outputPath := filepath.Join(outputDir, item.Data.Filename)
 		outFile, err := os.Create(outputPath)
 		if err != nil {
-			logger.Error("Error creating file: %v\n", err)
+			logger.Error("Error creating file:", err)
 			continue
 		}
 		defer outFile.Close()
 
 		_, err = io.Copy(outFile, resp.Body)
 		if err != nil {
-			logger.Error("Error saving file: %v\n", err)
+			logger.Error("Error saving file:", err)
 			continue
 		}
 
@@ -272,15 +345,11 @@ func findCollectionByParent(collections []Collection, parentKey string, name str
 //   - username: Zotero username for API authentication
 //   - apiKey: Zotero API key for authorization
 //   - collectionName: Path to the collection in format "GroupName/Optional/Collection/Path"
-//   - parentDir: Local directory where files will be saved (a "zotero" subdirectory will be created)
+//   - outputDir: Local directory where files will be saved
 //
 // Returns:
 //   - An error if any step in the process fails, nil on successful completion
-//
-// Example:
-//
-//	err := downloadPDFsFromGroup(client, "user123", "api_key", "Research Group/Literature", "/downloads")
-func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, parentDir string) error {
+func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, outputDir string) error {
 	const baseURL = "https://api.zotero.org"
 	userID := username
 
@@ -320,7 +389,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 	var groupID string
 	groupFound := false
 	for _, group := range groups {
-		logger.Info("Fetched group: '%s' with ID: %d\n", group.Data.Name, group.Data.ID)
+		logger.Info("Fetched group:", group.Data.Name, "with ID:", group.Data.ID)
 		if group.Data.Name == groupName {
 			groupID = fmt.Sprintf("%d", group.Data.ID)
 			groupFound = true
@@ -340,7 +409,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		if err != nil {
 			return err
 		} else {
-			logger.Info("Collection key found in group '%s': %s", groupName, collectionKey)
+			logger.Info("Collection key found in group", groupName+":", collectionKey)
 		}
 	}
 
@@ -391,7 +460,6 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		start += limit
 	}
 
-	outputDir := filepath.Join(parentDir, "zotero")
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
 		return fmt.Errorf("error creating directory: %v", err)
 	}
@@ -400,34 +468,34 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		downloadURL := fmt.Sprintf("%s/groups/%s/items/%s/file", baseURL, groupID, item.Key)
 		req, err := http.NewRequest("GET", downloadURL, nil)
 		if err != nil {
-			logger.Error("Error creating request for file: %v\n", err)
+			logger.Error("Error creating request for file:", err)
 			continue
 		}
 		req.Header.Add("Zotero-API-Key", apiKey)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			logger.Error("Error downloading file: %v\n", err)
+			logger.Error("Error downloading file:", err)
 			continue
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			logger.Error("Error: received non-200 response status for file: %s\n", resp.Status)
+			logger.Error("Error: received non-200 response status for file:", resp.Status)
 			continue
 		}
 
 		outputPath := filepath.Join(outputDir, item.Data.Filename)
 		outFile, err := os.Create(outputPath)
 		if err != nil {
-			logger.Error("Error creating file: %v\n", err)
+			logger.Error("Error creating file:", err)
 			continue
 		}
 		defer outFile.Close()
 
 		_, err = io.Copy(outFile, resp.Body)
 		if err != nil {
-			logger.Error("Error saving file: %v\n", err)
+			logger.Error("Error saving file:", err)
 			continue
 		}
 

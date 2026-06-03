@@ -24,29 +24,38 @@
 //
 // **Usage**
 //
-// The package exports the DownloadZoteroPDFs function that can be used directly
-// without creating a client instance:
+// The package exports the Download function, which accepts the same TOML
+// configuration shape used by the prismAId CLI and language wrappers:
 //
-//	err := zotero.DownloadZoteroPDFs(client, username, apiKey, collectionName, parentDir)
+//	[zotero]
+//	user = "user123"
+//	api_key = "apiKey456"
+//	group = "GroupName/Collection/SubCollection"
+//	output_dir = "/path/to/download/directory"
+//
+//	err := zotero.Download(client, tomlConfiguration)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
 //
-// **Parameters:**
+// **Configuration:**
 //
 //   - `client`: An HTTP client instance for making API requests.
-//   - `username`: The Zotero username or user ID.
-//   - `apiKey`: Your Zotero API key for authentication.
-//   - `collectionName`: The name or path of the collection or group. It can be a simple collection name, a nested
+//   - `zotero.user`: The Zotero username or user ID.
+//   - `zotero.api_key`: Your Zotero API key for authentication.
+//   - `zotero.group`: The name or path of the collection or group. It can be a simple collection name, a nested
 //     collection path (e.g., `"Collection/SubCollection"`), or a group name with optional nested collections
 //     (e.g., `"GroupName/Collection"`). The package will attempt to find the collection in the user's library first;
 //     if not found, it will search in the user's groups.
-//   - `parentDir`: The directory where the downloaded PDF files will be stored.
+//   - `zotero.output_dir`: The exact directory where downloaded PDF files will be stored.
+//
+// An optional `[revaise]` block can be included to document the download as a
+// RevAIse full-text output artifact.
 //
 // **Example with Nested Collection and Group**
 //
 //	client := &http.Client{}
-//	err := zotero.DownloadZoteroPDFs(client, "user123", "apiKey456", "GroupName/Collection/SubCollection", "/path/to/download/directory")
+//	err := zotero.Download(client, tomlConfiguration)
 //	if err != nil {
 //	    log.Fatal(err)
 //	}

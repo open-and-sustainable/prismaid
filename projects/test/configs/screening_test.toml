@@ -67,7 +67,7 @@ concept_match = 0.4
 field_relevance = 0.2
 
 ### LLM configuration for automated tests
-[[filters.llm]]
+[filters.llm]
 provider = "DeepSeek"
 api_key = ""
 model = "deepseek-chat"

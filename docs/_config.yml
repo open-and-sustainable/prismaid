@@ -29,6 +29,8 @@ nav_links:
       url: "/review/review-workflow.html"
     - name: "/Review/Configurator"
       url: "/review/review-configurator.html"
+    - name: "/Review/RevAIse"
+      url: "/review/revaise-integration.html"
     - name: "/Tools/Screening"
       url: "/tools/screening-tool.html"
     - name: "/Tools/Download"

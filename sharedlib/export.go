@@ -28,12 +28,9 @@ func runReview(input *C.char) error {
 	return prismaid.Review(goInput)
 }
 
-func runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir *C.char) error {
-	goUsername := C.GoString(username)
-	goApiKey := C.GoString(apiKey)
-	goCollectionName := C.GoString(collectionName)
-	goParentDir := C.GoString(parentDir)
-	return prismaid.DownloadZoteroPDFs(goUsername, goApiKey, goCollectionName, goParentDir)
+func runDownloadZotero(input *C.char) error {
+	goInput := C.GoString(input)
+	return prismaid.DownloadZotero(goInput)
 }
 
 func runDownloadURLList(path *C.char) error {
@@ -73,10 +70,10 @@ func RunReviewPython(input *C.char) *C.char {
 	return nil
 }
 
-//export DownloadZoteroPDFsPython
-func DownloadZoteroPDFsPython(username, apiKey, collectionName, parentDir *C.char) *C.char {
+//export DownloadZoteroPython
+func DownloadZoteroPython(input *C.char) *C.char {
 	defer handlePanic()
-	if err := runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir); err != nil {
+	if err := runDownloadZotero(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -120,10 +117,10 @@ func RunReviewR(input *C.char) *C.char {
 	return C.CString("Review completed successfully")
 }
 
-//export DownloadZoteroPDFsR
-func DownloadZoteroPDFsR(username, apiKey, collectionName, parentDir *C.char) *C.char {
+//export DownloadZoteroR
+func DownloadZoteroR(input *C.char) *C.char {
 	defer handlePanic()
-	if err := runDownloadZoteroPDFs(username, apiKey, collectionName, parentDir); err != nil {
+	if err := runDownloadZotero(input); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString("Download completed successfully")

@@ -35,18 +35,9 @@ SEXP RunReviewR_wrap(SEXP input) {
     return result;
 }
 
-SEXP DownloadZoteroPDFsR_wrap(SEXP username, SEXP apiKey, SEXP collectionName, SEXP parentDir) {
-    const char *c_username = (const char*)username;
-    const char *c_apiKey = (const char*)apiKey;
-    const char *c_collectionName = (const char*)collectionName;
-    const char *c_parentDir = (const char*)parentDir;
-
-    const char *c_result = DownloadZoteroPDFsR(
-        (char *)c_username,
-        (char *)c_apiKey,
-        (char *)c_collectionName,
-        (char *)c_parentDir
-    );
+SEXP DownloadZoteroR_wrap(SEXP input) {
+    const char *c_input = (const char*)input;
+    const char *c_result = DownloadZoteroR((char *)c_input);
 
     SEXP result = Rf_mkString(c_result);
     if (c_result) {
@@ -112,7 +103,7 @@ SEXP RunReviewR_wrap(SEXP input) {
     return result;
 }
 
-SEXP DownloadZoteroPDFsR_wrap(SEXP username, SEXP apiKey, SEXP collectionName, SEXP parentDir) {
+SEXP DownloadZoteroR_wrap(SEXP input) {
     SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
     PROTECT(result);
     UNPROTECT(1);

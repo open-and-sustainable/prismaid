@@ -122,7 +122,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v5
               with:
-                  go-version: "1.21"
+                  go-version: "1.26"
 
             - name: Build shared library for Linux
               working-directory: sharedlib
@@ -220,7 +220,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v5
               with:
-                  go-version: "1.21"
+                  go-version: "1.26"
 
             - name: Build shared library for Windows
               working-directory: sharedlib
@@ -309,7 +309,7 @@ jobs:
             - name: Set up Go
               uses: actions/setup-go@v5
               with:
-                  go-version: "1.21"
+                  go-version: "1.26"
 
             - name: Build shared library for macOS
               working-directory: sharedlib

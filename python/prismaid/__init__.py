@@ -34,9 +34,9 @@ _RunReviewPython = lib.RunReviewPython
 _RunReviewPython.argtypes = [c_char_p]
 _RunReviewPython.restype = c_char_p
 
-_DownloadZoteroPDFsPython = lib.DownloadZoteroPDFsPython
-_DownloadZoteroPDFsPython.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p]
-_DownloadZoteroPDFsPython.restype = c_char_p
+_DownloadZoteroPython = lib.DownloadZoteroPython
+_DownloadZoteroPython.argtypes = [c_char_p]
+_DownloadZoteroPython.restype = c_char_p
 
 _DownloadURLListPython = lib.DownloadURLListPython
 _DownloadURLListPython.argtypes = [c_char_p]
@@ -73,30 +73,18 @@ def review(toml_configuration: str) -> None:
         raise Exception(error_message)
 
 
-def download_zotero_pdfs(
-    username: str, api_key: str, collection_name: str, parent_dir: str
-) -> None:
+def download_zotero(toml_configuration: str) -> None:
     """
-    Download PDFs from Zotero.
+    Download PDFs from Zotero with a TOML configuration.
 
     Args:
-        username (str): Zotero username
-        api_key (str): Zotero API key
-        collection_name (str): Name of the Zotero collection
-        parent_dir (str): Directory to save the PDFs
+        toml_configuration (str): TOML configuration as a string containing a
+            [zotero] table and optionally a [revaise] block.
 
     Raises:
         Exception: If the download process fails
     """
-    result = cast(
-        bytes | None,
-        _DownloadZoteroPDFsPython(
-            username.encode("utf-8"),
-            api_key.encode("utf-8"),
-            collection_name.encode("utf-8"),
-            parent_dir.encode("utf-8"),
-        ),
-    )
+    result = cast(bytes | None, _DownloadZoteroPython(toml_configuration.encode("utf-8")))
 
     if result:
         error_message = ctypes.string_at(result).decode("utf-8")

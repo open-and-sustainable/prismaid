@@ -14,7 +14,7 @@ Pkg.add("PrismAId")
 `PrismAId` provides five main functions to interact with the underlying shared library:
 
 1. `run_review`: Execute a systematic review based on a TOML configuration
-2. `download_zotero_pdfs`: Download PDFs from a Zotero collection
+2. `download_zotero`: Download PDFs from a Zotero collection using TOML configuration
 3. `download_url_list`: Download files from a list of URLs
 4. `convert`: Convert files to text format
 5. `screening`: Filter manuscripts based on various criteria (deduplication, language, article type, topic relevance)
@@ -47,13 +47,15 @@ When you run the review project, you'll be prompted with cost information and as
 To download PDFs from a Zotero collection:
 
 ```julia
-# Parameters: username, API key, collection name, destination directory
-PrismAId.download_zotero_pdfs(
-    "your_username",
-    "your_api_key",
-    "Collection/Subcollection",
-    "/path/to/output/directory"
-)
+zotero_config = """
+    [zotero]
+    user = "your_username"
+    api_key = "your_api_key"
+    group = "Collection/Subcollection"
+    output_dir = "/path/to/output/directory"
+    """
+
+PrismAId.download_zotero(zotero_config)
 ```
 
 ### Downloading Files from a URL List

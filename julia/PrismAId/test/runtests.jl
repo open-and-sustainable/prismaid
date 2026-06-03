@@ -20,7 +20,7 @@ end
     @test_throws Exception PrismAId.run_review("")
 
     # Basic existence tests for new functions
-    @test hasmethod(PrismAId.download_zotero_pdfs, (String, String, String, String))
+    @test hasmethod(PrismAId.download_zotero, (String,))
     @test hasmethod(PrismAId.download_url_list, (String,))
     @test hasmethod(PrismAId.convert, (String, String))
     @test hasmethod(PrismAId.screening, (String,))
@@ -59,7 +59,7 @@ end
     assert_no_cstring_wrapper_error(() -> PrismAId.run_review("[project]\nname=\"x\"\n"))
 
     # download wrappers may fail with argument/runtime errors, but not wrapper type mismatch.
-    assert_no_cstring_wrapper_error(() -> PrismAId.download_zotero_pdfs("u", "k", "g", "/nonexistent"))
+    assert_no_cstring_wrapper_error(() -> PrismAId.download_zotero("[zotero]\nuser=\"u\"\napi_key=\"k\"\ngroup=\"g\"\noutput_dir=\"/nonexistent\"\n"))
     assert_no_cstring_wrapper_error(() -> PrismAId.download_url_list("/nonexistent/urls.txt"))
 
     # convert wrapper may fail for missing path/Tika, but not wrapper type mismatch.

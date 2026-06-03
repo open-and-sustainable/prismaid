@@ -2,27 +2,18 @@ package main
 
 import (
 	"encoding/csv"
-	"fmt"
 	"flag"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid"
 	"github.com/open-and-sustainable/prismaid/conversion"
 	terminal "github.com/open-and-sustainable/prismaid/init"
 )
-
-// ZoteroConfig represents the configuration needed to download PDFs from Zotero.
-// It contains user ID, API key, and the collection/group name.
-type ZoteroConfig struct {
-	User   string `toml:"user"`
-	APIKey string `toml:"api_key"`
-	Group  string `toml:"group"`
-}
 
 // main is the entry point for the PrismAId CLI application.
 //
@@ -317,9 +308,8 @@ func isZeroSizeFile(path string) bool {
 // handleZoteroDownload processes a TOML configuration file containing Zotero credentials
 // and downloads PDFs from the specified Zotero collection or group.
 //
-// It reads the configuration file, validates that all required fields (user, api_key, and group)
-// are present, and then calls the prismaid.DownloadZoteroPDFs function to perform the actual download.
-// The PDFs are saved to the same directory as the configuration file.
+// It reads the configuration file and calls the prismaid.DownloadZotero function
+// to parse the TOML and perform the actual download.
 //
 // The function handles any errors that may occur during configuration reading or PDF downloading,
 // logging appropriate error messages and exiting the program with status code 1 if an error occurs.
@@ -331,20 +321,13 @@ func isZeroSizeFile(path string) bool {
 // The function doesn't return anything as it handles errors internally
 // and terminates the program on failure.
 func handleZoteroDownload(configPath string) {
-	var config ZoteroConfig
-	_, err := toml.DecodeFile(configPath, &config)
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error reading Zotero configuration: %v", err))
 		os.Exit(1)
 	}
 
-	if config.User == "" || config.APIKey == "" || config.Group == "" {
-		logger.Error("Error: Zotero configuration must include user, api_key, and group")
-		os.Exit(1)
-	}
-
-	configDir := filepath.Dir(configPath)
-	err = prismaid.DownloadZoteroPDFs(config.User, config.APIKey, config.Group, configDir)
+	err = prismaid.DownloadZotero(string(data))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error downloading Zotero PDFs: %v", err))
 		os.Exit(1)

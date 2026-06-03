@@ -28,19 +28,17 @@ func Review(tomlConfiguration string) error {
 	return logic.Review(tomlConfiguration)
 }
 
-// DownloadZoteroPDFs downloads PDF documents from a specified Zotero collection.
+// DownloadZotero downloads PDF documents from a Zotero collection using TOML configuration.
 //
-// Parameters:
-//   - username: The Zotero username or user ID
-//   - apiKey: The Zotero API key for authentication
-//   - collectionName: The name of the collection to download PDFs from
-//   - parentDir: The directory path where downloaded PDFs will be saved
+// The tomlConfiguration parameter should contain a [zotero] table with user,
+// api_key, group, and output_dir fields. It may also contain an optional
+// [revaise] block to document the download in a RevAIse review record.
 //
 // Returns an error if the download process fails for any reason, such as invalid
 // credentials, network issues, or file system permissions.
-func DownloadZoteroPDFs(username, apiKey, collectionName, parentDir string) error {
+func DownloadZotero(tomlConfiguration string) error {
 	client := &http.Client{}
-	return zotero.DownloadZoteroPDFs(client, username, apiKey, collectionName, parentDir)
+	return zotero.Download(client, tomlConfiguration)
 }
 
 // DownloadURLList downloads files from a list of URLs specified in a text file.

@@ -13,13 +13,15 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/alembica/utils/logger"
+	"github.com/open-and-sustainable/prismaid/revaise"
 	"github.com/open-and-sustainable/prismaid/screening/filters"
 )
 
 // ScreeningConfig represents the TOML configuration for screening
 type ScreeningConfig struct {
-	Project ProjectConfig `toml:"project"`
-	Filters FiltersConfig `toml:"filters"`
+	Project ProjectConfig  `toml:"project"`
+	Filters FiltersConfig  `toml:"filters"`
+	RevAIse revaise.Config `toml:"revaise"`
 }
 
 // ProjectConfig contains basic project information
@@ -244,6 +246,10 @@ func Screen(tomlConfiguration string) error {
 	// Save results
 	if err := saveResults(result, config.Project.OutputFile, config.Project.OutputFormat); err != nil {
 		return fmt.Errorf("error saving results: %v", err)
+	}
+
+	if err := updateRevAIseScreening(config, result); err != nil {
+		return fmt.Errorf("revaise update error: %v", err)
 	}
 
 	// Log summary
@@ -1086,5 +1092,126 @@ func convertLLMConfig(config *LLMConfig) []any {
 			"tpm_limit":   config.TPMLimit,
 			"rpm_limit":   config.RPMLimit,
 		},
+	}
+}
+
+func updateRevAIseScreening(config ScreeningConfig, result *ScreeningResult) error {
+	if !config.RevAIse.IsEnabled() {
+		return nil
+	}
+
+	records := make([]revaise.ScreeningRecord, 0, len(result.Records))
+	for _, record := range result.Records {
+		records = append(records, revaise.ScreeningRecord{
+			ID:              record.ID,
+			OriginalData:    record.OriginalData,
+			Tags:            record.Tags,
+			Include:         record.Include,
+			ExclusionReason: record.ExclusionReason,
+		})
+	}
+
+	contribution := revaise.ScreeningContribution{
+		Review:                   screeningReviewSeed(config),
+		Records:                  records,
+		TotalRecords:             result.TotalRecords,
+		IncludedRecords:          result.IncludedRecords,
+		ExcludedRecords:          result.ExcludedRecords,
+		Statistics:               result.Statistics,
+		InclusionCriteria:        screeningInclusionCriteria(config.Filters),
+		ExclusionCriteria:        screeningExclusionCriteria(config.Filters),
+		LanguageCriteria:         config.Filters.Language.AcceptedLanguages,
+		ExcludeSystematicReviews: config.Filters.ArticleType.ExcludeReviews,
+		PrimarySourcesOnly:       true,
+		ResultPath:               config.Project.OutputFile + "." + config.Project.OutputFormat,
+		ResultFormat:             config.Project.OutputFormat,
+		AIAssistance:             screeningAIAssistance(config.Filters.LLM),
+	}
+	return revaise.UpdateScreening(config.RevAIse, contribution)
+}
+
+func screeningReviewSeed(config ScreeningConfig) revaise.ReviewSeed {
+	return revaise.ReviewSeed{
+		ID:      config.Project.Name,
+		Title:   config.Project.Name,
+		Type:    "SYSTEMATIC_REVIEW",
+		Status:  "IN_PROGRESS",
+		Version: config.Project.Version,
+		Authors: []string{
+			config.Project.Author,
+		},
+	}
+}
+
+func screeningInclusionCriteria(config FiltersConfig) []string {
+	var criteria []string
+	if config.TopicRelevance.Enabled && len(config.TopicRelevance.Topics) > 0 {
+		criteria = append(criteria, "Records matching topic relevance criteria: "+strings.Join(config.TopicRelevance.Topics, "; "))
+	}
+	if config.ArticleType.Enabled && len(config.ArticleType.IncludeTypes) > 0 {
+		criteria = append(criteria, "Included article types: "+strings.Join(config.ArticleType.IncludeTypes, ", "))
+	}
+	if len(criteria) == 0 {
+		criteria = append(criteria, "Records passing enabled prismAId screening filters")
+	}
+	return criteria
+}
+
+func screeningExclusionCriteria(config FiltersConfig) []string {
+	var criteria []string
+	if config.Deduplication.Enabled {
+		criteria = append(criteria, "Duplicate records")
+	}
+	if config.Language.Enabled && len(config.Language.AcceptedLanguages) > 0 {
+		criteria = append(criteria, "Records outside accepted languages: "+strings.Join(config.Language.AcceptedLanguages, ", "))
+	}
+	if config.ArticleType.Enabled {
+		if config.ArticleType.ExcludeReviews {
+			criteria = append(criteria, "Review articles")
+		}
+		if config.ArticleType.ExcludeEditorials {
+			criteria = append(criteria, "Editorials")
+		}
+		if config.ArticleType.ExcludeLetters {
+			criteria = append(criteria, "Letters")
+		}
+		if config.ArticleType.ExcludeTheoretical {
+			criteria = append(criteria, "Theoretical papers")
+		}
+		if config.ArticleType.ExcludeEmpirical {
+			criteria = append(criteria, "Empirical papers")
+		}
+		if config.ArticleType.ExcludeMethods {
+			criteria = append(criteria, "Methods papers")
+		}
+		if config.ArticleType.ExcludeSingleCase {
+			criteria = append(criteria, "Single-case studies")
+		}
+		if config.ArticleType.ExcludeSample {
+			criteria = append(criteria, "Sample studies")
+		}
+	}
+	if config.TopicRelevance.Enabled {
+		criteria = append(criteria, fmt.Sprintf("Topic relevance score below %.2f", config.TopicRelevance.MinScore))
+	}
+	if len(criteria) == 0 {
+		criteria = append(criteria, "Records excluded by enabled prismAId screening filters")
+	}
+	return criteria
+}
+
+func screeningAIAssistance(config *LLMConfig) *revaise.AIAssistance {
+	if !hasLLMConfig(config) {
+		return nil
+	}
+	return &revaise.AIAssistance{
+		ID:          "prismaid_screening_ai",
+		Provider:    config.Provider,
+		Model:       config.Model,
+		Version:     "unspecified",
+		Purpose:     []string{"CLASSIFICATION"},
+		Temperature: fmt.Sprintf("%g", config.Temperature),
+		TPMLimit:    fmt.Sprintf("%d", config.TPMLimit),
+		RPMLimit:    fmt.Sprintf("%d", config.RPMLimit),
 	}
 }

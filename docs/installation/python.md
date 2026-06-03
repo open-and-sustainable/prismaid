@@ -29,7 +29,9 @@ with open("screening.toml", "r") as file:
 prismaid.screening(screening_config)
 
 # Download papers from Zotero
-prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")  # Full name
+with open("zotero.toml", "r") as file:
+    zotero_config = file.read()
+prismaid.download_zotero(zotero_config)
 
 # Download from URL list
 prismaid.download_url_list("urls.txt")

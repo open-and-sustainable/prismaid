@@ -28,9 +28,11 @@ The Download tool can be accessed through multiple interfaces to fit your prefer
 
 # For Zotero downloads (requires a TOML config file)
 # First create a file zotero_config.toml with:
+#   [zotero]
 #   user = "your_username"
 #   api_key = "your_api_key"
 #   group = "Your Collection"
+#   output_dir = "papers/zotero"
 ./prismaid -download-zotero zotero_config.toml
 ```
 
@@ -43,7 +45,7 @@ import "github.com/open-and-sustainable/prismaid"
 err := prismaid.DownloadURLList("path/to/urls.txt")
 
 // Download from Zotero
-err := prismaid.DownloadZoteroPDFs("username", "apiKey", "collectionName", "./papers")
+err := prismaid.DownloadZotero(zoteroTomlConfig)
 ```
 
 ### Python Package
@@ -55,7 +57,7 @@ import prismaid
 prismaid.download_url_list("path/to/urls.txt")
 
 # Download from Zotero
-prismaid.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
+prismaid.download_zotero(zotero_config)
 ```
 
 ### R Package
@@ -67,7 +69,7 @@ library(prismaid)
 DownloadURLList("path/to/urls.txt")
 
 # Download from Zotero
-DownloadZoteroPDFs("username", "api_key", "collection_name", "./papers")
+DownloadZotero(zotero_config)
 ```
 
 ### Julia Package
@@ -79,8 +81,30 @@ using PrismAId
 PrismAId.download_url_list("path/to/urls.txt")
 
 # Download from Zotero
-PrismAId.download_zotero_pdfs("username", "api_key", "collection_name", "./papers")
+PrismAId.download_zotero(zotero_config)
 ```
+
+## RevAIse Documentation (Optional)
+
+Zotero download TOML files can optionally update a shared RevAIse review record. The current integration records `output_dir` as a full-text artifact. Reusing the same `record_file` updates the same RevAIse document.
+
+```toml
+[zotero]
+user = "your_zotero_user_id"
+api_key = "your_api_key"
+group = "Your Group/Collection"
+output_dir = "papers/zotero"
+
+[revaise]
+enabled = true
+record_file = "review.revaise.json"
+
+[revaise.stage]
+stage_type = "search"
+stage_label = "Zotero full-text download"
+```
+
+See [RevAIse Integration](../review/revaise-integration.md) for the full workflow and backup behavior.
 
 ## URL Lists
 
@@ -327,12 +351,14 @@ The collection parameter uses a filesystem-like representation for your Zotero l
 
 ### Creating a Zotero Config File
 
-For the binary method, create a TOML configuration file (e.g., `zotero_config.toml`):
+Create a TOML configuration file (e.g., `zotero_config.toml`):
 
 ```toml
+[zotero]
 user = "12345678"  # Your Zotero user ID
 api_key = "AbCdEfGhIjKlMnOpQrStUv"  # Your Zotero API key
 group = "Systematic Review/Climate Papers"  # Your collection path
+output_dir = "papers/zotero"  # Directory where PDFs will be saved
 ```
 
 ### Running the Download
@@ -347,7 +373,7 @@ Or with Python:
 
 ```python
 import prismaid
-prismaid.download_zotero_pdfs("12345678", "AbCdEfGhIjKlMnOpQrStUv", "Systematic Review/Climate Papers")
+prismaid.download_zotero(zotero_config)
 ```
 
 ## Best Practices
