@@ -30,6 +30,7 @@ prismAId offers a suite of tools to support every stage of your systematic revie
 2. **Download** - Acquire papers from Zotero collections or from URL lists
 3. **Convert** - Transform files (PDF, DOCX, HTML) to plain text for analysis
 4. **Review** - Process systematic literature reviews based on TOML configurations
+5. **RevAIse documentation support** - Optionally document review stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records
 
 ### Access Methods
 - **Command Line Interface** - For users who prefer terminal-based workflows
@@ -41,7 +42,7 @@ prismAId offers a suite of tools to support every stage of your systematic revie
   - Julia package
 
 ## Workflow
-Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review
+Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review. Optional RevAIse support can document Zotero download, screening, and review/extraction stages in one cumulative review record.
 
 <div style="text-align: left;">
     <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
@@ -60,7 +61,8 @@ Explore this website for comprehensive guidance on using the prismAId toolkit:
 5. [Review Tool](tools/review-tool): Master the core systematic review functionality for extracting structured information.
 6. [Review Support](review/review-workflow): Learn about methodologies and best practices for systematic reviews with prismAId.
 7. [Review Configurator](review/review-configurator): Quickly set up your review project with the web initializer tool.
-8. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
+8. [RevAIse Integration](review/revaise-integration): Learn how to maintain cumulative RevAIse review records across prismAId stages.
+9. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
 
 ## New Releases and Updates
 Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.

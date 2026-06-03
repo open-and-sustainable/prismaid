@@ -19,6 +19,8 @@ Pkg.add("PrismAId")
 4. `convert`: Convert files to text format
 5. `screening`: Filter manuscripts based on various criteria (deduplication, language, article type, topic relevance)
 
+Supported TOML configurations can optionally include `[revaise]` blocks to document workflow stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records.
+
 ### Quick Start Example: Running a Review
 
 1. Start by loading the `PrismAId` package:

@@ -42,6 +42,10 @@ prismAId offers several specialized tools to support systematic reviews:
    - Convert PDFs, DOCX, and HTML files to plain text
    - Prepare documents for AI processing
 
+5. **RevAIse Documentation Support**: Optionally document workflow stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records
+   - Update the same review record across Zotero download, screening, and review/extraction stages
+   - Preserve previous snapshots with automatic backups
+
 ## Workflow Overview
 1. **AI Model Provider Account and API Key**:
     - Register for an account with [OpenAI](https://www.openai.com/), [GoogleAI](https://aistudio.google.com), [Cohere](https://cohere.com/), or [Anthropic](https://www.anthropic.com/) and obtain an API key.
@@ -54,6 +58,9 @@ prismAId offers several specialized tools to support systematic reviews:
 4. **Define and Run the Review Project:**
     - Set up a configuration file (.toml) for your review project
     - Use the Review tool to process your papers and extract information
+5. **Document the Review Record Optionally:**
+    - Add `[revaise]` blocks to supported configuration files to update one cumulative review record
+    - See the [RevAIse integration guide](../review/revaise-integration)
 
 
 <div id="wcb" class="carbonbadge"></div>
