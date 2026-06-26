@@ -36,6 +36,21 @@ func exit(code int) {
 var requestTimestamps []time.Time
 var mutex sync.Mutex
 
+// emptyEnvReader resolves every variable to an empty string so that
+// configuration validation never reads environment variables or resolves API
+// keys.
+type emptyEnvReader struct{}
+
+func (emptyEnvReader) GetEnv(string) string { return "" }
+
+// ValidateConfig parses and validates a review TOML configuration without
+// running the review, accessing the network, or resolving API keys. It returns
+// nil if the configuration is valid, or an error describing the problem found.
+func ValidateConfig(tomlConfiguration string) error {
+	_, err := config.LoadConfig(tomlConfiguration, emptyEnvReader{})
+	return err
+}
+
 // Review is the main function responsible for orchestrating the systematic review process.
 // It takes a TOML string as input, which defines the configuration for the review, and executes
 // the steps to carry out the review process, including configuration loading, prompt generation,

@@ -59,6 +59,12 @@ func runScreening(input *C.char) error {
 	return prismaid.Screening(goInput)
 }
 
+func runValidate(configType, input *C.char) error {
+	goConfigType := C.GoString(configType)
+	goInput := C.GoString(input)
+	return prismaid.ValidateConfig(goConfigType, goInput)
+}
+
 // Python-specific function
 //
 //export RunReviewPython
@@ -101,6 +107,15 @@ func ConvertPython(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *
 func ScreeningPython(input *C.char) *C.char {
 	defer handlePanic()
 	if err := runScreening(input); err != nil {
+		return C.CString(err.Error())
+	}
+	return nil
+}
+
+//export ValidateConfigPython
+func ValidateConfigPython(configType, input *C.char) *C.char {
+	defer handlePanic()
+	if err := runValidate(configType, input); err != nil {
 		return C.CString(err.Error())
 	}
 	return nil
@@ -151,6 +166,15 @@ func ScreeningR(input *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString("Screening completed successfully")
+}
+
+//export ValidateConfigR
+func ValidateConfigR(configType, input *C.char) *C.char {
+	defer handlePanic()
+	if err := runValidate(configType, input); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString("Configuration is valid")
 }
 
 // Free memory function used by both interfaces

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/BurntSushi/toml"
@@ -166,5 +167,44 @@ func LoadConfig(tomlConfiguration string, envReader EnvReader) (*Config, error) 
 		config.Project.Configuration.Duplication = "no"
 	}
 
+	if err := validate(&config); err != nil {
+		return nil, err
+	}
+
 	return &config, nil
+}
+
+// validate checks that a parsed review configuration contains the fields that
+// are required for a meaningful review. It does not check API keys, which may be
+// supplied through environment variables at run time.
+func validate(c *Config) error {
+	if c.Project.Configuration.InputDirectory == "" {
+		return fmt.Errorf("project.configuration.input_directory is required")
+	}
+	if c.Project.Configuration.ResultsFileName == "" {
+		return fmt.Errorf("project.configuration.results_file_name is required")
+	}
+	if len(c.Project.LLM) == 0 {
+		return fmt.Errorf("at least one [project.llm] model is required")
+	}
+	for key, llm := range c.Project.LLM {
+		if llm.Provider == "" {
+			return fmt.Errorf("project.llm.%s.provider is required", key)
+		}
+	}
+	if c.Prompt.Task == "" {
+		return fmt.Errorf("prompt.task is required")
+	}
+	if c.Prompt.ExpectedResult == "" {
+		return fmt.Errorf("prompt.expected_result is required")
+	}
+	if len(c.Review) == 0 {
+		return fmt.Errorf("at least one [review] item is required")
+	}
+	for key, item := range c.Review {
+		if item.Key == "" {
+			return fmt.Errorf("review.%s.key is required", key)
+		}
+	}
+	return nil
 }

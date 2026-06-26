@@ -262,13 +262,16 @@ func RunInteractiveConfigCreation() {
 	}
 	fmt.Printf("You selected: %s\n", failsafe)
 
+	// Prompt for optional RevAIse documentation of this review
+	revaise := collectRevaise()
+
 	// Generate TOML config from user inputs
 	config := generateTomlConfig(
 		projectName, author, version,
 		inputDir, resultsFileName, outputFormat, logLevel,
 		duplication, cotJustification, summary, models,
 		persona, task, expected_result,
-		failsafe, definitions, example, review,
+		failsafe, definitions, example, review, revaise,
 	)
 
 	// Write the configuration to file
@@ -690,6 +693,103 @@ func collectExamples(reviewItems []ReviewItem) string {
 	return examples
 }
 
+// collectRevaise interactively asks whether to document this review in a RevAIse
+// review record and, when enabled, collects the fields for a `data_extraction`
+// stage. RevAIse support is opt-in and disabled by default.
+//
+// Returns:
+//   - A formatted TOML string for the [revaise] section and its subtables, or an
+//     empty string when the user does not enable RevAIse documentation.
+func collectRevaise() string {
+	enable, err := prompt.New().Ask("Document this review in a RevAIse review record?").
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "no", Note: "Do not document this review in a RevAIse record."},
+				{Text: "yes", Note: "Record this review's data extraction in a shared RevAIse review record."},
+			},
+			choose.WithHelp(true))
+	checkErr(err)
+	if enable != "yes" {
+		return ""
+	}
+
+	recordFile, err := prompt.New().Ask("Enter RevAIse record file:").Input(
+		"review.revaise.json", input.WithHelp(true))
+	checkErr(err)
+
+	format, err := prompt.New().Ask("Choose RevAIse record format:").
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "json", Note: "JSON record (default)."},
+				{Text: "yaml", Note: "YAML record."},
+			},
+			choose.WithHelp(true))
+	checkErr(err)
+
+	schemaVersion, err := prompt.New().Ask("Enter RevAIse schema version:").Input(
+		"0.5.0", input.WithHelp(true))
+	checkErr(err)
+
+	stageLabel, err := prompt.New().Ask("Enter extraction stage label:").Input(
+		"AI-assisted extraction", input.WithHelp(true))
+	checkErr(err)
+
+	runID, err := prompt.New().Ask("Enter extraction run id (reuse to update the same run, change it to add a new one):").Input(
+		"full_extraction_001", input.WithHelp(true))
+	checkErr(err)
+
+	runLabel, err := prompt.New().Ask("Enter extraction run label:").Input(
+		"Full extraction on included studies", input.WithHelp(true))
+	checkErr(err)
+
+	formID, err := prompt.New().Ask("Enter extraction form id:").Input(
+		"extraction_form_v1", input.WithHelp(true))
+	checkErr(err)
+
+	formName, err := prompt.New().Ask("Enter extraction form name:").Input(
+		"Extraction form", input.WithHelp(true))
+	checkErr(err)
+
+	formVersion, err := prompt.New().Ask("Enter extraction form version:").Input(
+		"1", input.WithHelp(true))
+	checkErr(err)
+
+	extractorID, err := prompt.New().Ask("Enter extractor id:").Input(
+		"prismaid", input.WithHelp(true))
+	checkErr(err)
+
+	return generateRevaiseToml(recordFile, format, schemaVersion, stageLabel,
+		runID, runLabel, formID, formName, formVersion, extractorID)
+}
+
+// generateRevaiseToml creates a formatted TOML string for the [revaise] section
+// of a review configuration, documenting the review as a RevAIse
+// `data_extraction` stage.
+//
+// Returns:
+//   - A formatted string containing the [revaise], [revaise.stage], and
+//     [revaise.extraction_run] tables.
+func generateRevaiseToml(recordFile, format, schemaVersion, stageLabel,
+	runID, runLabel, formID, formName, formVersion, extractorID string) string {
+	var b strings.Builder
+	b.WriteString("[revaise]\n")
+	b.WriteString("enabled = true\n")
+	b.WriteString(fmt.Sprintf("record_file = \"%s\"\n", recordFile))
+	b.WriteString(fmt.Sprintf("format = \"%s\"\n", format))
+	b.WriteString(fmt.Sprintf("schema_version = \"%s\"\n", schemaVersion))
+	b.WriteString("\n[revaise.stage]\n")
+	b.WriteString("stage_type = \"data_extraction\"\n")
+	b.WriteString(fmt.Sprintf("stage_label = \"%s\"\n", stageLabel))
+	b.WriteString("\n[revaise.extraction_run]\n")
+	b.WriteString(fmt.Sprintf("run_id = \"%s\"\n", runID))
+	b.WriteString(fmt.Sprintf("label = \"%s\"\n", runLabel))
+	b.WriteString(fmt.Sprintf("form_id = \"%s\"\n", formID))
+	b.WriteString(fmt.Sprintf("form_name = \"%s\"\n", formName))
+	b.WriteString(fmt.Sprintf("form_version = \"%s\"\n", formVersion))
+	b.WriteString(fmt.Sprintf("extractor_id = \"%s\"\n", extractorID))
+	return b.String()
+}
+
 // generateTomlConfig creates a formatted TOML configuration string from the provided parameters.
 // It structures the configuration into sections for project metadata, operational settings,
 // LLM configuration, prompt components, and review criteria.
@@ -713,12 +813,14 @@ func collectExamples(reviewItems []ReviewItem) string {
 //   - definitions: Definitions of key terms used in the review
 //   - example: Example reviews to guide the LLM
 //   - review: Pre-formatted TOML string for review criteria
+//   - revaise: Pre-formatted TOML string for the optional [revaise] section, or
+//     an empty string to omit RevAIse documentation
 //
 // Returns:
 //   - A formatted TOML configuration string with all whitespace trimmed
 func generateTomlConfig(projectName, author, version, inputDir, resultsFileName, outputFormat,
 	logLevel, duplication, cotJustification, summary, models,
-	persona, task, expected_result, failsafe, definitions, example, review string) string {
+	persona, task, expected_result, failsafe, definitions, example, review, revaise string) string {
 	config := fmt.Sprintf(`
 [project]
 name = "%s"
@@ -749,7 +851,11 @@ example = "%s"
 `, projectName, author, version, inputDir, resultsFileName, outputFormat,
 		logLevel, duplication, cotJustification, summary, models,
 		persona, task, expected_result, failsafe, definitions, example, review)
-	return strings.TrimSpace(config)
+	result := strings.TrimSpace(config)
+	if strings.TrimSpace(revaise) != "" {
+		result += "\n\n" + strings.TrimSpace(revaise)
+	}
+	return result
 }
 
 // writeTomlConfigToFile writes the generated TOML configuration string to a file

@@ -136,6 +136,16 @@ summary = "no"
     - `no`: Default.
     - `yes`: A summary is generated for each manuscript and saved in the same directory.
 
+### Validating the Configuration
+
+You can check a review configuration without running the review. Validation parses the TOML and verifies the required fields — input directory, results file, at least one LLM with a `provider`, the prompt `task` and `expected_result`, and at least one `[review]` item — including any optional `[revaise]` block. It performs no network access, file reads, or API-key resolution.
+
+```bash
+./prismaid -validate -project your_project.toml
+```
+
+The same check is available from every language binding, using config type `"review"`: `prismaid.ValidateConfig("review", config)` (Go), `prismaid.validate_config("review", config)` (Python, Julia), and `ValidateConfig("review", config)` (R).
+
 ### RevAIse Documentation (Optional)
 
 The review tool can optionally update a shared RevAIse review record with a `data_extraction` stage. Reusing the same `record_file` updates the same RevAIse document; distinct extraction runs should use distinct `run_id` values.

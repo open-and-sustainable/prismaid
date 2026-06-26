@@ -50,6 +50,10 @@ _ScreeningPython = lib.ScreeningPython
 _ScreeningPython.argtypes = [c_char_p]
 _ScreeningPython.restype = c_char_p
 
+_ValidateConfigPython = lib.ValidateConfigPython
+_ValidateConfigPython.argtypes = [c_char_p, c_char_p]
+_ValidateConfigPython.restype = c_char_p
+
 _FreeCString = lib.FreeCString
 _FreeCString.argtypes = [c_char_p]
 _FreeCString.restype = None
@@ -163,6 +167,32 @@ def screening(toml_configuration: str) -> None:
         Exception: If the screening process fails
     """
     result = cast(bytes | None, _ScreeningPython(toml_configuration.encode("utf-8")))
+    if result:
+        error_message = ctypes.string_at(result).decode("utf-8")
+        _FreeCString(result)
+        raise Exception(error_message)
+
+
+def validate_config(config_type: str, toml_configuration: str) -> None:
+    """
+    Validate a PrismAId configuration without executing it.
+
+    Args:
+        config_type (str): Which configuration schema to validate against.
+            One of "review", "screening", or "zotero".
+        toml_configuration (str): TOML configuration as a string.
+
+    Raises:
+        Exception: If the configuration is invalid or the config_type is
+            unrecognized.
+    """
+    result = cast(
+        bytes | None,
+        _ValidateConfigPython(
+            config_type.encode("utf-8"),
+            toml_configuration.encode("utf-8"),
+        ),
+    )
     if result:
         error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)

@@ -32,6 +32,15 @@ model = "gpt-4o-mini"
 temperature = 0.5
 tpm_limit = 0
 rpm_limit = 0
+
+[prompt]
+task = "Map the concepts discussed in the paper."
+expected_result = "A JSON object with the requested keys."
+
+[review]
+[review.1]
+key = "concept"
+values = [""]
 `
 
 var exitFunc = os.Exit
@@ -93,8 +102,8 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
 
-	// Expect only the CSV header ("File Name")
-	expectedContent := "Provider,Model,File Name\n"
+	// Expect only the CSV header (base columns plus the configured review key)
+	expectedContent := "Provider,Model,File Name,concept\n"
 	if string(content) != expectedContent {
 		t.Errorf("Expected output file to contain header only, got: %s", string(content))
 	}
@@ -181,5 +190,67 @@ exclude_letters = false
 	}
 	if !strings.Contains(outputStr, "exclusion_reason") {
 		t.Error("Output should contain exclusion_reason column")
+	}
+}
+
+// TestValidateConfig verifies that the public ValidateConfig facade routes each
+// configuration type to the correct validator and rejects unknown or empty
+// config types. Type-specific validation rules are covered by each tool's own
+// package tests.
+func TestValidateConfig(t *testing.T) {
+	validReview := `
+[project.configuration]
+input_directory = "/tmp/in"
+results_file_name = "/tmp/out/results"
+[project.llm.1]
+provider = "OpenAI"
+[prompt]
+task = "Map the concepts discussed in the paper."
+expected_result = "A JSON object with the requested keys."
+[review.1]
+key = "interest rate"
+values = [""]
+`
+	validScreening := `
+[project]
+input_file = "/tmp/manuscripts.csv"
+output_file = "/tmp/screening_output"
+text_column = "abstract"
+[filters.language]
+enabled = true
+`
+	validZotero := `
+[zotero]
+user = "user"
+api_key = "api_key"
+group = "collection"
+output_dir = "papers/zotero"
+`
+
+	// Each type validates its own valid configuration; config type is
+	// case-insensitive.
+	valid := map[string]string{
+		"review":    validReview,
+		"screening": validScreening,
+		"zotero":    validZotero,
+		"Review":    validReview,
+	}
+	for configType, toml := range valid {
+		if err := ValidateConfig(configType, toml); err != nil {
+			t.Errorf("ValidateConfig(%q, ...) expected valid, got error: %v", configType, err)
+		}
+	}
+
+	// Routing is type-specific: a review config validated as "zotero" must fail.
+	if err := ValidateConfig("zotero", validReview); err == nil {
+		t.Error("expected a review config to fail zotero validation")
+	}
+
+	// Unknown and empty config types are errors.
+	if err := ValidateConfig("bogus", validReview); err == nil {
+		t.Error("expected an error for an unknown config type")
+	}
+	if err := ValidateConfig("", validReview); err == nil {
+		t.Error("expected an error for an empty config type")
 	}
 }

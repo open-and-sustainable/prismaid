@@ -79,3 +79,28 @@ values = ["yes", "no"]
 [review.3]
 key = "geographical scale"
 values = ["world", "continent", "river basin"]
+
+### The [revaise] section optionally documents this review in a shared RevAIse review record (https://github.com/open-and-sustainable/revaise-model).
+### RevAIse support is opt-in and disabled by default; normal prismAId outputs are unchanged when it is enabled.
+### The review tool maps structured extraction results to a RevAIse "data_extraction" stage; each run needs a distinct run_id.
+### Reuse the same record_file across stages (download, screening, review) to build one cumulative record.
+### See the RevAIse Integration documentation for the full workflow and backup behavior.
+[revaise]
+enabled = false                     # Set to true to document this run in a RevAIse record
+record_file = "review.revaise.json" # Shared RevAIse record to create or update
+format = "json"                     # "json" or "yaml"; if omitted, detected from record_file (JSON default)
+schema_version = "0.5.0"            # RevAIse schema version
+# backup = true                     # Backups are enabled by default; set false to disable timestamped snapshots
+# backup_dir = ".revaise-backups"   # Directory for backup snapshots (default: .revaise-backups next to record_file)
+
+[revaise.stage]
+stage_type = "data_extraction" # RevAIse stage type for review runs
+stage_label = "AI-assisted extraction"
+
+[revaise.extraction_run]
+run_id = "full_extraction_001" # Distinct id per run; reuse to update the same run, change it to add a new one
+label = "Full extraction on included studies"
+form_id = "extraction_form_v1"
+form_name = "Extraction form"
+form_version = "1"
+extractor_id = "prismaid"

@@ -82,7 +82,21 @@ SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats, SEXP tikaAddress, SEXP s
 SEXP ScreeningR_wrap(SEXP input) {
     const char *c_input = (const char*)input;
     const char *c_result = ScreeningR((char *)c_input);
-    
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ValidateConfigR_wrap(SEXP configType, SEXP input) {
+    const char *c_configType = (const char*)configType;
+    const char *c_input = (const char*)input;
+    const char *c_result = ValidateConfigR((char *)c_configType, (char *)c_input);
+
     SEXP result = Rf_mkString(c_result);
     if (c_result) {
         FreeCString((char *)c_result);
@@ -125,6 +139,13 @@ SEXP ConvertR_wrap(SEXP inputDir, SEXP selectedFormats, SEXP tikaAddress, SEXP s
 }
 
 SEXP ScreeningR_wrap(SEXP input) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ValidateConfigR_wrap(SEXP configType, SEXP input) {
     SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
     PROTECT(result);
     UNPROTECT(1);

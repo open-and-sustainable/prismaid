@@ -41,6 +41,7 @@ function generateConfig() {
             failsafe: document.getElementById("failsafe").value,
         },
         review_items: collectReviewData(),
+        revaise: collectRevaiseData(),
     };
 
     // Generate TOML string from data
@@ -82,6 +83,28 @@ function collectReviewData() {
         return { key, values };
     });
     return data;
+}
+
+function collectRevaiseData() {
+    // Reads the optional RevAIse fields. Missing elements default to disabled.
+    return {
+        enabled: document.getElementById("revaise_enabled")?.value || "no",
+        record_file:
+            document.getElementById("revaise_record_file")?.value || "",
+        format: document.getElementById("revaise_format")?.value || "json",
+        schema_version:
+            document.getElementById("revaise_schema_version")?.value || "",
+        stage_label:
+            document.getElementById("revaise_stage_label")?.value || "",
+        run_id: document.getElementById("revaise_run_id")?.value || "",
+        run_label: document.getElementById("revaise_run_label")?.value || "",
+        form_id: document.getElementById("revaise_form_id")?.value || "",
+        form_name: document.getElementById("revaise_form_name")?.value || "",
+        form_version:
+            document.getElementById("revaise_form_version")?.value || "",
+        extractor_id:
+            document.getElementById("revaise_extractor_id")?.value || "",
+    };
 }
 
 function generateTOMLString(data) {
@@ -142,6 +165,27 @@ function generateTOMLString(data) {
             toml.push(`values = []`); // Fallback if `values` is not an array
         }
     });
+
+    // Append the optional RevAIse documentation section when enabled
+    if (data.revaise && data.revaise.enabled === "yes") {
+        toml.push("\n[revaise]");
+        toml.push("enabled = true");
+        toml.push(`record_file = "${data.revaise.record_file}"`);
+        toml.push(`format = "${data.revaise.format}"`);
+        toml.push(`schema_version = "${data.revaise.schema_version}"`);
+
+        toml.push("\n[revaise.stage]");
+        toml.push(`stage_type = "data_extraction"`);
+        toml.push(`stage_label = "${data.revaise.stage_label}"`);
+
+        toml.push("\n[revaise.extraction_run]");
+        toml.push(`run_id = "${data.revaise.run_id}"`);
+        toml.push(`label = "${data.revaise.run_label}"`);
+        toml.push(`form_id = "${data.revaise.form_id}"`);
+        toml.push(`form_name = "${data.revaise.form_name}"`);
+        toml.push(`form_version = "${data.revaise.form_version}"`);
+        toml.push(`extractor_id = "${data.revaise.extractor_id}"`);
+    }
 
     return toml.join("\n");
 }

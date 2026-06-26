@@ -49,6 +49,10 @@ prismaid.convert("./papers", "pdf", "localhost:9998", ocr_only=True)
 with open("project.toml", "r") as file:
     toml_config = file.read()
 prismaid.review(toml_config)
+
+# Validate a configuration without executing it
+# config type is one of "review", "screening", or "zotero"
+prismaid.validate_config("review", toml_config)
 ```
 
 <div id="wcb" class="carbonbadge"></div>

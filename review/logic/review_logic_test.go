@@ -30,6 +30,15 @@ model = "gpt-4o-mini"
 temperature = 0.5
 tpm_limit = 0
 rpm_limit = 0
+
+[prompt]
+task = "Map the concepts discussed in the paper."
+expected_result = "A JSON object with the requested keys."
+
+[review]
+[review.1]
+key = "concept"
+values = [""]
 `
 
 func TestRunReviewWithTempFiles(t *testing.T) {
@@ -89,8 +98,8 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 		t.Fatalf("Failed to read output file: %v", err)
 	}
 
-	// Expect only the CSV header ("File Name")
-	expectedContent := "Provider,Model,File Name\n"
+	// Expect only the CSV header (base columns plus the configured review key)
+	expectedContent := "Provider,Model,File Name,concept\n"
 	if string(content) != expectedContent {
 		t.Errorf("Expected output file to contain header only, got: %s", string(content))
 	}
@@ -98,5 +107,77 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	// Clean up the output file if it was created
 	if err := os.Remove(outputFilePath); err != nil {
 		t.Fatalf("Failed to clean up the output file: %v", err)
+	}
+}
+
+// TestValidateConfig verifies that ValidateConfig accepts a complete review
+// configuration and rejects configurations missing required fields.
+func TestValidateConfig(t *testing.T) {
+	valid := `
+[project]
+name = "Test"
+[project.configuration]
+input_directory = "/tmp/in"
+results_file_name = "/tmp/out/results"
+[project.llm]
+[project.llm.1]
+provider = "OpenAI"
+model = "gpt-4o-mini"
+[prompt]
+task = "Map the concepts discussed in the paper."
+expected_result = "A JSON object with the requested keys."
+[review]
+[review.1]
+key = "interest rate"
+values = [""]
+`
+	if err := ValidateConfig(valid); err != nil {
+		t.Fatalf("expected valid review config, got error: %v", err)
+	}
+
+	invalid := []struct {
+		name string
+		toml string
+	}{
+		{"malformed toml", "[project]\nname"},
+		{"missing prompt.task", `
+[project.configuration]
+input_directory = "/tmp/in"
+results_file_name = "/tmp/out/results"
+[project.llm.1]
+provider = "OpenAI"
+[prompt]
+expected_result = "json"
+[review.1]
+key = "k"
+`},
+		{"missing review items", `
+[project.configuration]
+input_directory = "/tmp/in"
+results_file_name = "/tmp/out/results"
+[project.llm.1]
+provider = "OpenAI"
+[prompt]
+task = "do"
+expected_result = "json"
+`},
+		{"missing input_directory", `
+[project.configuration]
+results_file_name = "/tmp/out/results"
+[project.llm.1]
+provider = "OpenAI"
+[prompt]
+task = "do"
+expected_result = "json"
+[review.1]
+key = "k"
+`},
+	}
+	for _, tc := range invalid {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateConfig(tc.toml); err == nil {
+				t.Fatalf("expected validation error, got nil")
+			}
+		})
 	}
 }

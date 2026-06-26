@@ -64,6 +64,17 @@ func DownloadWithConfig(client HttpClient, config Config) error {
 	return nil
 }
 
+// ValidateConfig parses and validates a Zotero TOML configuration without
+// contacting the Zotero API. It returns nil if the configuration is valid, or
+// an error describing the first problem found.
+func ValidateConfig(tomlConfiguration string) error {
+	var config Config
+	if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
+		return fmt.Errorf("error parsing Zotero configuration: %v", err)
+	}
+	return validateConfig(config)
+}
+
 func validateConfig(config Config) error {
 	if config.Zotero.User == "" {
 		return fmt.Errorf("zotero.user is required")

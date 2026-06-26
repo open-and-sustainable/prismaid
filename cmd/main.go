@@ -44,10 +44,29 @@ func main() {
 
 	screeningConfigPath := flag.String("screening", "", "Path to the screening configuration TOML file")
 
+	validateFlag := flag.Bool("validate", false, "Validate a configuration file without executing it; combine with -project, -screening, or -download-zotero")
+
 	flag.Parse()
 
 	if flag.Arg(0) == "-help" || flag.Arg(0) == "--help" {
 		flag.Usage()
+		return
+	}
+
+	// Configuration validation (no execution)
+	if *validateFlag {
+		logger.SetupLogging(logger.Stdout, "")
+		switch {
+		case *projectConfigPath != "":
+			handleValidate("review", *projectConfigPath)
+		case *screeningConfigPath != "":
+			handleValidate("screening", *screeningConfigPath)
+		case *downloadZoteroPath != "":
+			handleValidate("zotero", *downloadZoteroPath)
+		default:
+			logger.Error("Error: -validate requires one of -project, -screening, or -download-zotero with a configuration file path")
+			os.Exit(1)
+		}
 		return
 	}
 
@@ -320,6 +339,27 @@ func isZeroSizeFile(path string) bool {
 //
 // The function doesn't return anything as it handles errors internally
 // and terminates the program on failure.
+// handleValidate reads a configuration file and validates it without executing
+// the corresponding tool. The configType selects the configuration schema and
+// must be "review", "screening", or "zotero".
+//
+// It logs an error and exits with status code 1 if the file cannot be read or
+// the configuration is invalid. On success, it logs a confirmation message.
+func handleValidate(configType, configPath string) {
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error reading %s configuration: %v", configType, err))
+		os.Exit(1)
+	}
+
+	if err := prismaid.ValidateConfig(configType, string(data)); err != nil {
+		logger.Error(fmt.Sprintf("Invalid %s configuration: %v", configType, err))
+		os.Exit(1)
+	}
+
+	logger.Info(fmt.Sprintf("Configuration is valid (%s)", configType))
+}
+
 func handleZoteroDownload(configPath string) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {

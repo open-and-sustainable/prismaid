@@ -91,6 +91,29 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 # tpm_limit = 0
 # rpm_limit = 0
 
+### The [revaise] section optionally documents this screening in a shared RevAIse review record (https://github.com/open-and-sustainable/revaise-model).
+### RevAIse support is opt-in and disabled by default; normal screening outputs are unchanged when it is enabled.
+### Reuse the same record_file across stages to build one cumulative record; a new round_id appends a new screening round.
+### See the RevAIse Integration documentation for the full workflow and backup behavior.
+[revaise]
+enabled = false                     # Set to true to document this run in a RevAIse record
+record_file = "review.revaise.json" # Shared RevAIse record to create or update
+format = "json"                     # "json" or "yaml"; if omitted, detected from record_file (JSON default)
+schema_version = "0.5.0"            # RevAIse schema version
+# backup = true                     # Backups are enabled by default; set false to disable timestamped snapshots
+# backup_dir = ".revaise-backups"   # Directory for backup snapshots (default: .revaise-backups next to record_file)
+
+[revaise.stage]
+stage_type = "screening_title_abstract" # RevAIse stage type for screening
+stage_label = "Title and abstract screening"
+
+[revaise.screening_round]
+round_id = "ta_full_001" # Distinct id per round; reuse to update the same round, change it to add a new one
+round_type = "TITLE_ABSTRACT"
+round_number = 1
+round_label = "Full title and abstract screening"
+reviewer_id = "prismaid"
+
 ### Example configurations for different scenarios:
 
 ### Scenario 1: Simple deduplication only

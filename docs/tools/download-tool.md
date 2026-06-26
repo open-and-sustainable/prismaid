@@ -84,6 +84,16 @@ PrismAId.download_url_list("path/to/urls.txt")
 PrismAId.download_zotero(zotero_config)
 ```
 
+## Validating the Configuration
+
+You can check a Zotero configuration without contacting the Zotero API. Validation parses the TOML and verifies the required fields — `user`, `api_key`, `group`, and `output_dir` — including any optional `[revaise]` block. It performs no network access or file reads.
+
+```bash
+./prismaid -validate -download-zotero zotero_config.toml
+```
+
+The same check is available from every language binding, using config type `"zotero"`: `prismaid.ValidateConfig("zotero", config)` (Go), `prismaid.validate_config("zotero", config)` (Python, Julia), and `ValidateConfig("zotero", config)` (R).
+
 ## RevAIse Documentation (Optional)
 
 Zotero download TOML files can optionally update a shared RevAIse review record. The current integration records `output_dir` as a full-text artifact. Reusing the same `record_file` updates the same RevAIse document.
