@@ -9,6 +9,16 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.13.0] - 2026-06-26
+### Added
+- Added `ValidateConfig` to validate review, screening, and Zotero configurations without executing them, exposed across the Go API, CLI (`-validate`), shared library, Python, R, and Julia
+- Added optional `[revaise]` documentation blocks to the review and screening configuration templates
+- Added guided, opt-in RevAIse documentation setup to the interactive terminal and web review configurators
+
+### Changed
+- Review configurations now validate required fields when loaded and reject incomplete configurations instead of running with empty results
+- Updated Go dependencies
+
 ## [0.12.0] - 2026-06-03
 ### Added
 - Added optional RevAIse review-record support for Zotero downloads, screening, and review/extraction workflows

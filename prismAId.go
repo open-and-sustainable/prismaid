@@ -1,7 +1,9 @@
 package prismaid
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/open-and-sustainable/prismaid/conversion"
 	"github.com/open-and-sustainable/prismaid/download/list"
@@ -72,6 +74,33 @@ func DownloadURLList(path string) error {
 // files, unsupported formats, or file system permission issues.
 func Convert(inputDir, selectedFormats string, options conversion.ConvertOptions) error {
 	return conversion.Convert(inputDir, selectedFormats, options)
+}
+
+// ValidateConfig validates a prismAId configuration without executing it.
+//
+// configType selects which configuration schema to validate against and must be
+// one of "review", "screening", or "zotero" (case-insensitive). The
+// tomlConfiguration parameter is the TOML configuration string.
+//
+// Validation is read-only: it parses the configuration and checks required
+// fields and value constraints, including any optional [revaise] block. It
+// performs no network access, file reads, or API-key resolution, so it is safe
+// to call on draft configurations.
+//
+// It returns nil if the configuration is valid, or an error describing the
+// problem found. An empty or unrecognized configType is itself reported as an
+// error.
+func ValidateConfig(configType, tomlConfiguration string) error {
+	switch strings.ToLower(strings.TrimSpace(configType)) {
+	case "review":
+		return logic.ValidateConfig(tomlConfiguration)
+	case "screening":
+		return screening.ValidateConfig(tomlConfiguration)
+	case "zotero":
+		return zotero.ValidateConfig(tomlConfiguration)
+	default:
+		return fmt.Errorf("unknown config type %q: must be \"review\", \"screening\", or \"zotero\"", configType)
+	}
 }
 
 // Screening processes a list of manuscripts to identify items for exclusion based on various criteria.

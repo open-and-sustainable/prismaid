@@ -48,6 +48,12 @@ No coding is required. Use the command line interface to access all tools:
 
 # Run a systematic review
 ./prismaid -project your_project.toml
+
+# Validate a configuration without running it
+# Combine -validate with -project, -screening, or -download-zotero
+./prismaid -validate -project your_project.toml
+./prismaid -validate -screening screening_config.toml
+./prismaid -validate -download-zotero zotero_config.toml
 ```
 
 

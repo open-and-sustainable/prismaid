@@ -34,6 +34,10 @@ err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.ConvertOptions{})
 
 // Run a systematic review
 err := prismaid.Review(tomlConfigString)
+
+// Validate a configuration without executing it
+// configType is one of "review", "screening", or "zotero"
+err := prismaid.ValidateConfig("review", tomlConfigString)
 ```
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.

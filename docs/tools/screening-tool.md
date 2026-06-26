@@ -168,6 +168,16 @@ tpm_limit = 0                             # Tokens per minute limit
 rpm_limit = 0                             # Requests per minute limit
 ```
 
+### Validating the Configuration
+
+You can check a screening configuration without running the screening. Validation parses the TOML and verifies the required fields — `input_file`, `output_file`, `text_column`, and at least one enabled filter — and rejects review-only LLM syntax, including any optional `[revaise]` block. It performs no network access, file reads, or API-key resolution.
+
+```bash
+./prismaid -validate -screening screening_config.toml
+```
+
+The same check is available from every language binding, using config type `"screening"`: `prismaid.ValidateConfig("screening", config)` (Go), `prismaid.validate_config("screening", config)` (Python, Julia), and `ValidateConfig("screening", config)` (R).
+
 ### RevAIse Documentation (Optional)
 
 Screening can optionally update a shared RevAIse review record. Reusing the same `record_file` across screening runs updates the same record; a new `round_id` appends a new screening round.

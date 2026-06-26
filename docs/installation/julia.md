@@ -48,6 +48,10 @@ PrismAId.convert("./papers", "pdf", "localhost:9998", "", true)
 # Run a systematic review
 toml_config = read("project.toml", String)
 PrismAId.run_review(toml_config)  # Correct function name
+
+# Validate a configuration without executing it
+# config type is one of "review", "screening", or "zotero"
+PrismAId.validate_config("review", toml_config)
 ```
 
 

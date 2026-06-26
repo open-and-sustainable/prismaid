@@ -315,3 +315,29 @@ Screening <- function(input_string) {
     result <- .Call("ScreeningR_wrap", input_string, PACKAGE = "prismaid")
     return(result)
 }
+
+#' Validate a Configuration
+#'
+#' This function validates a prismAId configuration without executing it.
+#'
+#' @description
+#' Parses a TOML configuration and checks required fields and value constraints,
+#' including any optional `[revaise]` block, without running the tool, accessing
+#' the network, or resolving API keys. Use it to check a configuration file
+#' before running a review, screening, or Zotero download.
+#'
+#' @param config_type Which configuration schema to validate against. One of
+#'   "review", "screening", or "zotero".
+#' @param input_string The TOML configuration as a string.
+#' @return A string indicating the validation result: a confirmation message
+#'   when valid, or a description of the problem when invalid.
+#' @export
+#' @examples
+#' \dontrun{
+#' config <- paste(readLines("review.toml"), collapse = "\n")
+#' ValidateConfig("review", config)
+#' }
+ValidateConfig <- function(config_type, input_string) {
+    result <- .Call("ValidateConfigR_wrap", config_type, input_string, PACKAGE = "prismaid")
+    return(result)
+}

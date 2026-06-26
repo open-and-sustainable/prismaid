@@ -46,6 +46,10 @@ Convert("./papers", "pdf", "localhost:9998", "", TRUE)
 # Run a systematic review
 toml_content <- paste(readLines("project.toml"), collapse = "\n")
 RunReview(toml_content)  # Note the capitalization
+
+# Validate a configuration without executing it
+# config type is one of "review", "screening", or "zotero"
+ValidateConfig("review", toml_content)
 ```
 
 

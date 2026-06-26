@@ -9,6 +9,7 @@ char* DownloadZoteroR(char* input);
 char* DownloadURLListR(char* path);
 char* ConvertR(char* inputDir, char* selectedFormats, char* tikaAddress, char* singleFile, char* ocrOnly);
 char* ScreeningR(char* input);
+char* ValidateConfigR(char* configType, char* input);
 void FreeCString(char* str);
 
 #endif // CGO_EXPORT_H

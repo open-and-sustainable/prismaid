@@ -142,7 +142,37 @@ function screening(input::String)
     throw(ErrorException(result))
 end
 
+"""
+    validate_config(config_type::String, input::String)
+
+Validate a PrismAId TOML configuration without executing it. `config_type`
+selects the configuration schema and must be `"review"`, `"screening"`, or
+`"zotero"`. `input` is the TOML configuration string. Returns `nothing` when the
+configuration is valid and throws an exception describing the problem otherwise.
+"""
+function validate_config(config_type::String, input::String)
+    # Validate inputs
+    if isempty(config_type)
+        throw(ArgumentError("Config type cannot be empty"))
+    end
+
+    # Call the C function
+    c_output = ccall((:ValidateConfigPython, library_path), Ptr{Cchar}, (Cstring, Cstring), config_type, input)
+
+    if c_output == C_NULL
+        return nothing  # Success case returns NULL/nil in Python interface
+    end
+
+    # If we got here, it's an error message
+    result = unsafe_string(c_output)
+
+    # Free the C string
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+
+    throw(ErrorException(result))
+end
+
 # Export public functions
-export run_review, download_zotero, download_url_list, convert, screening
+export run_review, download_zotero, download_url_list, convert, screening, validate_config
 
 end # module PrismAId

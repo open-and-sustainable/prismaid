@@ -984,3 +984,61 @@ func TestOutputFormats(t *testing.T) {
 		t.Error("JSON file was not created")
 	}
 }
+
+// TestValidateConfig verifies that ValidateConfig accepts a complete screening
+// configuration and rejects configurations that are missing required fields,
+// have no filter enabled, or use review-only LLM syntax.
+func TestValidateConfig(t *testing.T) {
+	valid := `
+[project]
+name = "Test Screening"
+input_file = "/tmp/manuscripts.csv"
+output_file = "/tmp/screening_output"
+text_column = "abstract"
+[filters]
+[filters.language]
+enabled = true
+accepted_languages = ["en"]
+`
+	if err := ValidateConfig(valid); err != nil {
+		t.Fatalf("expected valid screening config, got error: %v", err)
+	}
+
+	invalid := []struct {
+		name string
+		toml string
+	}{
+		{"missing input_file", `
+[project]
+output_file = "/tmp/out"
+text_column = "abstract"
+[filters.language]
+enabled = true
+`},
+		{"no filter enabled", `
+[project]
+input_file = "/tmp/in.csv"
+output_file = "/tmp/out"
+text_column = "abstract"
+[filters.language]
+enabled = false
+`},
+		{"review-only llm syntax", `
+[project]
+input_file = "/tmp/in.csv"
+output_file = "/tmp/out"
+text_column = "abstract"
+[project.llm.1]
+provider = "OpenAI"
+[filters.language]
+enabled = true
+`},
+	}
+	for _, tc := range invalid {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateConfig(tc.toml); err == nil {
+				t.Fatalf("expected validation error, got nil")
+			}
+		})
+	}
+}

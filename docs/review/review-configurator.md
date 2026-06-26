@@ -141,6 +141,71 @@ This configurator helps you create a TOML configuration file for the prismAId Re
     <button type="button" onclick="addReviewBlock()" style="background-color: #ffffff;">Add Review Item</button>
     <br><br>
 
+    <h2 id="revaise-documentation">RevAIse Documentation (Optional)</h2>
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Optionally document this review as a data-extraction stage in a shared <a href="https://revaise-model.readthedocs.io/stable/">RevAIse</a> review record. Disabled by default; normal review outputs are unchanged when enabled.</p>
+        <label for="revaise_enabled" class="form-label">Enable RevAIse:</label>
+        <select id="revaise_enabled" name="revaise_enabled" class="form-input">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes</option>
+        </select><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Path to the RevAIse record to create or update. Reuse the same file across stages to build one cumulative record.</p>
+        <label for="revaise_record_file" class="form-label">Record File:</label>
+        <input type="text" id="revaise_record_file" name="revaise_record_file" value="review.revaise.json" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Record format. If omitted, it is detected from the record file (JSON by default).</p>
+        <label for="revaise_format" class="form-label">Format:</label>
+        <select id="revaise_format" name="revaise_format" class="form-input">
+            <option value="json" selected>JSON</option>
+            <option value="yaml">YAML</option>
+        </select><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">RevAIse schema version to record.</p>
+        <label for="revaise_schema_version" class="form-label">Schema Version:</label>
+        <input type="text" id="revaise_schema_version" name="revaise_schema_version" value="0.5.0" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Human-readable label for this extraction stage.</p>
+        <label for="revaise_stage_label" class="form-label">Stage Label:</label>
+        <input type="text" id="revaise_stage_label" name="revaise_stage_label" value="AI-assisted extraction" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Run identifier. Reuse the same id to update the same run; change it to record a new one (e.g. a pilot vs. a full extraction).</p>
+        <label for="revaise_run_id" class="form-label">Run ID:</label>
+        <input type="text" id="revaise_run_id" name="revaise_run_id" value="full_extraction_001" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Human-readable label for this extraction run.</p>
+        <label for="revaise_run_label" class="form-label">Run Label:</label>
+        <input type="text" id="revaise_run_label" name="revaise_run_label" value="Full extraction on included studies" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Extraction form identifier, name, and version.</p>
+        <label for="revaise_form_id" class="form-label">Form ID:</label>
+        <input type="text" id="revaise_form_id" name="revaise_form_id" value="extraction_form_v1" class="form-input"><br>
+        <label for="revaise_form_name" class="form-label">Form Name:</label>
+        <input type="text" id="revaise_form_name" name="revaise_form_name" value="Extraction form" class="form-input"><br>
+        <label for="revaise_form_version" class="form-label">Form Version:</label>
+        <input type="text" id="revaise_form_version" name="revaise_form_version" value="1" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Identifier of the extractor performing this run.</p>
+        <label for="revaise_extractor_id" class="form-label">Extractor ID:</label>
+        <input type="text" id="revaise_extractor_id" name="revaise_extractor_id" value="prismaid" class="form-input"><br>
+    </div>
+
 </form>
 
 ## Generate Configuration

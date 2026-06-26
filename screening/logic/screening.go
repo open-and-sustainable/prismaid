@@ -127,35 +127,57 @@ type ScreeningResult struct {
 	LLMConfig       *LLMConfig         `json:"-"` // Pass LLM config through for filters
 }
 
-// Screen performs the main screening process
-func Screen(tomlConfiguration string) error {
+// ValidateConfig parses and validates a screening TOML configuration without
+// running any filters, loading input data, or accessing the network. It returns
+// nil if the configuration is valid, or an error describing the first problem
+// found.
+func ValidateConfig(tomlConfiguration string) error {
+	_, err := parseAndValidateConfig(tomlConfiguration)
+	return err
+}
+
+// parseAndValidateConfig decodes a screening TOML configuration and validates
+// it, returning the parsed configuration when valid. It performs no filtering,
+// input loading, or network access, so it is safe to use for validation alone.
+func parseAndValidateConfig(tomlConfiguration string) (*ScreeningConfig, error) {
 	if strings.Contains(tomlConfiguration, "[project.llm") {
-		return fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
+		return nil, fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
 	}
 	if strings.Contains(tomlConfiguration, "[[filters.llm]]") || strings.Contains(tomlConfiguration, "[filters.llm.") {
-		return fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of [[filters.llm]] or numbered tables")
+		return nil, fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of [[filters.llm]] or numbered tables")
 	}
 
 	// Parse TOML configuration
 	var config ScreeningConfig
 	meta, err := toml.Decode(tomlConfiguration, &config)
 	if err != nil {
-		return fmt.Errorf("error parsing TOML configuration: %v", err)
+		return nil, fmt.Errorf("error parsing TOML configuration: %v", err)
 	}
 	for _, undecoded := range meta.Undecoded() {
 		key := undecoded.String()
 		if strings.HasPrefix(key, "project.llm") {
-			return fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
+			return nil, fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
 		}
 		if strings.HasPrefix(key, "filters.llm.") {
-			return fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of numbered tables")
+			return nil, fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of numbered tables")
 		}
 	}
 
 	// Validate configuration
 	if err := validateConfig(&config); err != nil {
-		return fmt.Errorf("configuration validation error: %v", err)
+		return nil, fmt.Errorf("configuration validation error: %v", err)
 	}
+
+	return &config, nil
+}
+
+// Screen performs the main screening process
+func Screen(tomlConfiguration string) error {
+	cfg, err := parseAndValidateConfig(tomlConfiguration)
+	if err != nil {
+		return err
+	}
+	config := *cfg
 
 	// Setup logger based on configuration
 	if config.Project.LogLevel == "high" {

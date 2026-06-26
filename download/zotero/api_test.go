@@ -216,3 +216,48 @@ group = "collection"
 		t.Fatalf("expected output_dir validation error, got %v", err)
 	}
 }
+
+// TestValidateConfig verifies that ValidateConfig accepts a complete Zotero
+// configuration (including an optional [revaise] block) and rejects
+// configurations missing required fields.
+func TestValidateConfig(t *testing.T) {
+	valid := `
+[zotero]
+user = "user"
+api_key = "api_key"
+group = "collection"
+output_dir = "papers/zotero"
+
+[revaise]
+enabled = true
+record_file = "review.revaise.json"
+`
+	if err := ValidateConfig(valid); err != nil {
+		t.Fatalf("expected valid Zotero config, got error: %v", err)
+	}
+
+	invalid := []struct {
+		name string
+		toml string
+	}{
+		{"missing api_key", `
+[zotero]
+user = "user"
+group = "collection"
+output_dir = "papers/zotero"
+`},
+		{"missing user", `
+[zotero]
+api_key = "api_key"
+group = "collection"
+output_dir = "papers/zotero"
+`},
+	}
+	for _, tc := range invalid {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := ValidateConfig(tc.toml); err == nil {
+				t.Fatalf("expected validation error, got nil")
+			}
+		})
+	}
+}
