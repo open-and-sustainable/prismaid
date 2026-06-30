@@ -20,7 +20,7 @@
 //	enabled = true
 //	record_file = "review.revaise.json"
 //	format = "json"
-//	schema_version = "0.5.0"
+//	schema_version = "0.7.1"
 //
 // The first enabled stage creates the record if it does not already exist. Each
 // later stage reads that same record, creates a timestamped backup snapshot,

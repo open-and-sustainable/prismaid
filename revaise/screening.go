@@ -79,6 +79,8 @@ func applyScreening(record Record, cfg Config, contribution ScreeningContributio
 		"blind_screening":              false,
 	}
 	stage["overall_statistics"] = map[string]any{
+		"base_stats_id":           firstNonEmpty(cfg.Screening.RoundID, "screening") + "_overall_stats",
+		"base_total_items":        contribution.TotalRecords,
 		"initial_records_count":   contribution.TotalRecords,
 		"final_included_count":    contribution.IncludedRecords,
 		"overall_inclusion_rate":  ratio(contribution.IncludedRecords, contribution.TotalRecords),
@@ -122,6 +124,7 @@ func upsertScreeningRound(stage map[string]any, cfg Config, contribution Screeni
 	}
 	roundLabel := firstNonEmpty(cfg.Screening.RoundLabel, roundID)
 	reviewerID := firstNonEmpty(cfg.Screening.ReviewerID, "prismaid")
+	reviewerRole := firstNonEmpty(cfg.Screening.ReviewerRole, "SCREENER")
 	timestamp := firstNonEmpty(cfg.Screening.CompletedAt, nowRFC3339())
 
 	decisions := make([]any, 0, len(contribution.Records))
@@ -166,10 +169,9 @@ func upsertScreeningRound(stage map[string]any, cfg Config, contribution Screeni
 		"included_record_ids": includedIDs,
 		"excluded_record_ids": excludedIDs,
 		"reviewers": []any{
-			map[string]any{"participant_id": reviewerID, "name": reviewerID},
+			map[string]any{"name": reviewerID, "participant_role": []any{reviewerRole}},
 		},
 		"round_statistics": map[string]any{
-			"base_total_items":       contribution.TotalRecords,
 			"total_records_screened": contribution.TotalRecords,
 			"records_included":       contribution.IncludedRecords,
 			"records_excluded":       contribution.ExcludedRecords,
@@ -178,7 +180,7 @@ func upsertScreeningRound(stage map[string]any, cfg Config, contribution Screeni
 		},
 	}
 	if contribution.AIAssistance != nil {
-		round["ai_assistance"] = aiAssistanceObject(*contribution.AIAssistance, []string{"CLASSIFICATION"})
+		round["ai_assistance"] = aiAssistanceObject(*contribution.AIAssistance, []string{"CLASSIFICATION"}, cfg.HumanOversight)
 	}
 
 	rounds := list(stage, "screening_rounds")
@@ -202,7 +204,7 @@ func screeningDecision(record ScreeningRecord) string {
 	return "EXCLUDE"
 }
 
-func aiAssistanceObject(ai AIAssistance, defaultPurpose []string) map[string]any {
+func aiAssistanceObject(ai AIAssistance, defaultPurpose []string, oversight string) map[string]any {
 	purpose := ai.Purpose
 	if len(purpose) == 0 {
 		purpose = defaultPurpose
@@ -213,7 +215,7 @@ func aiAssistanceObject(ai AIAssistance, defaultPurpose []string) map[string]any
 		"ai_version":            firstNonEmpty(ai.Version, "unspecified"),
 		"ai_provider":           ai.Provider,
 		"ai_purpose":            purpose,
-		"human_oversight_level": "FULL_REVIEW",
+		"human_oversight_level": firstNonEmpty(oversight, "NONE"),
 	}
 	parameters := make([]any, 0)
 	if ai.Temperature != "" {

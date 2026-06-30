@@ -99,7 +99,8 @@ rpm_limit = 0                                 # Requests per minute limit (0 = u
 enabled = false                     # Set to true to document this run in a RevAIse record
 record_file = "review.revaise.json" # Shared RevAIse record to create or update
 format = "json"                     # "json" or "yaml"; if omitted, detected from record_file (JSON default)
-schema_version = "0.5.0"            # RevAIse schema version
+schema_version = "0.7.1"            # RevAIse schema version
+# human_oversight_level = "NONE"    # Human review of AI output: FULL_REVIEW, SAMPLE_REVIEW, CONFIDENCE_BASED, EXCEPTION_ONLY, MINIMAL, or NONE [default]
 # backup = true                     # Backups are enabled by default; set false to disable timestamped snapshots
 # backup_dir = ".revaise-backups"   # Directory for backup snapshots (default: .revaise-backups next to record_file)
 
@@ -113,6 +114,7 @@ round_type = "TITLE_ABSTRACT"
 round_number = 1
 round_label = "Full title and abstract screening"
 reviewer_id = "prismaid"
+# reviewer_role = "SCREENER"          # RevAIse participant role: SCREENER [default], DATA_EXTRACTOR, REVIEWER, LEAD_REVIEWER, etc.
 
 ### Example configurations for different scenarios:
 

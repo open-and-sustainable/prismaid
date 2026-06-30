@@ -70,7 +70,7 @@ func applyExtraction(record Record, cfg Config, contribution ExtractionContribut
 		"form_version": formVersion,
 	})
 	if len(contribution.Models) > 0 {
-		stage["ai_assistance_config"] = aiAssistanceObject(combinedAI(contribution.Models), []string{"EXTRACTION"})
+		stage["ai_assistance_config"] = aiAssistanceObject(combinedAI(contribution.Models), []string{"EXTRACTION"}, cfg.HumanOversight)
 	}
 	if contribution.ResultPath != "" {
 		upsertStageOutputs(stage, []map[string]any{
@@ -90,6 +90,7 @@ func applyExtraction(record Record, cfg Config, contribution ExtractionContribut
 	}
 	stage["extracted_studies"] = upsertExtractedStudies(list(stage, "extracted_studies"), studies)
 	stage["extraction_statistics"] = map[string]any{
+		"base_stats_id":           cfg.Extraction.RunID + "_extraction_stats",
 		"base_total_items":        len(contribution.Filenames),
 		"total_studies_extracted": len(studies),
 		"total_data_points":       totalDataPoints(studies),
@@ -154,7 +155,6 @@ func dataPointsFromResponse(runID, sourceID string, response extractionResponse,
 		return []any{
 			map[string]any{
 				"datapoint_id":         slug(runID + "_" + sourceID + "_" + response.Provider + "_" + response.Model + "_raw_response"),
-				"field_id":             "raw_response",
 				"extracted_value":      modelResponse,
 				"extraction_timestamp": timestamp,
 				"extractor_id":         extractorID,
@@ -167,7 +167,6 @@ func dataPointsFromResponse(runID, sourceID string, response extractionResponse,
 	for key, value := range parsed {
 		points = append(points, map[string]any{
 			"datapoint_id":         slug(runID + "_" + sourceID + "_" + response.Provider + "_" + response.Model + "_" + key),
-			"field_id":             key,
 			"extracted_value":      valueToString(value),
 			"extraction_timestamp": timestamp,
 			"extractor_id":         extractorID,

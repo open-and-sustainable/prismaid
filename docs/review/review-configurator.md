@@ -169,7 +169,20 @@ This configurator helps you create a TOML configuration file for the prismAId Re
     <div class="form-group">
         <p class="description" style="font-style: italic;">RevAIse schema version to record.</p>
         <label for="revaise_schema_version" class="form-label">Schema Version:</label>
-        <input type="text" id="revaise_schema_version" name="revaise_schema_version" value="0.5.0" class="form-input"><br>
+        <input type="text" id="revaise_schema_version" name="revaise_schema_version" value="0.7.1" class="form-input"><br>
+    </div>
+
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">How much a human reviews the AI output. Defaults to None, since prismAId itself performs no human review; raise it to reflect the review you actually carry out.</p>
+        <label for="revaise_human_oversight" class="form-label">Human Oversight Level:</label>
+        <select id="revaise_human_oversight" name="revaise_human_oversight" class="form-input">
+            <option value="NONE" selected>None</option>
+            <option value="MINIMAL">Minimal</option>
+            <option value="EXCEPTION_ONLY">Exception only</option>
+            <option value="CONFIDENCE_BASED">Confidence based</option>
+            <option value="SAMPLE_REVIEW">Sample review</option>
+            <option value="FULL_REVIEW">Full review</option>
+        </select><br>
     </div>
 
     <div class="form-group">

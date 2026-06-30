@@ -727,7 +727,7 @@ func collectRevaise() string {
 	checkErr(err)
 
 	schemaVersion, err := prompt.New().Ask("Enter RevAIse schema version:").Input(
-		"0.5.0", input.WithHelp(true))
+		"0.7.1", input.WithHelp(true))
 	checkErr(err)
 
 	stageLabel, err := prompt.New().Ask("Enter extraction stage label:").Input(
@@ -758,7 +758,20 @@ func collectRevaise() string {
 		"prismaid", input.WithHelp(true))
 	checkErr(err)
 
-	return generateRevaiseToml(recordFile, format, schemaVersion, stageLabel,
+	humanOversight, err := prompt.New().Ask("Choose the level of human oversight of the AI output:").
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "NONE", Note: "No human review of the AI output (default)."},
+				{Text: "MINIMAL", Note: "Minimal human review."},
+				{Text: "EXCEPTION_ONLY", Note: "Humans review only flagged exceptions."},
+				{Text: "CONFIDENCE_BASED", Note: "Human review triggered by AI confidence."},
+				{Text: "SAMPLE_REVIEW", Note: "Humans review a sample of the AI output."},
+				{Text: "FULL_REVIEW", Note: "Humans review every AI output."},
+			},
+			choose.WithHelp(true))
+	checkErr(err)
+
+	return generateRevaiseToml(recordFile, format, schemaVersion, humanOversight, stageLabel,
 		runID, runLabel, formID, formName, formVersion, extractorID)
 }
 
@@ -769,7 +782,7 @@ func collectRevaise() string {
 // Returns:
 //   - A formatted string containing the [revaise], [revaise.stage], and
 //     [revaise.extraction_run] tables.
-func generateRevaiseToml(recordFile, format, schemaVersion, stageLabel,
+func generateRevaiseToml(recordFile, format, schemaVersion, humanOversight, stageLabel,
 	runID, runLabel, formID, formName, formVersion, extractorID string) string {
 	var b strings.Builder
 	b.WriteString("[revaise]\n")
@@ -777,6 +790,7 @@ func generateRevaiseToml(recordFile, format, schemaVersion, stageLabel,
 	b.WriteString(fmt.Sprintf("record_file = \"%s\"\n", recordFile))
 	b.WriteString(fmt.Sprintf("format = \"%s\"\n", format))
 	b.WriteString(fmt.Sprintf("schema_version = \"%s\"\n", schemaVersion))
+	b.WriteString(fmt.Sprintf("human_oversight_level = \"%s\"\n", humanOversight))
 	b.WriteString("\n[revaise.stage]\n")
 	b.WriteString("stage_type = \"data_extraction\"\n")
 	b.WriteString(fmt.Sprintf("stage_label = \"%s\"\n", stageLabel))
