@@ -9,6 +9,14 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.13.1] - 2026-06-30
+### Added
+- Added `[revaise]` options `human_oversight_level` and `reviewer_role`, configurable in the templates and the review configurators, to record the AI/human division of labor and the screening reviewer role
+### Changed
+- Updated RevAIse review-record reading and writing to conform to the RevAIse data model 0.7.1
+- Bumped the default RevAIse schema version to 0.7.1
+- The recorded human oversight level now defaults to NONE instead of FULL_REVIEW, so prismAId no longer overstates human review of AI output
+
 ## [0.13.0] - 2026-06-26
 ### Added
 - Added `ValidateConfig` to validate review, screening, and Zotero configurations without executing them, exposed across the Go API, CLI (`-validate`), shared library, Python, R, and Julia

@@ -54,14 +54,29 @@ Add this block to any supported stage configuration:
 enabled = true
 record_file = "review.revaise.json"
 format = "json"
-schema_version = "0.5.0"
+schema_version = "0.7.1"
 ```
 
 `format` may be `json` or `yaml`. If omitted, prismAId detects the format from `record_file`; JSON is the default.
 
+### Human Oversight
+
+prismAId records how much a human reviewed the AI output in every AI-assistance entry. Set `human_oversight_level` to describe your process:
+
+```toml
+[revaise]
+enabled = true
+record_file = "review.revaise.json"
+human_oversight_level = "FULL_REVIEW"
+```
+
+Allowed values are `FULL_REVIEW`, `SAMPLE_REVIEW`, `CONFIDENCE_BASED`, `EXCEPTION_ONLY`, `MINIMAL`, and `NONE`. The default is `NONE`, because prismAId itself performs no human review; raise it to reflect the review you actually carry out.
+
 ## Screening Rounds
 
 Each screening run needs an explicit round identity. Reusing the same `round_id` updates the existing round. Using a new `round_id` appends a new round.
+
+The reviewer recorded for a round is identified by `reviewer_id` and carries the role set in `reviewer_role` (default `SCREENER`; other RevAIse roles include `DATA_EXTRACTOR`, `REVIEWER`, and `LEAD_REVIEWER`).
 
 Pilot screening:
 

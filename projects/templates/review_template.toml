@@ -89,7 +89,8 @@ values = ["world", "continent", "river basin"]
 enabled = false                     # Set to true to document this run in a RevAIse record
 record_file = "review.revaise.json" # Shared RevAIse record to create or update
 format = "json"                     # "json" or "yaml"; if omitted, detected from record_file (JSON default)
-schema_version = "0.5.0"            # RevAIse schema version
+schema_version = "0.7.1"            # RevAIse schema version
+# human_oversight_level = "NONE"    # Human review of AI output: FULL_REVIEW, SAMPLE_REVIEW, CONFIDENCE_BASED, EXCEPTION_ONLY, MINIMAL, or NONE [default]
 # backup = true                     # Backups are enabled by default; set false to disable timestamped snapshots
 # backup_dir = ".revaise-backups"   # Directory for backup snapshots (default: .revaise-backups next to record_file)
 

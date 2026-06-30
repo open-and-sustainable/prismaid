@@ -94,6 +94,8 @@ function collectRevaiseData() {
         format: document.getElementById("revaise_format")?.value || "json",
         schema_version:
             document.getElementById("revaise_schema_version")?.value || "",
+        human_oversight_level:
+            document.getElementById("revaise_human_oversight")?.value || "NONE",
         stage_label:
             document.getElementById("revaise_stage_label")?.value || "",
         run_id: document.getElementById("revaise_run_id")?.value || "",
@@ -173,6 +175,9 @@ function generateTOMLString(data) {
         toml.push(`record_file = "${data.revaise.record_file}"`);
         toml.push(`format = "${data.revaise.format}"`);
         toml.push(`schema_version = "${data.revaise.schema_version}"`);
+        toml.push(
+            `human_oversight_level = "${data.revaise.human_oversight_level}"`,
+        );
 
         toml.push("\n[revaise.stage]");
         toml.push(`stage_type = "data_extraction"`);
