@@ -5,11 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	prompt "github.com/cqroot/prompt"
 	choose "github.com/cqroot/prompt/choose"
 	input "github.com/cqroot/prompt/input"
+	"github.com/open-and-sustainable/prismaid"
 )
 
 // ReviewItem stores a single review item's key and associated values
@@ -147,10 +149,7 @@ func RunInteractiveConfigCreation() {
 
 	// Build models object
 	models_items := collectModelItems()
-	models := ""
-	if len(models_items) > 0 {
-		models = generateModelToml(models_items)
-	} else {
+	if len(models_items) == 0 {
 		fmt.Println("You will have to specify the LLM parameters in your project configuration file.")
 	}
 
@@ -208,15 +207,12 @@ func RunInteractiveConfigCreation() {
 	}
 	fmt.Printf("You selected: %s\n", expected_result)
 
-	review := ""
 	definitions := ""
 	example := ""
 
 	// Build answer object
 	review_items := collectReviewItems()
 	if len(review_items) > 0 {
-		review = generateReviewToml(review_items)
-
 		// Build definitions object
 		definitions = collectDefinitions(review_items)
 
@@ -266,13 +262,27 @@ func RunInteractiveConfigCreation() {
 	revaise := collectRevaise()
 
 	// Generate TOML config from user inputs
-	config := generateTomlConfig(
-		projectName, author, version,
-		inputDir, resultsFileName, outputFormat, logLevel,
-		duplication, cotJustification, summary, models,
-		persona, task, expected_result,
-		failsafe, definitions, example, review, revaise,
-	)
+	config := prismaid.GenerateReviewConfig(prismaid.ReviewConfigParams{
+		Name:             projectName,
+		Author:           author,
+		Version:          version,
+		InputDirectory:   inputDir,
+		ResultsFileName:  resultsFileName,
+		OutputFormat:     outputFormat,
+		LogLevel:         logLevel,
+		Duplication:      duplication,
+		CotJustification: cotJustification,
+		Summary:          summary,
+		LLMs:             toReviewLLMs(models_items),
+		Persona:          persona,
+		Task:             task,
+		ExpectedResult:   expected_result,
+		Failsafe:         failsafe,
+		Definitions:      definitions,
+		Example:          example,
+		ReviewItems:      toReviewItems(review_items),
+		RevAIse:          revaise,
+	})
 
 	// Write the configuration to file
 	err = writeTomlConfigToFile(config, filePath)
@@ -496,52 +506,6 @@ func collectModelItems() []ModelItem {
 	return modelItems
 }
 
-// generateModelToml creates a formatted TOML string from a slice of ModelItem structures.
-// It converts each model configuration into a TOML section with properties like provider,
-// API key, model name, temperature, and rate limits. Each model is assigned a sequential
-// number in the TOML output.
-//
-// Parameters:
-//   - modelsItems: A slice of ModelItem structures containing model configurations
-//
-// Returns:
-//   - A formatted string containing TOML configuration for the [project.llm] section
-func generateModelToml(modelsItems []ModelItem) string {
-	var tomlModelsSection strings.Builder
-
-	// Loop through the review items and append each one to the TOML string
-	for i, item := range modelsItems {
-		tomlModelsSection.WriteString(fmt.Sprintf("[project.llm.%d]\n", i+1))
-		tomlModelsSection.WriteString(fmt.Sprintf("provider = \"%s\"\n", item.Provider))
-		tomlModelsSection.WriteString(fmt.Sprintf("api_key = \"%s\"\n", item.APIKey))
-		tomlModelsSection.WriteString(fmt.Sprintf("model = \"%s\"\n", item.Model))
-		tomlModelsSection.WriteString(fmt.Sprintf("temperature = \"%s\"\n", item.Temperature))
-		tomlModelsSection.WriteString(fmt.Sprintf("tpm_limit = \"%s\"\n", item.TpmLimit))
-		tomlModelsSection.WriteString(fmt.Sprintf("rpm_limit = \"%s\"\n", item.RpmLimit))
-		if item.BaseURL != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("base_url = \"%s\"\n", item.BaseURL))
-		}
-		if item.EndpointType != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("endpoint_type = \"%s\"\n", item.EndpointType))
-		}
-		if item.Region != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("region = \"%s\"\n", item.Region))
-		}
-		if item.ProjectID != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("project_id = \"%s\"\n", item.ProjectID))
-		}
-		if item.Location != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("location = \"%s\"\n", item.Location))
-		}
-		if item.APIVersion != "" {
-			tomlModelsSection.WriteString(fmt.Sprintf("api_version = \"%s\"\n", item.APIVersion))
-		}
-		tomlModelsSection.WriteString("\n")
-	}
-
-	return tomlModelsSection.String()
-}
-
 // collectReviewItems interactively prompts the user to define review criteria
 // for project configuration. It repeatedly asks the user if they want to add
 // review items, collecting a key and a set of possible values for each one.
@@ -596,35 +560,6 @@ func collectReviewItems() []ReviewItem {
 	}
 
 	return reviewItems
-}
-
-// generateReviewToml creates a formatted TOML string from a slice of ReviewItem structures.
-// It converts each review item into a TOML section with a key and an array of possible values.
-// Each review item is assigned a sequential number in the TOML output.
-//
-// Parameters:
-//   - reviewItems: A slice of ReviewItem structures containing keys and their possible values
-//
-// Returns:
-//   - A formatted string containing TOML configuration for the [review] section
-func generateReviewToml(reviewItems []ReviewItem) string {
-	var tomlReviewSection strings.Builder
-
-	// Loop through the review items and append each one to the TOML string
-	for i, item := range reviewItems {
-		tomlReviewSection.WriteString(fmt.Sprintf("[review.%d]\n", i+1))
-		tomlReviewSection.WriteString(fmt.Sprintf("key = \"%s\"\n", item.Key))
-		tomlReviewSection.WriteString("values = [")
-		for j, value := range item.Values {
-			tomlReviewSection.WriteString(fmt.Sprintf("\"%s\"", strings.TrimSpace(value)))
-			if j < len(item.Values)-1 {
-				tomlReviewSection.WriteString(", ")
-			}
-		}
-		tomlReviewSection.WriteString("]\n")
-	}
-
-	return tomlReviewSection.String()
 }
 
 // collectDefinitions interactively prompts the user to provide definitions for review items.
@@ -698,9 +633,9 @@ func collectExamples(reviewItems []ReviewItem) string {
 // stage. RevAIse support is opt-in and disabled by default.
 //
 // Returns:
-//   - A formatted TOML string for the [revaise] section and its subtables, or an
-//     empty string when the user does not enable RevAIse documentation.
-func collectRevaise() string {
+//   - The collected RevAIse parameters, or nil when the user does not enable
+//     RevAIse documentation.
+func collectRevaise() *prismaid.ReviewRevAIse {
 	enable, err := prompt.New().Ask("Document this review in a RevAIse review record?").
 		AdvancedChoose(
 			[]choose.Choice{
@@ -710,7 +645,7 @@ func collectRevaise() string {
 			choose.WithHelp(true))
 	checkErr(err)
 	if enable != "yes" {
-		return ""
+		return nil
 	}
 
 	recordFile, err := prompt.New().Ask("Enter RevAIse record file:").Input(
@@ -771,105 +706,56 @@ func collectRevaise() string {
 			choose.WithHelp(true))
 	checkErr(err)
 
-	return generateRevaiseToml(recordFile, format, schemaVersion, humanOversight, stageLabel,
-		runID, runLabel, formID, formName, formVersion, extractorID)
-}
-
-// generateRevaiseToml creates a formatted TOML string for the [revaise] section
-// of a review configuration, documenting the review as a RevAIse
-// `data_extraction` stage.
-//
-// Returns:
-//   - A formatted string containing the [revaise], [revaise.stage], and
-//     [revaise.extraction_run] tables.
-func generateRevaiseToml(recordFile, format, schemaVersion, humanOversight, stageLabel,
-	runID, runLabel, formID, formName, formVersion, extractorID string) string {
-	var b strings.Builder
-	b.WriteString("[revaise]\n")
-	b.WriteString("enabled = true\n")
-	b.WriteString(fmt.Sprintf("record_file = \"%s\"\n", recordFile))
-	b.WriteString(fmt.Sprintf("format = \"%s\"\n", format))
-	b.WriteString(fmt.Sprintf("schema_version = \"%s\"\n", schemaVersion))
-	b.WriteString(fmt.Sprintf("human_oversight_level = \"%s\"\n", humanOversight))
-	b.WriteString("\n[revaise.stage]\n")
-	b.WriteString("stage_type = \"data_extraction\"\n")
-	b.WriteString(fmt.Sprintf("stage_label = \"%s\"\n", stageLabel))
-	b.WriteString("\n[revaise.extraction_run]\n")
-	b.WriteString(fmt.Sprintf("run_id = \"%s\"\n", runID))
-	b.WriteString(fmt.Sprintf("label = \"%s\"\n", runLabel))
-	b.WriteString(fmt.Sprintf("form_id = \"%s\"\n", formID))
-	b.WriteString(fmt.Sprintf("form_name = \"%s\"\n", formName))
-	b.WriteString(fmt.Sprintf("form_version = \"%s\"\n", formVersion))
-	b.WriteString(fmt.Sprintf("extractor_id = \"%s\"\n", extractorID))
-	return b.String()
-}
-
-// generateTomlConfig creates a formatted TOML configuration string from the provided parameters.
-// It structures the configuration into sections for project metadata, operational settings,
-// LLM configuration, prompt components, and review criteria.
-//
-// Parameters:
-//   - projectName: Name of the project
-//   - author: Author of the project
-//   - version: Version number
-//   - inputDir: Directory containing input files
-//   - resultsFileName: Name of the file to store results
-//   - outputFormat: Format for output data (e.g., "csv", "json")
-//   - logLevel: Logging verbosity level
-//   - duplication: Whether to enable duplication for debugging
-//   - cotJustification: Whether to enable chain-of-thought justification
-//   - summary: Whether to enable document summarization
-//   - models: Pre-formatted TOML string for LLM model configurations
-//   - persona: Description of the AI persona for the review prompt
-//   - task: Description of the task for the review prompt
-//   - expected_result: Description of expected results for the review prompt
-//   - failsafe: Fallback instructions for the review prompt
-//   - definitions: Definitions of key terms used in the review
-//   - example: Example reviews to guide the LLM
-//   - review: Pre-formatted TOML string for review criteria
-//   - revaise: Pre-formatted TOML string for the optional [revaise] section, or
-//     an empty string to omit RevAIse documentation
-//
-// Returns:
-//   - A formatted TOML configuration string with all whitespace trimmed
-func generateTomlConfig(projectName, author, version, inputDir, resultsFileName, outputFormat,
-	logLevel, duplication, cotJustification, summary, models,
-	persona, task, expected_result, failsafe, definitions, example, review, revaise string) string {
-	config := fmt.Sprintf(`
-[project]
-name = "%s"
-author = "%s"
-version = "%s"
-
-[project.configuration]
-input_directory = "%s"
-results_file_name = "%s"
-output_format = "%s"
-log_level = "%s"
-duplication = "%s"
-cot_justification = "%s"
-summary = "%s"
-
-[project.llm]
-%s
-[prompt]
-persona = "%s"
-task = "%s"
-expected_result = "%s"
-failsafe = "%s"
-definitions = "%s"
-example = "%s"
-
-[review]
-%s
-`, projectName, author, version, inputDir, resultsFileName, outputFormat,
-		logLevel, duplication, cotJustification, summary, models,
-		persona, task, expected_result, failsafe, definitions, example, review)
-	result := strings.TrimSpace(config)
-	if strings.TrimSpace(revaise) != "" {
-		result += "\n\n" + strings.TrimSpace(revaise)
+	return &prismaid.ReviewRevAIse{
+		RecordFile:     recordFile,
+		Format:         format,
+		SchemaVersion:  schemaVersion,
+		HumanOversight: humanOversight,
+		StageLabel:     stageLabel,
+		RunID:          runID,
+		RunLabel:       runLabel,
+		FormID:         formID,
+		FormName:       formName,
+		FormVersion:    formVersion,
+		ExtractorID:    extractorID,
 	}
-	return result
+}
+
+// toReviewLLMs converts the interactively collected model items into the typed
+// parameters expected by prismaid.GenerateReviewConfig, parsing the numeric
+// fields (defaulting to zero when a value cannot be parsed).
+func toReviewLLMs(items []ModelItem) []prismaid.ReviewLLM {
+	llms := make([]prismaid.ReviewLLM, 0, len(items))
+	for _, item := range items {
+		temperature, _ := strconv.ParseFloat(item.Temperature, 64)
+		tpmLimit, _ := strconv.ParseInt(item.TpmLimit, 10, 64)
+		rpmLimit, _ := strconv.ParseInt(item.RpmLimit, 10, 64)
+		llms = append(llms, prismaid.ReviewLLM{
+			Provider:     item.Provider,
+			APIKey:       item.APIKey,
+			Model:        item.Model,
+			Temperature:  temperature,
+			TpmLimit:     tpmLimit,
+			RpmLimit:     rpmLimit,
+			BaseURL:      item.BaseURL,
+			EndpointType: item.EndpointType,
+			Region:       item.Region,
+			ProjectID:    item.ProjectID,
+			Location:     item.Location,
+			APIVersion:   item.APIVersion,
+		})
+	}
+	return llms
+}
+
+// toReviewItems converts the interactively collected review items into the
+// typed parameters expected by prismaid.GenerateReviewConfig.
+func toReviewItems(items []ReviewItem) []prismaid.ReviewItem {
+	reviewItems := make([]prismaid.ReviewItem, 0, len(items))
+	for _, item := range items {
+		reviewItems = append(reviewItems, prismaid.ReviewItem{Key: item.Key, Values: item.Values})
+	}
+	return reviewItems
 }
 
 // writeTomlConfigToFile writes the generated TOML configuration string to a file
