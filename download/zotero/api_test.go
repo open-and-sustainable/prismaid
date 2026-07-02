@@ -127,7 +127,7 @@ func TestDownloadPDFs(t *testing.T) {
 			// Use t.TempDir() to create a temporary directory
 			tempDir := t.TempDir()
 
-			err := DownloadWithConfig(client, Config{
+			_, err := DownloadWithConfig(client, Config{
 				Zotero: ZoteroConfig{
 					User:      "user",
 					APIKey:    "api_key",
@@ -197,7 +197,7 @@ api_key = "api_key"
 group = "collection"
 output_dir = "` + tempDir + `"
 `
-	if err := Download(client, config); err != nil {
+	if _, err := Download(client, config); err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(tempDir, "file.pdf")); err != nil {
@@ -206,7 +206,7 @@ output_dir = "` + tempDir + `"
 }
 
 func TestDownloadRequiresOutputDir(t *testing.T) {
-	err := Download(&MockClient{}, `
+	_, err := Download(&MockClient{}, `
 [zotero]
 user = "user"
 api_key = "api_key"

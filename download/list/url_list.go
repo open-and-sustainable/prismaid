@@ -242,7 +242,14 @@ type ColumnMapping struct {
 //
 // Returns an error if the function fails to open or read the input file,
 // but continues processing even if individual URLs fail to download.
-func DownloadURLList(path string) error {
+// URLListResult summarizes a URL-list download run.
+type URLListResult struct {
+	Total      int
+	Downloaded int
+	Failed     int
+}
+
+func DownloadURLList(path string) (*URLListResult, error) {
 	// Extract the directory from the input file path
 	dirPath := filepath.Dir(path)
 
@@ -294,11 +301,11 @@ func findUniqueFilename(dirPath, filename string) string {
 }
 
 // processTextFile handles the original plain text URL list format
-func processTextFile(path, dirPath string) error {
+func processTextFile(path, dirPath string) (*URLListResult, error) {
 	// Open the file at the given path
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
@@ -317,7 +324,7 @@ func processTextFile(path, dirPath string) error {
 	}
 
 	if err := scanner.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Create concurrent downloader with reasonable limits
@@ -379,15 +386,19 @@ func processTextFile(path, dirPath string) error {
 		logger.Info(fmt.Sprintf("Download file saved to: %s", downloadPath))
 	}
 
-	return nil
+	return &URLListResult{
+		Total:      len(urls),
+		Downloaded: len(urls) - len(failedURLs),
+		Failed:     len(failedURLs),
+	}, nil
 }
 
 // processCSVFile handles CSV/TSV files with metadata
-func processCSVFile(path, dirPath string, delimiter rune) error {
+func processCSVFile(path, dirPath string, delimiter rune) (*URLListResult, error) {
 	// Parse the CSV/TSV file
 	papers, headers, err := parseCSVFile(path, delimiter)
 	if err != nil {
-		return fmt.Errorf("failed to parse CSV/TSV file: %w", err)
+		return nil, fmt.Errorf("failed to parse CSV/TSV file: %w", err)
 	}
 
 	logger.Info(fmt.Sprintf("Found %d entries to process", len(papers)))
@@ -484,7 +495,11 @@ func processCSVFile(path, dirPath string, delimiter rune) error {
 	logger.Info(fmt.Sprintf("Download complete: %d successful, %d failed out of %d total",
 		successCount, failCount, len(papers)))
 
-	return nil
+	return &URLListResult{
+		Total:      len(papers),
+		Downloaded: successCount,
+		Failed:     failCount,
+	}, nil
 }
 
 // parseCSVFile reads a CSV/TSV file and extracts paper metadata with intelligent column detection

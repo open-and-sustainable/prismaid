@@ -36,7 +36,7 @@ func TestDownloadURLList(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := DownloadURLList(txtFile)
+		_, err := DownloadURLList(txtFile)
 		if err != nil {
 			t.Errorf("DownloadURLList failed: %v", err)
 		}
@@ -49,7 +49,7 @@ func TestDownloadURLList(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := DownloadURLList(csvFile)
+		_, err := DownloadURLList(csvFile)
 		if err != nil {
 			t.Errorf("DownloadURLList failed: %v", err)
 		}
@@ -68,14 +68,14 @@ func TestDownloadURLList(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err := DownloadURLList(tsvFile)
+		_, err := DownloadURLList(tsvFile)
 		if err != nil {
 			t.Errorf("DownloadURLList failed: %v", err)
 		}
 	})
 
 	t.Run("Non-existent file", func(t *testing.T) {
-		err := DownloadURLList("/nonexistent/file.txt")
+		_, err := DownloadURLList("/nonexistent/file.txt")
 		if err == nil {
 			t.Error("Expected error for non-existent file")
 		}
@@ -597,7 +597,7 @@ func TestProcessTextFileWithFailedLogging(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err := processTextFile(txtPath, tempDir)
+	_, err := processTextFile(txtPath, tempDir)
 	if err != nil {
 		t.Errorf("processTextFile failed: %v", err)
 	}

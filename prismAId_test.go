@@ -80,7 +80,7 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	}
 
 	// Run the workflow by passing the TOML configuration string directly
-	err = Review(mockConfig)
+	_, err = Review(mockConfig)
 	if err != nil {
 		t.Fatalf("RunReview failed: %v", err)
 	}
@@ -163,7 +163,7 @@ exclude_letters = false
 `, inputFile, outputFile)
 
 	// Run the screening
-	err := Screening(screeningConfig)
+	_, err := Screening(screeningConfig)
 	if err != nil {
 		t.Fatalf("Screening failed: %v", err)
 	}

@@ -148,7 +148,7 @@ func TestConvert(t *testing.T) {
 // TestConvertErrors tests error handling
 func TestConvertErrors(t *testing.T) {
 	// Test with a non-existent directory
-	err := Convert("/nonexistent/directory", "html,pdf", ConvertOptions{})
+	_, err := Convert("/nonexistent/directory", "html,pdf", ConvertOptions{})
 	if err == nil {
 		t.Errorf("Expected error when using non-existent directory, but got none")
 	}
@@ -167,7 +167,7 @@ func TestConvertPDFSingleFileExtensionMismatch(t *testing.T) {
 		t.Fatalf("Failed to write test HTML file: %v", err)
 	}
 
-	err = Convert(tempDir, "pdf", ConvertOptions{
+	_, err = Convert(tempDir, "pdf", ConvertOptions{
 		PDF: PDFOptions{SingleFile: htmlPath},
 	})
 	if err == nil {
@@ -182,7 +182,7 @@ func TestConvertOCROnlyRequiresTika(t *testing.T) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	err = Convert(tempDir, "pdf", ConvertOptions{
+	_, err = Convert(tempDir, "pdf", ConvertOptions{
 		PDF: PDFOptions{OCROnly: true},
 	})
 	if err == nil {
@@ -256,7 +256,7 @@ func TestConvertWithTikaFallback(t *testing.T) {
 	}
 
 	// Test: Standard conversion works, Tika address provided but not needed
-	err = Convert(tempDir, "html", ConvertOptions{TikaServer: "localhost:99999"})
+	_, err = Convert(tempDir, "html", ConvertOptions{TikaServer: "localhost:99999"})
 	if err != nil {
 		t.Errorf("Convert returned an error: %v", err)
 	}

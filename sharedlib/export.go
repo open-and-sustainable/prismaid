@@ -25,17 +25,20 @@ func handlePanic() *C.char {
 // common logic as an helper function
 func runReview(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.Review(goInput)
+	_, err := prismaid.Review(goInput)
+	return err
 }
 
 func runDownloadZotero(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.DownloadZotero(goInput)
+	_, err := prismaid.DownloadZotero(goInput)
+	return err
 }
 
 func runDownloadURLList(path *C.char) error {
 	goPath := C.GoString(path)
-	return prismaid.DownloadURLList(goPath)
+	_, err := prismaid.DownloadURLList(goPath)
+	return err
 }
 
 func runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.char) error {
@@ -45,18 +48,20 @@ func runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.c
 	goSingleFile := C.GoString(singleFile)
 	goOcrOnly := strings.TrimSpace(strings.ToLower(C.GoString(ocrOnly)))
 	ocrOnlyEnabled := goOcrOnly == "1" || goOcrOnly == "true" || goOcrOnly == "yes"
-	return prismaid.Convert(goInputDir, goSelectedFormats, prismaid.ConvertOptions{
+	_, err := prismaid.Convert(goInputDir, goSelectedFormats, prismaid.ConvertOptions{
 		TikaServer: goTikaAddress,
 		PDF: prismaid.PDFOptions{
 			SingleFile: goSingleFile,
 			OCROnly:    ocrOnlyEnabled,
 		},
 	})
+	return err
 }
 
 func runScreening(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.Screening(goInput)
+	_, err := prismaid.Screening(goInput)
+	return err
 }
 
 func runValidate(configType, input *C.char) error {

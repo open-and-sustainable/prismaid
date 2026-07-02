@@ -76,7 +76,7 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	}
 
 	// Run the workflow by passing the TOML configuration string directly
-	err = Review(mockConfig)
+	_, err = Review(mockConfig)
 	if err != nil {
 		t.Fatalf("RunReview failed: %v", err)
 	}

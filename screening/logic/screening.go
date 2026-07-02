@@ -172,10 +172,10 @@ func parseAndValidateConfig(tomlConfiguration string) (*ScreeningConfig, error) 
 }
 
 // Screen performs the main screening process
-func Screen(tomlConfiguration string) error {
+func Screen(tomlConfiguration string) (*ScreeningResult, error) {
 	cfg, err := parseAndValidateConfig(tomlConfiguration)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	config := *cfg
 
@@ -191,7 +191,7 @@ func Screen(tomlConfiguration string) error {
 	// Load input data
 	manuscripts, err := loadInputData(config.Project.InputFile, config.Project.TextColumn, config.Project.IdentifierColumn)
 	if err != nil {
-		return fmt.Errorf("error loading input data: %v", err)
+		return nil, fmt.Errorf("error loading input data: %v", err)
 	}
 
 	// Initialize screening result
@@ -213,7 +213,7 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		if err := applyDeduplicationFilter(result, config.Filters.Deduplication); err != nil {
-			return fmt.Errorf("deduplication filter error: %v", err)
+			return nil, fmt.Errorf("deduplication filter error: %v", err)
 		}
 
 		// Update flag for next filter
@@ -228,7 +228,7 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		if err := applyLanguageFilter(result, config.Filters.Language, config.Filters.LLM); err != nil {
-			return fmt.Errorf("language filter error: %v", err)
+			return nil, fmt.Errorf("language filter error: %v", err)
 		}
 
 		// Update flag for next filter
@@ -243,7 +243,7 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		if err := applyArticleTypeFilter(result, config.Filters.ArticleType, config.Filters.LLM); err != nil {
-			return fmt.Errorf("article type filter error: %v", err)
+			return nil, fmt.Errorf("article type filter error: %v", err)
 		}
 
 		// Update flag for next filter
@@ -258,7 +258,7 @@ func Screen(tomlConfiguration string) error {
 		}
 
 		if err := applyTopicRelevanceFilter(result, config.Filters.TopicRelevance, config.Filters.LLM); err != nil {
-			return fmt.Errorf("topic relevance filter error: %v", err)
+			return nil, fmt.Errorf("topic relevance filter error: %v", err)
 		}
 	}
 
@@ -267,17 +267,17 @@ func Screen(tomlConfiguration string) error {
 
 	// Save results
 	if err := saveResults(result, config.Project.OutputFile, config.Project.OutputFormat); err != nil {
-		return fmt.Errorf("error saving results: %v", err)
+		return nil, fmt.Errorf("error saving results: %v", err)
 	}
 
 	if err := updateRevAIseScreening(config, result); err != nil {
-		return fmt.Errorf("revaise update error: %v", err)
+		return nil, fmt.Errorf("revaise update error: %v", err)
 	}
 
 	// Log summary
 	logSummary(result, config.Project.LogLevel, config.Project.OutputFile)
 
-	return nil
+	return result, nil
 }
 
 // loadInputData loads manuscripts from CSV or TXT file

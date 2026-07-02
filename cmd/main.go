@@ -112,7 +112,7 @@ func main() {
 			logger.Error("Error reading Screening configuration:", err)
 			os.Exit(1)
 		}
-		err = prismaid.Screening(string(data))
+		_, err = prismaid.Screening(string(data))
 		if err != nil {
 			logger.Error("Error running Screening logic:", err)
 			os.Exit(1)
@@ -127,7 +127,7 @@ func main() {
 			logger.Error("Error reading Review configuration:", err)
 			os.Exit(1)
 		}
-		err = prismaid.Review(string(data))
+		_, err = prismaid.Review(string(data))
 		if err != nil {
 			logger.Error("Error running Review logic:", err)
 			os.Exit(1)
@@ -167,7 +167,7 @@ func main() {
 // The function doesn't return anything as it handles errors internally
 // and terminates the program on failure.
 func handleConversion(inputDir, format, tikaServer string, ocrOnly bool) {
-	err := conversion.Convert(inputDir, format, conversion.ConvertOptions{
+	_, err := conversion.Convert(inputDir, format, conversion.ConvertOptions{
 		TikaServer: tikaServer,
 		PDF: conversion.PDFOptions{
 			OCROnly: ocrOnly && format == "pdf",
@@ -181,7 +181,7 @@ func handleConversion(inputDir, format, tikaServer string, ocrOnly bool) {
 }
 
 func handleConversionFile(filePath, tikaServer string, ocrOnly bool) {
-	err := conversion.Convert(filepath.Dir(filePath), "pdf", conversion.ConvertOptions{
+	_, err := conversion.Convert(filepath.Dir(filePath), "pdf", conversion.ConvertOptions{
 		TikaServer: tikaServer,
 		PDF: conversion.PDFOptions{
 			SingleFile: filePath,
@@ -367,7 +367,7 @@ func handleZoteroDownload(configPath string) {
 		os.Exit(1)
 	}
 
-	err = prismaid.DownloadZotero(string(data))
+	_, err = prismaid.DownloadZotero(string(data))
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error downloading Zotero PDFs: %v", err))
 		os.Exit(1)

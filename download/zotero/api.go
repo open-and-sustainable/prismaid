@@ -39,29 +39,37 @@ type Item struct {
 	} `json:"data"`
 }
 
+// ZoteroResult summarizes a Zotero download run: how many attachments were
+// downloaded and the directory they were saved to.
+type ZoteroResult struct {
+	Downloaded int
+	OutputDir  string
+}
+
 // Download parses a Zotero TOML configuration and downloads matching PDF attachments.
-func Download(client HttpClient, tomlConfiguration string) error {
+func Download(client HttpClient, tomlConfiguration string) (*ZoteroResult, error) {
 	var config Config
 	if _, err := toml.Decode(tomlConfiguration, &config); err != nil {
-		return fmt.Errorf("error parsing Zotero configuration: %v", err)
+		return nil, fmt.Errorf("error parsing Zotero configuration: %v", err)
 	}
 	return DownloadWithConfig(client, config)
 }
 
 // DownloadWithConfig downloads matching Zotero PDF attachments using a parsed configuration.
-func DownloadWithConfig(client HttpClient, config Config) error {
+func DownloadWithConfig(client HttpClient, config Config) (*ZoteroResult, error) {
 	if err := validateConfig(config); err != nil {
-		return err
+		return nil, err
 	}
 
-	if err := downloadPDFs(client, config.Zotero.User, config.Zotero.APIKey, config.Zotero.Group, config.Zotero.OutputDir); err != nil {
-		return err
+	downloaded, err := downloadPDFs(client, config.Zotero.User, config.Zotero.APIKey, config.Zotero.Group, config.Zotero.OutputDir)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := updateRevAIse(config); err != nil {
-		return fmt.Errorf("error updating RevAIse record: %v", err)
+		return nil, fmt.Errorf("error updating RevAIse record: %v", err)
 	}
-	return nil
+	return &ZoteroResult{Downloaded: downloaded, OutputDir: config.Zotero.OutputDir}, nil
 }
 
 // ValidateConfig parses and validates a Zotero TOML configuration without
@@ -125,7 +133,7 @@ func updateRevAIse(config Config) error {
 //
 // Returns:
 //   - An error if any step in the process fails, nil on successful completion
-func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir string) error {
+func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir string) (int, error) {
 	const baseURL = "https://api.zotero.org"
 	userID := username
 
@@ -145,23 +153,23 @@ func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir
 		pagedURL := fmt.Sprintf("%s&limit=%d&start=%d", collectionURL, limit, start)
 		req, err := http.NewRequest("GET", pagedURL, nil)
 		if err != nil {
-			return fmt.Errorf("error creating request: %v", err)
+			return 0, fmt.Errorf("error creating request: %v", err)
 		}
 
 		req.Header.Add("Zotero-API-Key", apiKey)
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("error making request: %v", err)
+			return 0, fmt.Errorf("error making request: %v", err)
 		}
 		if resp.StatusCode != http.StatusOK {
 			resp.Body.Close()
-			return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+			return 0, fmt.Errorf("error: received non-200 response status: %s", resp.Status)
 		}
 
 		var pageItems []Item
 		if err := json.NewDecoder(resp.Body).Decode(&pageItems); err != nil {
 			resp.Body.Close()
-			return fmt.Errorf("error decoding JSON: %v", err)
+			return 0, fmt.Errorf("error decoding JSON: %v", err)
 		}
 		resp.Body.Close()
 
@@ -176,9 +184,10 @@ func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir
 	}
 
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating directory: %v", err)
+		return 0, fmt.Errorf("error creating directory: %v", err)
 	}
 
+	downloaded := 0
 	for _, item := range items {
 		downloadURL := fmt.Sprintf("%s/users/%s/items/%s/file", baseURL, userID, item.Key)
 		req, err := http.NewRequest("GET", downloadURL, nil)
@@ -214,10 +223,11 @@ func downloadPDFs(client HttpClient, username, apiKey, collectionName, outputDir
 			continue
 		}
 
+		downloaded++
 		logger.Info("Downloaded:", item.Data.Filename)
 	}
 
-	return nil
+	return downloaded, nil
 }
 
 type Collection struct {
@@ -360,14 +370,14 @@ func findCollectionByParent(collections []Collection, parentKey string, name str
 //
 // Returns:
 //   - An error if any step in the process fails, nil on successful completion
-func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, outputDir string) error {
+func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, outputDir string) (int, error) {
 	const baseURL = "https://api.zotero.org"
 	userID := username
 
 	// Split collectionName into parts
 	pathParts := strings.Split(collectionName, "/")
 	if len(pathParts) == 0 {
-		return fmt.Errorf("collectionName is empty")
+		return 0, fmt.Errorf("collectionName is empty")
 	}
 
 	groupName := pathParts[0]
@@ -377,23 +387,23 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 	groupsURL := fmt.Sprintf("%s/users/%s/groups?format=json", baseURL, userID)
 	req, err := http.NewRequest("GET", groupsURL, nil)
 	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
+		return 0, fmt.Errorf("error creating request: %v", err)
 	}
 	req.Header.Add("Zotero-API-Key", apiKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error making request: %v", err)
+		return 0, fmt.Errorf("error making request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+		return 0, fmt.Errorf("error: received non-200 response status: %s", resp.Status)
 	}
 
 	var groups []Group
 	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
-		return fmt.Errorf("error decoding JSON: %v", err)
+		return 0, fmt.Errorf("error decoding JSON: %v", err)
 	}
 
 	// Find the group with the matching name
@@ -409,7 +419,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 	}
 
 	if !groupFound {
-		return fmt.Errorf("group '%s' not found", groupName)
+		return 0, fmt.Errorf("group '%s' not found", groupName)
 	}
 
 	// If collectionPath is empty, download items from the group's library root
@@ -418,7 +428,7 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		// Find the collection within the group
 		collectionKey, err = getGroupCollectionKey(client, groupID, apiKey, collectionPath)
 		if err != nil {
-			return err
+			return 0, err
 		} else {
 			logger.Info("Collection key found in group", groupName+":", collectionKey)
 		}
@@ -441,23 +451,23 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 		pagedURL := fmt.Sprintf("%s&limit=%d&start=%d", itemsURL, limit, start)
 		req, err = http.NewRequest("GET", pagedURL, nil)
 		if err != nil {
-			return fmt.Errorf("error creating request: %v", err)
+			return 0, fmt.Errorf("error creating request: %v", err)
 		}
 		req.Header.Add("Zotero-API-Key", apiKey)
 
 		resp, err = client.Do(req)
 		if err != nil {
-			return fmt.Errorf("error making request: %v", err)
+			return 0, fmt.Errorf("error making request: %v", err)
 		}
 		if resp.StatusCode != http.StatusOK {
 			resp.Body.Close()
-			return fmt.Errorf("error: received non-200 response status: %s", resp.Status)
+			return 0, fmt.Errorf("error: received non-200 response status: %s", resp.Status)
 		}
 
 		var pageItems []Item
 		if err := json.NewDecoder(resp.Body).Decode(&pageItems); err != nil {
 			resp.Body.Close()
-			return fmt.Errorf("error decoding JSON: %v", err)
+			return 0, fmt.Errorf("error decoding JSON: %v", err)
 		}
 		resp.Body.Close()
 
@@ -472,9 +482,10 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 	}
 
 	if err := os.MkdirAll(outputDir, os.ModePerm); err != nil {
-		return fmt.Errorf("error creating directory: %v", err)
+		return 0, fmt.Errorf("error creating directory: %v", err)
 	}
 
+	downloaded := 0
 	for _, item := range items {
 		downloadURL := fmt.Sprintf("%s/groups/%s/items/%s/file", baseURL, groupID, item.Key)
 		req, err := http.NewRequest("GET", downloadURL, nil)
@@ -510,10 +521,11 @@ func downloadPDFsFromGroup(client HttpClient, username, apiKey, collectionName, 
 			continue
 		}
 
+		downloaded++
 		logger.Info("Downloaded:", item.Data.Filename)
 	}
 
-	return nil // Successfully downloaded from group
+	return downloaded, nil // Successfully downloaded from group
 }
 
 // getGroupCollectionKey retrieves the unique key for a collection within a Zotero group by navigating

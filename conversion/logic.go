@@ -46,6 +46,7 @@ import (
 //	if err != nil {
 //	    log.Fatalf("Conversion failed: %v", err)
 //	}
+//
 // PDFOptions controls PDF-specific conversion behavior.
 type PDFOptions struct {
 	SingleFile string
@@ -61,23 +62,24 @@ type ConvertOptions struct {
 // Convert processes files from the specified input directory and converts them to text format.
 // If PDF.OCROnly is true, it skips standard PDF conversion and uses Tika OCR directly.
 // If PDF.SingleFile is set, only that PDF is processed for the pdf format.
-func Convert(inputDir, selectedFormats string, options ConvertOptions) error {
+func Convert(inputDir, selectedFormats string, options ConvertOptions) (*ConvertResult, error) {
 	useTika := resolveUseTika(options.TikaServer)
 	if options.PDF.OCROnly && !useTika {
-		return fmt.Errorf("ocr-only requested but Tika server not available at %s", options.TikaServer)
+		return nil, fmt.Errorf("ocr-only requested but Tika server not available at %s", options.TikaServer)
 	}
 
 	// Load files from the input directory
 	files, err := os.ReadDir(inputDir)
 	if err != nil {
 		logger.Error("Error: ", err)
-		return fmt.Errorf("error reading input directory: %v", err)
+		return nil, fmt.Errorf("error reading input directory: %v", err)
 	}
 
 	// formats
 	formats := strings.Split(selectedFormats, ",")
 
 	// parse files
+	converted := 0
 	for _, format := range formats { // FIXED: use value, not index
 		format = strings.TrimSpace(format)
 		if format == "" {
@@ -85,23 +87,35 @@ func Convert(inputDir, selectedFormats string, options ConvertOptions) error {
 		}
 		switch format {
 		case "pdf":
-			if err := convertPDF(inputDir, files, useTika, options.PDF, options.TikaServer); err != nil {
-				return err
+			n, err := convertPDF(inputDir, files, useTika, options.PDF, options.TikaServer)
+			if err != nil {
+				return nil, err
 			}
+			converted += n
 		case "docx":
-			if err := convertDOCX(inputDir, files, useTika, options.TikaServer); err != nil {
-				return err
+			n, err := convertDOCX(inputDir, files, useTika, options.TikaServer)
+			if err != nil {
+				return nil, err
 			}
+			converted += n
 		case "html":
-			if err := convertHTML(inputDir, files, useTika, options.TikaServer); err != nil {
-				return err
+			n, err := convertHTML(inputDir, files, useTika, options.TikaServer)
+			if err != nil {
+				return nil, err
 			}
+			converted += n
 		default:
 			logger.Error("Unsupported document type: ", format)
-			return fmt.Errorf("unsupported document type: %s", format)
+			return nil, fmt.Errorf("unsupported document type: %s", format)
 		}
 	}
-	return nil
+	return &ConvertResult{FilesConverted: converted}, nil
+}
+
+// ConvertResult summarizes a conversion run: how many files were converted to
+// text across the selected formats.
+type ConvertResult struct {
+	FilesConverted int
 }
 
 func resolveUseTika(tikaAddress string) bool {
@@ -116,14 +130,18 @@ func resolveUseTika(tikaAddress string) bool {
 	return false
 }
 
-func convertPDF(inputDir string, files []os.DirEntry, useTika bool, options PDFOptions, tikaAddress string) error {
+func convertPDF(inputDir string, files []os.DirEntry, useTika bool, options PDFOptions, tikaAddress string) (int, error) {
 	if options.SingleFile != "" {
 		ext := filepath.Ext(options.SingleFile)
 		if !strings.EqualFold(ext, ".pdf") {
-			return fmt.Errorf("file extension %s does not match format pdf", ext)
+			return 0, fmt.Errorf("file extension %s does not match format pdf", ext)
 		}
-		return convertSingle(options.SingleFile, "pdf", ext, useTika, tikaAddress, options.OCROnly)
+		if err := convertSingle(options.SingleFile, "pdf", ext, useTika, tikaAddress, options.OCROnly); err != nil {
+			return 0, err
+		}
+		return 1, nil
 	}
+	count := 0
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -134,13 +152,15 @@ func convertPDF(inputDir string, files []os.DirEntry, useTika bool, options PDFO
 		}
 		fullPath := filepath.Join(inputDir, file.Name())
 		if err := convertSingle(fullPath, "pdf", ext, useTika, tikaAddress, options.OCROnly); err != nil {
-			return err
+			return count, err
 		}
+		count++
 	}
-	return nil
+	return count, nil
 }
 
-func convertDOCX(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) error {
+func convertDOCX(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) (int, error) {
+	count := 0
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -151,13 +171,15 @@ func convertDOCX(inputDir string, files []os.DirEntry, useTika bool, tikaAddress
 		}
 		fullPath := filepath.Join(inputDir, file.Name())
 		if err := convertSingle(fullPath, "docx", ext, useTika, tikaAddress, false); err != nil {
-			return err
+			return count, err
 		}
+		count++
 	}
-	return nil
+	return count, nil
 }
 
-func convertHTML(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) error {
+func convertHTML(inputDir string, files []os.DirEntry, useTika bool, tikaAddress string) (int, error) {
+	count := 0
 	for _, file := range files {
 		if file.IsDir() {
 			continue
@@ -168,10 +190,11 @@ func convertHTML(inputDir string, files []os.DirEntry, useTika bool, tikaAddress
 		}
 		fullPath := filepath.Join(inputDir, file.Name())
 		if err := convertSingle(fullPath, "html", ext, useTika, tikaAddress, false); err != nil {
-			return err
+			return count, err
 		}
+		count++
 	}
-	return nil
+	return count, nil
 }
 
 func convertSingle(fullPath, format, ext string, useTika bool, tikaAddress string, ocrOnly bool) error {

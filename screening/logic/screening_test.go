@@ -66,7 +66,7 @@ exclude_letters = false
 `
 
 	// Run screening
-	err = Screen(config)
+	_, err = Screen(config)
 	if err != nil {
 		t.Fatalf("Screening failed: %v", err)
 	}
@@ -468,7 +468,7 @@ tpm_limit = 0
 rpm_limit = 0
 `
 
-	err := Screen(config)
+	_, err := Screen(config)
 	if err == nil {
 		t.Fatal("expected screening to reject review-style [project.llm.1] syntax")
 	}
@@ -506,7 +506,7 @@ tpm_limit = 0
 rpm_limit = 0
 `
 
-	err := Screen(config)
+	_, err := Screen(config)
 	if err == nil {
 		t.Fatal("expected screening to reject multi-model [[filters.llm]] syntax")
 	}

@@ -51,6 +51,16 @@ func ValidateConfig(tomlConfiguration string) error {
 	return err
 }
 
+// ReviewResult summarizes a completed review run: where results were written,
+// how many manuscripts were processed, how many review items were extracted, and
+// which models were used. The detailed extraction output is in the results file.
+type ReviewResult struct {
+	OutputFile           string
+	ManuscriptsProcessed int
+	ReviewItems          int
+	Models               []string
+}
+
 // Review is the main function responsible for orchestrating the systematic review process.
 // It takes a TOML string as input, which defines the configuration for the review, and executes
 // the steps to carry out the review process, including configuration loading, prompt generation,
@@ -102,12 +112,12 @@ func ValidateConfig(tomlConfiguration string) error {
 //
 // The Review function is the primary entry point for executing the entire review process, based on the user-provided TOML configuration string.
 // It orchestrates the different stages of the review process, including input parsing, prompt generation, extraction, and results handling.
-func Review(tomlConfiguration string) error {
+func Review(tomlConfiguration string) (*ReviewResult, error) {
 	// load project configuration
 	config, err := config.LoadConfig(tomlConfiguration, config.RealEnvReader{})
 	if err != nil {
 		fmt.Println("Error loading project configuration:", err) // here the logging function is not implemented yet
-		return err
+		return nil, err
 	}
 
 	// setup logging
@@ -128,7 +138,7 @@ func Review(tomlConfiguration string) error {
 	jsonString, filenames, err := prompt.PrepareInput(config)
 	if err != nil {
 		logger.Error("Error generating prompts:", err)
-		return err
+		return nil, err
 	}
 	logger.Info("Found", len(filenames), "files")
 
@@ -142,12 +152,12 @@ func Review(tomlConfiguration string) error {
 	err = results.Save(config, reviewResults, filenames, keys)
 	if err != nil {
 		logger.Error("Error saving results:", err)
-		return err
+		return nil, err
 	}
 
 	if err := updateRevAIseExtraction(config, reviewResults, filenames, keys); err != nil {
 		logger.Error("Error updating RevAIse record:", err)
-		return err
+		return nil, err
 	}
 
 	// cleanup eventual debugging temporary files
@@ -155,8 +165,18 @@ func Review(tomlConfiguration string) error {
 		debug.RemoveDuplicateInput(config)
 	}
 
+	models := make([]string, 0, len(config.Project.LLM))
+	for _, llm := range config.Project.LLM {
+		models = append(models, llm.Provider+" "+llm.Model)
+	}
+
 	logger.Info("Done!")
-	return nil
+	return &ReviewResult{
+		OutputFile:           config.Project.Configuration.ResultsFileName + "." + config.Project.Configuration.OutputFormat,
+		ManuscriptsProcessed: len(filenames),
+		ReviewItems:          len(keys),
+		Models:               models,
+	}, nil
 }
 
 func updateRevAIseExtraction(config *config.Config, reviewResults string, filenames, keys []string) error {
