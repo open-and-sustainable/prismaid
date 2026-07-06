@@ -6,6 +6,7 @@ package main
 import "C"
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -70,6 +71,22 @@ func runValidate(configType, input *C.char) error {
 	return prismaid.ValidateConfig(goConfigType, goInput)
 }
 
+// runCheckConformance runs a protocol conformance check and returns the report
+// as a JSON string. On error it returns a JSON object with an "error" field.
+func runCheckConformance(record, protocol *C.char) string {
+	report, err := prismaid.CheckConformance(C.GoString(record), C.GoString(protocol))
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	data, err := json.Marshal(report)
+	if err != nil {
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(errData)
+	}
+	return string(data)
+}
+
 // Python-specific function
 //
 //export RunReviewPython
@@ -126,6 +143,12 @@ func ValidateConfigPython(configType, input *C.char) *C.char {
 	return nil
 }
 
+//export CheckConformancePython
+func CheckConformancePython(record, protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runCheckConformance(record, protocol))
+}
+
 // R-specific exports
 //
 //export RunReviewR
@@ -180,6 +203,12 @@ func ValidateConfigR(configType, input *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString("Configuration is valid")
+}
+
+//export CheckConformanceR
+func CheckConformanceR(record, protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runCheckConformance(record, protocol))
 }
 
 // Free memory function used by both interfaces

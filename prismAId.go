@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/open-and-sustainable/prismaid/conformance"
 	"github.com/open-and-sustainable/prismaid/conversion"
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
@@ -151,6 +152,33 @@ func ValidateConfig(configType, tomlConfiguration string) error {
 	default:
 		return fmt.Errorf("unknown config type %q: must be \"review\", \"screening\", or \"zotero\"", configType)
 	}
+}
+
+// ConformanceReport summarizes a protocol conformance check: which protocol was
+// applied, whether the record conforms, and the unmet constraints (each carrying
+// the protocol's own message).
+type ConformanceReport = conformance.Report
+
+// CheckConformance validates a RevAIse review-record JSON string against a
+// reporting protocol's SHACL shapes (for example "prisma-2020"). The verdict and
+// the per-constraint messages come from the protocol's shapes, so conformance is
+// decided symbolically rather than asserted by prismAId.
+//
+// The protocol is selected by name; ConformanceProtocols lists the accepted
+// values, and an unknown protocol is reported as an error. The check is
+// read-only and offline, using shapes and context vendored with prismAId.
+func CheckConformance(recordJSON, protocol string) (ConformanceReport, error) {
+	report, err := conformance.Check(recordJSON, protocol)
+	if err != nil {
+		return ConformanceReport{}, err
+	}
+	return *report, nil
+}
+
+// ConformanceProtocols returns the protocol identifiers accepted by
+// CheckConformance.
+func ConformanceProtocols() []string {
+	return conformance.AvailableProtocols()
 }
 
 // Screening processes a list of manuscripts to identify items for exclusion based on various criteria.

@@ -172,7 +172,34 @@ function validate_config(config_type::String, input::String)
     throw(ErrorException(result))
 end
 
+"""
+    check_conformance(record_json::String, protocol::String)
+
+Check whether a RevAIse review record conforms to a reporting protocol. `record_json`
+is the RevAIse review record as a JSON string and `protocol` selects the protocol
+(for example `"prisma-2020"`). The verdict and messages come from the protocol's
+SHACL shapes published by the RevAIse model.
+
+Returns the conformance report as a JSON string — an object with `protocol`,
+`conforms`, and `violations` (each carrying a `message`), or an `error` field when
+the check fails. Parse it with a JSON package such as JSON.jl.
+"""
+function check_conformance(record_json::String, protocol::String)
+    if isempty(protocol)
+        throw(ArgumentError("Protocol cannot be empty"))
+    end
+
+    c_output = ccall((:CheckConformancePython, library_path), Ptr{Cchar}, (Cstring, Cstring), record_json, protocol)
+    if c_output == C_NULL
+        throw(ErrorException("conformance check returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
 # Export public functions
-export run_review, download_zotero, download_url_list, convert, screening, validate_config
+export run_review, download_zotero, download_url_list, convert, screening, validate_config, check_conformance
 
 end # module PrismAId

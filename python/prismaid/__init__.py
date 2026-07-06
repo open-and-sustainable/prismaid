@@ -1,4 +1,5 @@
 import ctypes
+import json
 import platform
 from ctypes import CDLL, c_char_p
 from typing import cast
@@ -53,6 +54,10 @@ _ScreeningPython.restype = c_char_p
 _ValidateConfigPython = lib.ValidateConfigPython
 _ValidateConfigPython.argtypes = [c_char_p, c_char_p]
 _ValidateConfigPython.restype = c_char_p
+
+_CheckConformancePython = lib.CheckConformancePython
+_CheckConformancePython.argtypes = [c_char_p, c_char_p]
+_CheckConformancePython.restype = c_char_p
 
 _FreeCString = lib.FreeCString
 _FreeCString.argtypes = [c_char_p]
@@ -197,3 +202,40 @@ def validate_config(config_type: str, toml_configuration: str) -> None:
         error_message = ctypes.string_at(result).decode("utf-8")
         _FreeCString(result)
         raise Exception(error_message)
+
+
+def check_conformance(record_json: str, protocol: str) -> dict:
+    """
+    Check whether a RevAIse review record conforms to a reporting protocol.
+
+    The verdict and messages come from the protocol's SHACL shapes published by
+    the RevAIse model, so conformance is decided by the shapes rather than
+    asserted by the tool.
+
+    Args:
+        record_json (str): The RevAIse review record as a JSON string.
+        protocol (str): The protocol identifier (e.g. "prisma-2020").
+
+    Returns:
+        dict: The conformance report with keys "protocol", "conforms", and
+            "violations" (each violation carrying a "message").
+
+    Raises:
+        Exception: If the check fails, for example an unknown protocol or an
+            unreadable record.
+    """
+    result = cast(
+        bytes | None,
+        _CheckConformancePython(
+            record_json.encode("utf-8"),
+            protocol.encode("utf-8"),
+        ),
+    )
+    if not result:
+        raise Exception("conformance check returned no result")
+    raw = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    report = json.loads(raw)
+    if isinstance(report, dict) and report.get("error"):
+        raise Exception(report["error"])
+    return report

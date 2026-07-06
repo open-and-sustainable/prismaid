@@ -46,6 +46,9 @@ func main() {
 
 	validateFlag := flag.Bool("validate", false, "Validate a configuration file without executing it; combine with -project, -screening, or -download-zotero")
 
+	conformancePath := flag.String("conformance", "", "Path to a RevAIse review-record JSON file to check for protocol conformance")
+	protocol := flag.String("protocol", "prisma-2020", "Protocol to check conformance against (used with -conformance)")
+
 	flag.Parse()
 
 	if flag.Arg(0) == "-help" || flag.Arg(0) == "--help" {
@@ -67,6 +70,13 @@ func main() {
 			logger.Error("Error: -validate requires one of -project, -screening, or -download-zotero with a configuration file path")
 			os.Exit(1)
 		}
+		return
+	}
+
+	// Protocol conformance check (no execution)
+	if *conformancePath != "" {
+		logger.SetupLogging(logger.Stdout, "")
+		handleConformance(*conformancePath, *protocol)
 		return
 	}
 
@@ -358,6 +368,35 @@ func handleValidate(configType, configPath string) {
 	}
 
 	logger.Info(fmt.Sprintf("Configuration is valid (%s)", configType))
+}
+
+// handleConformance reads a RevAIse review-record JSON file and checks it against
+// a reporting protocol's shapes, printing the verdict and any unmet constraints.
+// It exits with status code 1 on error or when the record does not conform, so
+// the result is scriptable.
+func handleConformance(recordPath, protocol string) {
+	data, err := os.ReadFile(recordPath)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error reading record file: %v", err))
+		os.Exit(1)
+	}
+
+	report, err := prismaid.CheckConformance(string(data), protocol)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Conformance check failed: %v", err))
+		os.Exit(1)
+	}
+
+	if report.Conforms {
+		logger.Info(fmt.Sprintf("Record conforms to %s", protocol))
+		return
+	}
+
+	logger.Info(fmt.Sprintf("Record does NOT conform to %s (%d unmet constraints):", protocol, len(report.Violations)))
+	for _, v := range report.Violations {
+		logger.Info("  - " + v.Message)
+	}
+	os.Exit(1)
 }
 
 func handleZoteroDownload(configPath string) {
