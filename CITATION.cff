@@ -1,9 +1,8 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.13.1 - Conformed RevAIse review-record input and output to the RevAIse data model 0.7.1 and added configurable human-oversight and reviewer-role recording.
+  v0.14.0 - Added protocol conformance checking against RevAIse SHACL shapes and headless configuration generators, and made tool operations return structured results.
 type: software
-version: "0.13.1"
 doi: 10.5281/zenodo.11210796
 authors:
   - given-names: Riccardo

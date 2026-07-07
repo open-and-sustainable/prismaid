@@ -341,3 +341,32 @@ ValidateConfig <- function(config_type, input_string) {
     result <- .Call("ValidateConfigR_wrap", config_type, input_string, PACKAGE = "prismaid")
     return(result)
 }
+
+#' Check Protocol Conformance
+#'
+#' This function checks whether a RevAIse review record conforms to a reporting
+#' protocol, using the SHACL shapes published by the RevAIse model.
+#'
+#' @description
+#' Validates a RevAIse review-record JSON string against a protocol's SHACL
+#' shapes (for example "prisma-2020"). The verdict and the per-constraint
+#' messages come from the protocol shapes, so conformance is decided by the
+#' shapes rather than asserted by the tool.
+#'
+#' @param record_json The RevAIse review record as a JSON string.
+#' @param protocol The protocol identifier to check against (for example
+#'   "prisma-2020").
+#' @return A JSON string with the conformance report: an object with
+#'   \code{protocol}, \code{conforms}, and \code{violations} (each carrying a
+#'   \code{message}). On failure the JSON has an \code{error} field. Parse it
+#'   with a JSON reader such as \code{jsonlite::fromJSON}.
+#' @export
+#' @examples
+#' \dontrun{
+#' record <- paste(readLines("review.revaise.json"), collapse = "\n")
+#' report <- CheckConformance(record, "prisma-2020")
+#' }
+CheckConformance <- function(record_json, protocol) {
+    result <- .Call("CheckConformanceR_wrap", record_json, protocol, PACKAGE = "prismaid")
+    return(result)
+}

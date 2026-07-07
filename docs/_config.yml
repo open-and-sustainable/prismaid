@@ -31,6 +31,8 @@ nav_links:
       url: "/review/review-configurator.html"
     - name: "/Review/RevAIse"
       url: "/review/revaise-integration.html"
+    - name: "/Conformance"
+      url: "/conformance.html"
     - name: "/Tools/Screening"
       url: "/tools/screening-tool.html"
     - name: "/Tools/Download"

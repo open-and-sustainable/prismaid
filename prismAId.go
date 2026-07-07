@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/open-and-sustainable/prismaid/conformance"
 	"github.com/open-and-sustainable/prismaid/conversion"
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
@@ -26,8 +27,27 @@ type PDFOptions = conversion.PDFOptions
 //
 // Returns an error if the review process fails for any reason, such as invalid configuration,
 // inaccessible files, or API errors.
-func Review(tomlConfiguration string) error {
-	return logic.Review(tomlConfiguration)
+func Review(tomlConfiguration string) (ReviewResult, error) {
+	result, err := logic.Review(tomlConfiguration)
+	if err != nil {
+		return ReviewResult{}, err
+	}
+	return ReviewResult{
+		OutputFile:           result.OutputFile,
+		ManuscriptsProcessed: result.ManuscriptsProcessed,
+		ReviewItems:          result.ReviewItems,
+		Models:               result.Models,
+	}, nil
+}
+
+// ReviewResult summarizes the outcome of a review run: the output file written,
+// how many manuscripts were processed, how many review items were extracted, and
+// which models were used. The detailed extraction output is in the output file.
+type ReviewResult struct {
+	OutputFile           string
+	ManuscriptsProcessed int
+	ReviewItems          int
+	Models               []string
 }
 
 // DownloadZotero downloads PDF documents from a Zotero collection using TOML configuration.
@@ -38,9 +58,20 @@ func Review(tomlConfiguration string) error {
 //
 // Returns an error if the download process fails for any reason, such as invalid
 // credentials, network issues, or file system permissions.
-func DownloadZotero(tomlConfiguration string) error {
+func DownloadZotero(tomlConfiguration string) (ZoteroResult, error) {
 	client := &http.Client{}
-	return zotero.Download(client, tomlConfiguration)
+	result, err := zotero.Download(client, tomlConfiguration)
+	if err != nil {
+		return ZoteroResult{}, err
+	}
+	return ZoteroResult{Downloaded: result.Downloaded, OutputDir: result.OutputDir}, nil
+}
+
+// ZoteroResult summarizes a Zotero download run: how many attachments were
+// downloaded and the directory they were saved to.
+type ZoteroResult struct {
+	Downloaded int
+	OutputDir  string
 }
 
 // DownloadURLList downloads files from a list of URLs specified in a text file.
@@ -51,8 +82,21 @@ func DownloadZotero(tomlConfiguration string) error {
 //
 // Returns an error if the function fails to open or read the input file,
 // but continues processing even if individual URLs fail to download.
-func DownloadURLList(path string) error {
-	return list.DownloadURLList(path)
+func DownloadURLList(path string) (URLListResult, error) {
+	result, err := list.DownloadURLList(path)
+	if err != nil {
+		return URLListResult{}, err
+	}
+	return URLListResult{Total: result.Total, Downloaded: result.Downloaded, Failed: result.Failed}, nil
+}
+
+// URLListResult summarizes a URL-list download run: how many URLs were listed,
+// how many were downloaded, and how many failed. Detailed per-URL outcomes are
+// written to the "_download" report next to the input file.
+type URLListResult struct {
+	Total      int
+	Downloaded int
+	Failed     int
 }
 
 // Convert processes files in the specified directory and converts them to plain text format.
@@ -72,9 +116,16 @@ func DownloadURLList(path string) error {
 //
 // Returns an error if the conversion process fails for any reason, such as inaccessible
 // files, unsupported formats, or file system permission issues.
-func Convert(inputDir, selectedFormats string, options conversion.ConvertOptions) error {
-	return conversion.Convert(inputDir, selectedFormats, options)
+func Convert(inputDir, selectedFormats string, options conversion.ConvertOptions) (ConvertResult, error) {
+	result, err := conversion.Convert(inputDir, selectedFormats, options)
+	if err != nil {
+		return ConvertResult{}, err
+	}
+	return *result, nil
 }
+
+// ConvertResult exposes the conversion result summary for the public API.
+type ConvertResult = conversion.ConvertResult
 
 // ValidateConfig validates a prismAId configuration without executing it.
 //
@@ -103,6 +154,33 @@ func ValidateConfig(configType, tomlConfiguration string) error {
 	}
 }
 
+// ConformanceReport summarizes a protocol conformance check: which protocol was
+// applied, whether the record conforms, and the unmet constraints (each carrying
+// the protocol's own message).
+type ConformanceReport = conformance.Report
+
+// CheckConformance validates a RevAIse review-record JSON string against a
+// reporting protocol's SHACL shapes (for example "prisma-2020"). The verdict and
+// the per-constraint messages come from the protocol's shapes, so conformance is
+// decided symbolically rather than asserted by prismAId.
+//
+// The protocol is selected by name; ConformanceProtocols lists the accepted
+// values, and an unknown protocol is reported as an error. The check is
+// read-only and offline, using shapes and context vendored with prismAId.
+func CheckConformance(recordJSON, protocol string) (ConformanceReport, error) {
+	report, err := conformance.Check(recordJSON, protocol)
+	if err != nil {
+		return ConformanceReport{}, err
+	}
+	return *report, nil
+}
+
+// ConformanceProtocols returns the protocol identifiers accepted by
+// CheckConformance.
+func ConformanceProtocols() []string {
+	return conformance.AvailableProtocols()
+}
+
 // Screening processes a list of manuscripts to identify items for exclusion based on various criteria.
 //
 // The tomlConfiguration parameter should contain a valid TOML string with all the necessary
@@ -115,8 +193,29 @@ func ValidateConfig(configType, tomlConfiguration string) error {
 //   - Article type classification: Identifies and filters based on article types (reviews, editorials, etc.)
 //   - Topic relevance: Scores manuscripts based on relevance to specified topics using keyword, concept, and field matching
 //
-// Returns an error if the screening process fails for any reason, such as invalid configuration,
-// inaccessible files, or processing errors.
-func Screening(tomlConfiguration string) error {
-	return screening.Screen(tomlConfiguration)
+// It returns a ScreeningResult summarizing the run, or an error if the screening
+// process fails for any reason, such as invalid configuration, inaccessible
+// files, or processing errors.
+func Screening(tomlConfiguration string) (ScreeningResult, error) {
+	result, err := screening.Screen(tomlConfiguration)
+	if err != nil {
+		return ScreeningResult{}, err
+	}
+	return ScreeningResult{
+		TotalRecords:    result.TotalRecords,
+		IncludedRecords: result.IncludedRecords,
+		ExcludedRecords: result.ExcludedRecords,
+		Statistics:      result.Statistics,
+	}, nil
+}
+
+// ScreeningResult summarizes the outcome of a screening run: the total number of
+// records processed, how many were included and excluded, and per-filter
+// statistics. The detailed per-record output is written to the configured
+// output file, not returned here.
+type ScreeningResult struct {
+	TotalRecords    int
+	IncludedRecords int
+	ExcludedRecords int
+	Statistics      map[string]int
 }

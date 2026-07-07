@@ -106,6 +106,20 @@ SEXP ValidateConfigR_wrap(SEXP configType, SEXP input) {
     return result;
 }
 
+SEXP CheckConformanceR_wrap(SEXP record, SEXP protocol) {
+    const char *c_record = (const char*)record;
+    const char *c_protocol = (const char*)protocol;
+    const char *c_result = CheckConformanceR((char *)c_record, (char *)c_protocol);
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
 #else
 
 // Stub implementation for unsupported platforms
@@ -146,6 +160,13 @@ SEXP ScreeningR_wrap(SEXP input) {
 }
 
 SEXP ValidateConfigR_wrap(SEXP configType, SEXP input) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP CheckConformanceR_wrap(SEXP record, SEXP protocol) {
     SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
     PROTECT(result);
     UNPROTECT(1);

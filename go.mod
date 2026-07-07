@@ -12,6 +12,7 @@ require (
 	github.com/open-and-sustainable/alembica v0.3.4
 	github.com/pdfcpu/pdfcpu v0.13.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
+	github.com/tggo/goRDFlib v0.1.13
 	golang.org/x/sync v0.21.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -42,6 +43,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.2.0 // indirect
+	github.com/cayleygraph/quad v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/bubbles v1.0.0 // indirect
 	github.com/charmbracelet/bubbletea v1.3.10 // indirect
@@ -83,8 +85,10 @@ require (
 	github.com/ollama/ollama v0.30.10 // indirect
 	github.com/openai/openai-go/v3 v3.41.0 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
+	github.com/piprate/json-gold v0.8.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkoukk/tiktoken-go v0.1.8 // indirect
+	github.com/pquerna/cachecontrol v0.2.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sashabaranov/go-openai v1.41.2 // indirect
 	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect

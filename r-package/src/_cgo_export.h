@@ -10,6 +10,7 @@ char* DownloadURLListR(char* path);
 char* ConvertR(char* inputDir, char* selectedFormats, char* tikaAddress, char* singleFile, char* ocrOnly);
 char* ScreeningR(char* input);
 char* ValidateConfigR(char* configType, char* input);
+char* CheckConformanceR(char* record, char* protocol);
 void FreeCString(char* str);
 
 #endif // CGO_EXPORT_H

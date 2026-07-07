@@ -9,6 +9,18 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.14.0] - 2026-07-07
+### Added
+- Added protocol conformance checking against the RevAIse SHACL shapes: `CheckConformance` in the Go API, a CLI `-conformance` flag, and bindings in Python, R, and Julia. The protocol is selected by name (PRISMA 2020 included), and new protocols are pluggable.
+- Added headless configuration generators (`GenerateReviewConfig`, `GenerateScreeningConfig`, `GenerateZoteroConfig`) in the Go API, now used by the interactive review configurator.
+
+### Changed
+- Review, Screening, Convert, DownloadZotero, and DownloadURLList now return a structured result summarizing the run alongside the error.
+- Updated Go dependencies.
+
+### Fixed
+- The interactive review configurator emitted numeric LLM fields (temperature, token and request limits) as quoted strings, producing configurations that failed to load; they are now written as numbers.
+
 ## [0.13.1] - 2026-06-30
 ### Added
 - Added `[revaise]` options `human_oversight_level` and `reviewer_role`, configurable in the templates and the review configurators, to record the AI/human division of labor and the screening reviewer role

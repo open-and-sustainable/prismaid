@@ -62,7 +62,8 @@ Explore this website for comprehensive guidance on using the prismAId toolkit:
 6. [Review Support](review/review-workflow): Learn about methodologies and best practices for systematic reviews with prismAId.
 7. [Review Configurator](review/review-configurator): Quickly set up your review project with the web initializer tool.
 8. [RevAIse Integration](review/revaise-integration): Learn how to maintain cumulative RevAIse review records across prismAId stages.
-9. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
+9. [Protocol Conformance](conformance): Declaratively check a review record against a reporting protocol such as PRISMA 2020, using the SHACL shapes published by RevAIse.
+10. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
 
 ## New Releases and Updates
 Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.

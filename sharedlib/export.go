@@ -6,6 +6,7 @@ package main
 import "C"
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"unsafe"
@@ -25,17 +26,20 @@ func handlePanic() *C.char {
 // common logic as an helper function
 func runReview(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.Review(goInput)
+	_, err := prismaid.Review(goInput)
+	return err
 }
 
 func runDownloadZotero(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.DownloadZotero(goInput)
+	_, err := prismaid.DownloadZotero(goInput)
+	return err
 }
 
 func runDownloadURLList(path *C.char) error {
 	goPath := C.GoString(path)
-	return prismaid.DownloadURLList(goPath)
+	_, err := prismaid.DownloadURLList(goPath)
+	return err
 }
 
 func runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.char) error {
@@ -45,24 +49,42 @@ func runConvert(inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly *C.c
 	goSingleFile := C.GoString(singleFile)
 	goOcrOnly := strings.TrimSpace(strings.ToLower(C.GoString(ocrOnly)))
 	ocrOnlyEnabled := goOcrOnly == "1" || goOcrOnly == "true" || goOcrOnly == "yes"
-	return prismaid.Convert(goInputDir, goSelectedFormats, prismaid.ConvertOptions{
+	_, err := prismaid.Convert(goInputDir, goSelectedFormats, prismaid.ConvertOptions{
 		TikaServer: goTikaAddress,
 		PDF: prismaid.PDFOptions{
 			SingleFile: goSingleFile,
 			OCROnly:    ocrOnlyEnabled,
 		},
 	})
+	return err
 }
 
 func runScreening(input *C.char) error {
 	goInput := C.GoString(input)
-	return prismaid.Screening(goInput)
+	_, err := prismaid.Screening(goInput)
+	return err
 }
 
 func runValidate(configType, input *C.char) error {
 	goConfigType := C.GoString(configType)
 	goInput := C.GoString(input)
 	return prismaid.ValidateConfig(goConfigType, goInput)
+}
+
+// runCheckConformance runs a protocol conformance check and returns the report
+// as a JSON string. On error it returns a JSON object with an "error" field.
+func runCheckConformance(record, protocol *C.char) string {
+	report, err := prismaid.CheckConformance(C.GoString(record), C.GoString(protocol))
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	data, err := json.Marshal(report)
+	if err != nil {
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(errData)
+	}
+	return string(data)
 }
 
 // Python-specific function
@@ -121,6 +143,12 @@ func ValidateConfigPython(configType, input *C.char) *C.char {
 	return nil
 }
 
+//export CheckConformancePython
+func CheckConformancePython(record, protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runCheckConformance(record, protocol))
+}
+
 // R-specific exports
 //
 //export RunReviewR
@@ -175,6 +203,12 @@ func ValidateConfigR(configType, input *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString("Configuration is valid")
+}
+
+//export CheckConformanceR
+func CheckConformanceR(record, protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runCheckConformance(record, protocol))
 }
 
 // Free memory function used by both interfaces

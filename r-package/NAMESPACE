@@ -5,6 +5,7 @@ export(DownloadURLList)
 export(Convert)
 export(Screening)
 export(ValidateConfig)
+export(CheckConformance)
 
 # Register the C functions from the shared object
 useDynLib(prismaid, RunReviewR_wrap)
@@ -13,4 +14,5 @@ useDynLib(prismaid, DownloadURLListR_wrap)
 useDynLib(prismaid, ConvertR_wrap)
 useDynLib(prismaid, ScreeningR_wrap)
 useDynLib(prismaid, ValidateConfigR_wrap)
+useDynLib(prismaid, CheckConformanceR_wrap)
 useDynLib(prismaid, check_platform_support)
