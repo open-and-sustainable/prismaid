@@ -20,24 +20,40 @@ go get "github.com/open-and-sustainable/prismaid"
 
 ## Use
 Import and use the toolkit in your code:
+The execution functions return a result value summarizing the run alongside the error:
+
 ```go
 import "github.com/open-and-sustainable/prismaid"
 
 // Run screening on manuscripts
-err := prismaid.Screening(tomlConfigString)
+screeningResult, err := prismaid.Screening(tomlConfigString)
 
 // Download papers from Zotero
-err := prismaid.DownloadZotero(zoteroTomlConfigString)
+zoteroResult, err := prismaid.DownloadZotero(zoteroTomlConfigString)
+
+// Download files listed in a text or CSV file
+urlResult, err := prismaid.DownloadURLList("urls.txt")
 
 // Convert files to text
-err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.ConvertOptions{})
+convertResult, err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.ConvertOptions{})
 
 // Run a systematic review
-err := prismaid.Review(tomlConfigString)
+reviewResult, err := prismaid.Review(tomlConfigString)
+```
 
+Configuration helpers and protocol conformance:
+
+```go
 // Validate a configuration without executing it
 // configType is one of "review", "screening", or "zotero"
 err := prismaid.ValidateConfig("review", tomlConfigString)
+
+// Generate a configuration programmatically (also GenerateScreeningConfig, GenerateZoteroConfig).
+// Compose with ValidateConfig to confirm the result before use.
+reviewTOML := prismaid.GenerateReviewConfig(prismaid.ReviewConfigParams{ /* project, LLMs, prompt, review items */ })
+
+// Check a RevAIse review record against a reporting protocol's shapes
+report, err := prismaid.CheckConformance(recordJSON, "prisma-2020")
 ```
 
 Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
