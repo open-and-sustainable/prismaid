@@ -9,7 +9,7 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.14.0] - Unreleased
+## [0.14.0] - 2026-07-07
 ### Added
 - Added protocol conformance checking against the RevAIse SHACL shapes: `CheckConformance` in the Go API, a CLI `-conformance` flag, and bindings in Python, R, and Julia. The protocol is selected by name (PRISMA 2020 included), and new protocols are pluggable.
 - Added headless configuration generators (`GenerateReviewConfig`, `GenerateScreeningConfig`, `GenerateZoteroConfig`) in the Go API, now used by the interactive review configurator.
