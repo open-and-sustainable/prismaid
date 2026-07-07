@@ -3,7 +3,6 @@ title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literatur
 message: >-
   v0.14.0 - Added protocol conformance checking against RevAIse SHACL shapes and headless configuration generators, and made tool operations return structured results.
 type: software
-version: "0.14.0"
 doi: 10.5281/zenodo.11210796
 authors:
   - given-names: Riccardo
