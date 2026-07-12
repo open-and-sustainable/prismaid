@@ -27,7 +27,7 @@ prismAId is built for Open Science, and every feature serves that goal:
 
 ## Quickstart
 
-**Fastest — with an AI agent.** Connect an assistant to the [MCP server](mcp-server) and describe your review; it generates and validates the configuration, runs the tools, and checks conformance for you.
+**With an AI agent.** Connect an assistant to the [MCP server](mcp-server) and describe your review; it generates and validates the configuration, runs the tools, and checks conformance for you.
 
 **Or install and run directly.** Install prismAId for your platform — a no-coding binary or a language package — then create a configuration with the [web configurator](review/review-configurator) or the `-init` command and run your review. See [Installation & Setup](installation/setup-overview).
 
