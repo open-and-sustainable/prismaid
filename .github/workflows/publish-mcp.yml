@@ -1,8 +1,12 @@
 name: Publish MCP Server
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish without the leading v (e.g. 0.15.0). Leave blank to use the latest tag."
+        required: false
+        default: ""
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -19,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -36,8 +42,10 @@ jobs:
 
       - name: Set release metadata
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#v}"
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="$(git describe --tags --abbrev=0 | sed 's/^v//')"
+          fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER}/prismaid-mcp:$VERSION" >> "$GITHUB_ENV"
 
