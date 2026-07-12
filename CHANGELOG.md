@@ -9,7 +9,7 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.15.0] - Unreleased
+## [0.15.0] - 2026-07-12
 ### Added
 - Added an MCP server (`cmd/prismaid-mcp`) exposing the toolkit to AI agents over stdio: configuration generation and validation, screening, review, conversion, downloads, protocol conformance checking, and protocol guidance. It is distributed as a container image on GHCR and published to the MCP Registry on release.
 - Added `ProtocolGuidance`, returning a protocol's full requirement checklist grouped by record class so a conforming review can be planned up front; exposed across the Go API, CLI (`-guidance`), shared library, Python, R, and Julia.
