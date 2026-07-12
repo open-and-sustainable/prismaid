@@ -3,7 +3,6 @@ title: Julia Package
 layout: default
 ---
 
-
 # Julia Package
 
 ---
@@ -52,7 +51,15 @@ PrismAId.run_review(toml_config)  # Correct function name
 # Validate a configuration without executing it
 # config type is one of "review", "screening", or "zotero"
 PrismAId.validate_config("review", toml_config)
+
+# Check a RevAIse review record against a reporting protocol (returns a JSON string)
+report = PrismAId.check_conformance(record_json, "prisma-2020")
+
+# Get a protocol's full requirement checklist, to plan a conforming review
+guidance = PrismAId.protocol_guidance("prisma-2020")
 ```
+
+See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do.
 
 
 <div id="wcb" class="carbonbadge"></div>

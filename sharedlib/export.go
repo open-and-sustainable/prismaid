@@ -87,6 +87,22 @@ func runCheckConformance(record, protocol *C.char) string {
 	return string(data)
 }
 
+// runProtocolGuidance returns a protocol's requirement checklist as a JSON
+// string. On error it returns a JSON object with an "error" field.
+func runProtocolGuidance(protocol *C.char) string {
+	guidance, err := prismaid.ProtocolGuidance(C.GoString(protocol))
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	data, err := json.Marshal(guidance)
+	if err != nil {
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(errData)
+	}
+	return string(data)
+}
+
 // Python-specific function
 //
 //export RunReviewPython
@@ -149,6 +165,12 @@ func CheckConformancePython(record, protocol *C.char) *C.char {
 	return C.CString(runCheckConformance(record, protocol))
 }
 
+//export ProtocolGuidancePython
+func ProtocolGuidancePython(protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runProtocolGuidance(protocol))
+}
+
 // R-specific exports
 //
 //export RunReviewR
@@ -209,6 +231,12 @@ func ValidateConfigR(configType, input *C.char) *C.char {
 func CheckConformanceR(record, protocol *C.char) *C.char {
 	defer handlePanic()
 	return C.CString(runCheckConformance(record, protocol))
+}
+
+//export ProtocolGuidanceR
+func ProtocolGuidanceR(protocol *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runProtocolGuidance(protocol))
 }
 
 // Free memory function used by both interfaces

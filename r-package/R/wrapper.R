@@ -370,3 +370,30 @@ CheckConformance <- function(record_json, protocol) {
     result <- .Call("CheckConformanceR_wrap", record_json, protocol, PACKAGE = "prismaid")
     return(result)
 }
+
+#' Protocol Guidance
+#'
+#' This function returns a protocol's full requirement checklist, extracted from
+#' the SHACL shapes published by the RevAIse model.
+#'
+#' @description
+#' Returns the requirements a protocol imposes (for example "prisma-2020"),
+#' grouped by the record class each applies to. It is advisory: it describes what
+#' a conforming review needs and does not constrain the order in which prismAId's
+#' tools are used.
+#'
+#' @param protocol The protocol identifier (for example "prisma-2020").
+#' @return A JSON string with the guidance: an object with \code{protocol},
+#'   \code{name}, \code{version}, \code{status}, and \code{requirements} (each
+#'   carrying a \code{target_class} and a \code{message}). On failure the JSON has
+#'   an \code{error} field. Parse it with a JSON reader such as
+#'   \code{jsonlite::fromJSON}.
+#' @export
+#' @examples
+#' \dontrun{
+#' guidance <- ProtocolGuidance("prisma-2020")
+#' }
+ProtocolGuidance <- function(protocol) {
+    result <- .Call("ProtocolGuidanceR_wrap", protocol, PACKAGE = "prismaid")
+    return(result)
+}

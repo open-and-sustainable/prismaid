@@ -1,20 +1,15 @@
 ---
-title: Contributing
+title: Development
 layout: default
 ---
 
-# Contributing
+# Development
 
 ---
 
-## How to Contribute
-We welcome contributions to improve any aspect of the prismAId toolkit, whether you're fixing bugs, adding features, or enhancing documentation:
-- **Branching Strategy**: Create a new branch for each set of related changes and submit a pull request via GitHub.
-- **Code Reviews**: All submissions undergo thorough review to maintain code quality.
-- **Community Engagement**: Connect with us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions) for feature requests, suggestions, or questions. - Discuss in the Matrix [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org) or follow the [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.
+This page describes how prismAId is built — its software stack, architecture, and the Open Science principles behind it.
 
-### Guidelines
-For detailed contribution guidelines, see our [`CONTRIBUTING.md`](../CONTRIBUTING.md) and [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md).
+To contribute code, documentation, or ideas, see the [Contribution Guidelines](../CONTRIBUTING) and the [Code of Conduct](../CODE_OF_CONDUCT). To ask questions or propose features, reach us through GitHub [issues](https://github.com/open-and-sustainable/prismaid/issues) and [discussions](https://github.com/open-and-sustainable/prismaid/discussions), or the Matrix [prismAId Support Room](https://matrix.to/#/#prismAId-support:matrix.org).
 
 ## Software Stack
 
@@ -63,7 +58,6 @@ prismAId actively supports Open Science principles through:
 
 6. **Scientific Innovation**
    - Standardized, reusable methods facilitate innovation, cumulative knowledge, and rapid knowledge dissemination.
-
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

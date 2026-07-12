@@ -1,0 +1,81 @@
+name: Publish MCP Server
+
+on:
+  release:
+    types: [created]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Run tests
+        run: go test -short ./...
+
+      - name: Build MCP server
+        run: go build -o dist/prismaid-mcp ./cmd/prismaid-mcp
+
+      - name: Set release metadata
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER}/prismaid-mcp:$VERSION" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The registry entry should only be published after the referenced OCI image
+      # is already available in GHCR for the tagged version.
+      - name: Build and push MCP image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.prismaid-mcp
+          push: true
+          tags: ${{ env.IMAGE }}
+
+      - name: Update server.json for this release
+        run: |
+          jq --arg version "$VERSION" --arg image "$IMAGE" \
+            '.version = $version | .packages[0].identifier = $image' \
+            server.json > server.json.tmp
+          mv server.json.tmp server.json
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          chmod +x mcp-publisher
+          sudo mv mcp-publisher /usr/local/bin/mcp-publisher
+
+      - name: Authenticate with MCP Registry
+        run: mcp-publisher login github-oidc
+
+      - name: Publish to MCP Registry
+        run: mcp-publisher publish

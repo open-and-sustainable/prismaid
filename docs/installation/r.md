@@ -7,7 +7,7 @@ layout: default
 
 ---
 
-## Supported Platform
+## Supported Platforms
 - Linux: AMD64
 - macOS: Arm64
 
@@ -50,7 +50,15 @@ RunReview(toml_content)  # Note the capitalization
 # Validate a configuration without executing it
 # config type is one of "review", "screening", or "zotero"
 ValidateConfig("review", toml_content)
+
+# Check a RevAIse review record against a reporting protocol (returns a JSON string)
+report <- CheckConformance(record_json, "prisma-2020")
+
+# Get a protocol's full requirement checklist, to plan a conforming review
+guidance <- ProtocolGuidance("prisma-2020")
 ```
+
+See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do.
 
 
 <div id="wcb" class="carbonbadge"></div>

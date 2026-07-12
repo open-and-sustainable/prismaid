@@ -5,6 +5,8 @@ layout: default
 
 # Additional Setup Information
 
+---
+
 ## Configuration Initialization
 prismAId offers multiple ways to create review configuration files:
 
@@ -17,7 +19,7 @@ prismAId offers multiple ways to create review configuration files:
 ./prismaid -init
 ```
 
-![Terminal app for drafting project configuration file](https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/terminal.gif)
+![Terminal app for drafting project configuration file](https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/terminal.gif)
 
 ## Apache Tika Server for OCR (Optional)
 
@@ -141,7 +143,7 @@ See the [Convert Tool](../tools/convert-tool) documentation for more details.
 - Check firewall settings if accessing from another machine
 
 ## Use in Jupyter Notebooks
-When using versions <= 0.6.6 it is not possible to disable the prompt asking the user's confirmation to proceed with the review, leading Jupyter notebooks to crash the python engine and to the impossibility to run reviews with single models (in ensemble reviews, on the contrary, confirmation requests are automatically disabled).
+In versions <= 0.6.6, the prompt asking the user to confirm the review cannot be disabled. This crashes the Python engine in Jupyter notebooks and makes it impossible to run single-model reviews (in ensemble reviews, confirmation requests are disabled automatically).
 
 To overcome this problem, it is possible to intercept the IO on the terminal as it follows:
 ```python
@@ -160,7 +162,7 @@ def run_review_with_auto_input(input_str):
         os.dup2(slave, 2)  # Redirect stderr
         os.close(master)
         import prismaid
-        prismaid.RunReviewPython(input_str.encode("utf-8"))
+        prismaid.review(input_str)
         os._exit(0)
 
     else:  # Parent process

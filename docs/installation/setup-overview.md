@@ -10,15 +10,17 @@ layout: default
 ## Supported Systems
 prismAId is accessible across multiple platforms, offering flexibility based on user preference and system requirements:
 
-1. **Binaries**: Standalone executables for Windows, macOS, and Linux, requiring no coding skills.
+1. **MCP Server**: A main entry point for conversational use — connect an AI agent and let it drive the tools. See the [MCP Server](../mcp-server) page.
 
-2. **Go Package**: Full functionality for Go-based projects.
+2. **Binaries**: Standalone executables for Windows, macOS, and Linux, requiring no coding skills.
 
-3. **Python Package** on PyPI: For integration in Python scripts and Jupyter notebooks.
+3. **Go Package**: Full functionality for Go-based projects.
 
-4. **R Package** on R-universe: Compatible with R and RStudio environments.
+4. **Python Package** on PyPI: For integration in Python scripts and Jupyter notebooks.
 
-5. **Julia Package** from the Julia official package registry: For integration in Julia workflows and Jupyter notebooks.
+5. **R Package** on R-universe: Compatible with R and RStudio environments.
+
+6. **Julia Package** from the Julia official package registry: For integration in Julia workflows and Jupyter notebooks.
 
 ## Toolkit Overview
 
@@ -29,20 +31,20 @@ prismAId offers several specialized tools to support systematic reviews:
    - Filter by language detection
    - Classify and filter by article type (research, review, editorial, etc.)
 
-2. **Review Tool**: Process systematic literature reviews based on TOML configurations
+2. **Download Tool**: Acquire papers for your review
+   - Download PDFs directly from Zotero collections
+   - Download files from URL lists
+
+3. **Convert Tool**: Transform documents into analyzable text
+   - Convert PDFs, DOCX, and HTML files to plain text
+   - Prepare documents for AI processing
+
+4. **Review Tool**: Process systematic literature reviews based on TOML configurations
    - Configure review criteria, AI model settings, and output formats
    - Extract structured information from scientific papers
    - Generate comprehensive review summaries
 
-3. **Download Tool**: Acquire papers for your review
-   - Download PDFs directly from Zotero collections
-   - Download files from URL lists
-
-4. **Convert Tool**: Transform documents into analyzable text
-   - Convert PDFs, DOCX, and HTML files to plain text
-   - Prepare documents for AI processing
-
-5. **RevAIse Documentation Support**: Optionally document workflow stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records
+5. **RevAIse Documentation Support**: Optionally document workflow stages as [RevAIse](../review/revaise-integration) review records
    - Update the same review record across Zotero download, screening, and review/extraction stages
    - Preserve previous snapshots with automatic backups
 
@@ -53,7 +55,8 @@ prismAId offers several specialized tools to support systematic reviews:
 2. **Install prismAId**:
     - Follow the installation instructions below based on your preferred system.
 3. **Prepare Papers for Review:**
-    - Download papers using the Download tool
+    - Screen the manuscript list using the Screening tool to exclude out-of-scope items
+    - Download the retained papers using the Download tool
     - Convert papers to text format using the Convert tool
 4. **Define and Run the Review Project:**
     - Set up a configuration file (.toml) for your review project

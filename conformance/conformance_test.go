@@ -20,7 +20,21 @@ const sampleRecord = `{
   ]
 }`
 
+// skipIfOffline skips network-dependent tests in short mode and when the
+// published RevAIse catalogue cannot be reached, so they never fail offline.
+func skipIfOffline(t *testing.T) {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("skipping network-dependent conformance test in short mode")
+	}
+	if _, err := fetchCatalog(); err != nil {
+		t.Skipf("skipping: RevAIse catalogue unreachable: %v", err)
+	}
+}
+
 func TestCheckReportsPrismaGaps(t *testing.T) {
+	skipIfOffline(t)
+
 	report, err := Check(sampleRecord, "prisma-2020")
 	if err != nil {
 		t.Fatalf("Check failed: %v", err)
@@ -42,13 +56,20 @@ func TestCheckReportsPrismaGaps(t *testing.T) {
 }
 
 func TestCheckUnknownProtocol(t *testing.T) {
+	skipIfOffline(t)
+
 	if _, err := Check(sampleRecord, "made-up"); err == nil {
 		t.Fatal("expected an error for an unknown protocol")
 	}
 }
 
 func TestAvailableProtocols(t *testing.T) {
-	got := AvailableProtocols()
+	skipIfOffline(t)
+
+	got, err := AvailableProtocols()
+	if err != nil {
+		t.Fatalf("AvailableProtocols failed: %v", err)
+	}
 	found := false
 	for _, p := range got {
 		if p == "prisma-2020" {
@@ -57,6 +78,44 @@ func TestAvailableProtocols(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("expected prisma-2020 among available protocols, got %v", got)
+	}
+}
+
+func TestProtocolGuidance(t *testing.T) {
+	skipIfOffline(t)
+
+	guidance, err := ProtocolGuidance("prisma-2020")
+	if err != nil {
+		t.Fatalf("ProtocolGuidance failed: %v", err)
+	}
+	if guidance.Name == "" {
+		t.Error("expected protocol metadata (name) to be populated")
+	}
+	if len(guidance.Requirements) == 0 {
+		t.Fatal("expected at least one requirement")
+	}
+
+	// Requirements should carry the protocol's own messages and be grouped by
+	// the record class they apply to.
+	foundReview := false
+	for _, r := range guidance.Requirements {
+		if r.Message == "" {
+			t.Error("expected every requirement to carry a message")
+		}
+		if r.TargetClass == "Review" {
+			foundReview = true
+		}
+	}
+	if !foundReview {
+		t.Error("expected at least one Review-class requirement")
+	}
+}
+
+func TestProtocolGuidanceUnknown(t *testing.T) {
+	skipIfOffline(t)
+
+	if _, err := ProtocolGuidance("made-up"); err == nil {
+		t.Fatal("expected an error for an unknown protocol")
 	}
 }
 

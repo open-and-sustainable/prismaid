@@ -1,4 +1,13 @@
+---
+title: Language Detection Filter
+layout: default
+---
+
 # Language Detection Filter
+
+---
+
+Part of the prismAId [Screening Tool](../tools/screening-tool).
 
 ## Overview
 
@@ -140,6 +149,16 @@ accepted_languages = []  # Empty means accept all
 use_ai = false  # Still detects and tags language
 ```
 
+## Best Practices
+
+1. **Title Priority**: Trust title language over abstract due to translation practices
+2. **Journal Context**: Consider journal names as language indicators
+3. **AI for Edge Cases**: Use AI mode when dealing with:
+   - Regional publications
+   - Mixed-language collections
+   - Manuscripts with technical Latin terms
+4. **Fallback Strategy**: AI mode always falls back to rule-based on errors
+
 ## Performance Considerations
 
 ### Rule-Based Mode
@@ -152,19 +171,12 @@ use_ai = false  # Still detects and tags language
 - **Accuracy**: Better for edge cases and mixed languages
 - **Cost**: API costs apply
 
-## Best Practices
-
-1. **Title Priority**: Trust title language over abstract due to translation practices
-2. **Journal Context**: Consider journal names as language indicators
-3. **AI for Edge Cases**: Use AI mode when dealing with:
-   - Regional publications
-   - Mixed-language collections
-   - Manuscripts with technical Latin terms
-4. **Fallback Strategy**: AI mode always falls back to rule-based on errors
-
 ## Filter Order
 
 Language detection is applied second in the screening pipeline, after deduplication but before article type classification. This ensures:
 - No duplicate processing
 - Language tags available for downstream filters
 - Efficient exclusion of non-target language papers
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

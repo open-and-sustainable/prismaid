@@ -19,7 +19,7 @@ Conformance sits on top of prismAId's existing open-science layer and combines t
 
 Two principles make this more than a convenience wrapper, and they are worth stating explicitly:
 
-1. **Requirements live in the protocol, not in the software.** The rules a review must satisfy are the SHACL shapes, which are data. A single engine serves any protocol, and adopting a new or revised protocol requires no change to prismAId.
+1. **Requirements live in the protocol, not in the software.** The rules a review must satisfy are the SHACL shapes, which are data. prismAId pulls those shapes from where RevAIse publishes them (its GitHub Pages site) at check time rather than bundling a copy, so it always validates against the latest published version. A single engine serves any protocol, and adopting a new or revised protocol requires no change to prismAId.
 2. **Conformance is a symbolic verdict, not the model's opinion.** Whether a review meets a standard is decided by validating the record against the shapes. The claim is machine-checked and reproducible, not produced by the model that also did the review.
 
 This is what lets AI contributions be verified against versioned, declarative standards — the payoff for open science.
@@ -32,11 +32,15 @@ The mechanism is a short, deterministic pipeline:
 2. The graph is validated against the selected protocol's SHACL shapes.
 3. The result is a report: whether the record **conforms**, plus a list of **unmet constraints**, each carrying the protocol's own message — for PRISMA 2020, mapped to the numbered checklist items (for example *"PRISMA 2020 (25): funding sources must be declared."*).
 
-prismAId records the stages it actually performs — search, screening, and extraction. The other stages a protocol requires — registration, risk-of-bias assessment, synthesis, reporting — are documented by the reviewer (guided by an agent) in the same RevAIse record. Because conformance is evaluated over the whole record, the report tells you what is still missing across the **entire** protocol, not just the automated part.
+prismAId performs screening and data extraction, and helps you acquire and convert the papers in between. The other stages a protocol requires — searching and identifying records, registration, risk-of-bias assessment, synthesis, and reporting — are documented by the reviewer (guided by an agent) in the same RevAIse record. Because conformance is evaluated over the whole record, the report tells you what is still missing across the **entire** protocol, not just the automated part.
+
+## Guidance
+
+Conformance answers whether a finished record meets a protocol. To see what a conforming review needs **before** you start — the protocol's full requirement checklist, grouped by record class — use [Protocol Guidance](guidance). It is the proactive companion to the reactive check on this page.
 
 ## Protocols
 
-Protocols are selected by name. **PRISMA 2020** is included. The design is pluggable: as the RevAIse model publishes shapes for additional protocols, they become available by name, with no change to prismAId's code.
+Protocols are selected by name. **PRISMA 2020** is available today. Both the list of protocols and their shapes are pulled at check time from the latest versions RevAIse publishes on GitHub Pages — nothing is bundled with prismAId — so as RevAIse publishes shapes for additional protocols they become available by name automatically, with no change to prismAId's code and no new release. Because the shapes are fetched on demand, conformance checking requires a network connection.
 
 ## Usage
 
@@ -76,6 +80,8 @@ report <- CheckConformance(record_json, "prisma-2020")
 report = PrismAId.check_conformance(record_json, "prisma-2020")
 ```
 
+Through the [MCP server](mcp-server) the same check is available to AI agents as the `prismaid_check_conformance` tool.
+
 ## The report
 
 Every channel returns the same information:
@@ -85,7 +91,7 @@ Every channel returns the same information:
 
 The verdict and the messages come entirely from the protocol's shapes, so the report reflects the standard itself, not prismAId's interpretation of it.
 
-See [RevAIse Integration](review/revaise-integration) for how the review record is produced and maintained across stages.
+See [RevAIse Integration](review/revaise-integration) for how the review record is produced and maintained across stages, and [Protocol Guidance](guidance) to see a protocol's full requirement checklist before you check.
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

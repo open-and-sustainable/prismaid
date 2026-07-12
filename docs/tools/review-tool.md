@@ -49,7 +49,7 @@ import "github.com/open-and-sustainable/prismaid"
 
 // Run a systematic review with a TOML configuration string
 tomlConfig := "..." // Your TOML configuration as a string
-err := prismaid.Review(tomlConfig)
+reviewResult, err := prismaid.Review(tomlConfig)
 ```
 
 ### Python Package
@@ -216,7 +216,7 @@ The **`[prompt]`** section breaks down the prompt structure into essential compo
 
 ### Prompt Structure
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prompt_struct.png" alt="Prompt Structure Diagram" style="width: 90%;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/prompt_struct.png" alt="Prompt Structure Diagram" style="width: 90%;">
 </div>
 
 Each component clarifies the model's role, task, and expected output, reducing ambiguity. Definitions and examples enhance clarity, while a failsafe mechanism prevents forced responses if information is absent.

@@ -1,4 +1,11 @@
+---
+title: Code of Conduct
+layout: default
+---
+
 # Code of Conduct
+
+---
 
 ## Our Pledge
 

@@ -1,4 +1,11 @@
-# Contributing to primsAId
+---
+title: Contribution Guidelines
+layout: default
+---
+
+# Contributing to prismAId
+
+---
 
 Thank you for your interest in contributing to prismAId! We welcome contributions from everyone and value your input and efforts to improve this project. Below, you will find guidelines and instructions on how to contribute effectively and ensure a smooth collaboration process.
 

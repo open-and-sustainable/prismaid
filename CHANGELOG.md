@@ -9,6 +9,19 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.15.0] - 2026-07-12
+### Added
+- Added an MCP server (`cmd/prismaid-mcp`) exposing the toolkit to AI agents over stdio: configuration generation and validation, screening, review, conversion, downloads, protocol conformance checking, and protocol guidance. It is distributed as a container image on GHCR and published to the MCP Registry on release.
+- Added `ProtocolGuidance`, returning a protocol's full requirement checklist grouped by record class so a conforming review can be planned up front; exposed across the Go API, CLI (`-guidance`), shared library, Python, R, and Julia.
+
+### Changed
+- Protocol conformance now fetches the protocol catalogue and SHACL shapes from the latest versions RevAIse publishes on GitHub Pages instead of shapes vendored in the repository, so new or revised protocols become available without a prismAId release; conformance and guidance now require network access.
+- `ConformanceProtocols` now returns an error alongside the list of protocols.
+- Reworked the documentation site: dedicated MCP Server and Protocol Guidance pages, an Open Science-led landing page and Recipes page, MCP-first navigation, and consistency and flow fixes throughout.
+
+### Removed
+- Removed the vendored PRISMA 2020 SHACL shapes from the repository; the shapes are now fetched from RevAIse.
+
 ## [0.14.0] - 2026-07-07
 ### Added
 - Added protocol conformance checking against the RevAIse SHACL shapes: `CheckConformance` in the Go API, a CLI `-conformance` flag, and bindings in Python, R, and Julia. The protocol is selected by name (PRISMA 2020 included), and new protocols are pluggable.

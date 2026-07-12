@@ -11,6 +11,7 @@ char* ConvertR(char* inputDir, char* selectedFormats, char* tikaAddress, char* s
 char* ScreeningR(char* input);
 char* ValidateConfigR(char* configType, char* input);
 char* CheckConformanceR(char* record, char* protocol);
+char* ProtocolGuidanceR(char* protocol);
 void FreeCString(char* str);
 
 #endif // CGO_EXPORT_H

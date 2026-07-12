@@ -1,4 +1,13 @@
+---
+title: Article Type Classification Filter
+layout: default
+---
+
 # Article Type Classification Filter
+
+---
+
+Part of the prismAId [Screening Tool](../tools/screening-tool).
 
 ## Overview
 
@@ -187,6 +196,17 @@ include_types = ["research_article", "systematic_review", "meta_analysis"]
 | Editorial on research ethics | editorial |
 | Cohort study of 1000 patients | research_article, empirical_study, sample_study |
 
+## Best Practices
+
+1. **Understand Overlapping Types**: Remember that manuscripts can have multiple types
+2. **Use Exclusions Carefully**: Excluding one type may affect related types
+3. **Consider `include_types`**: Use for precise control over accepted types
+4. **AI for Complex Cases**: Use AI mode when dealing with:
+   - Interdisciplinary research
+   - Novel publication formats
+   - Non-standard article structures
+5. **Review Classifications**: Check the assigned types in output to verify accuracy
+
 ## Performance Considerations
 
 ### Rule-Based Mode
@@ -199,20 +219,12 @@ include_types = ["research_article", "systematic_review", "meta_analysis"]
 - **Accuracy**: Better for nuanced classification and edge cases
 - **Cost**: API costs apply
 
-## Best Practices
-
-1. **Understand Overlapping Types**: Remember that manuscripts can have multiple types
-2. **Use Exclusions Carefully**: Excluding one type may affect related types
-3. **Consider `include_types`**: Use for precise control over accepted types
-4. **AI for Complex Cases**: Use AI mode when dealing with:
-   - Interdisciplinary research
-   - Novel publication formats
-   - Non-standard article structures
-5. **Review Classifications**: Check the assigned types in output to verify accuracy
-
 ## Filter Order
 
 Article type classification is applied third in the screening pipeline, after deduplication and language detection. This ensures:
 - No duplicate processing
 - Only manuscripts in accepted languages are classified
 - Classification tags available for final inclusion decisions
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

@@ -165,8 +165,9 @@ type ConformanceReport = conformance.Report
 // decided symbolically rather than asserted by prismAId.
 //
 // The protocol is selected by name; ConformanceProtocols lists the accepted
-// values, and an unknown protocol is reported as an error. The check is
-// read-only and offline, using shapes and context vendored with prismAId.
+// values, and an unknown protocol is reported as an error. The shapes are pulled
+// from the latest version RevAIse publishes on GitHub Pages, so the check
+// requires network access; nothing is vendored with prismAId.
 func CheckConformance(recordJSON, protocol string) (ConformanceReport, error) {
 	report, err := conformance.Check(recordJSON, protocol)
 	if err != nil {
@@ -176,9 +177,28 @@ func CheckConformance(recordJSON, protocol string) (ConformanceReport, error) {
 }
 
 // ConformanceProtocols returns the protocol identifiers accepted by
-// CheckConformance.
-func ConformanceProtocols() []string {
+// CheckConformance. It reads the catalogue RevAIse publishes on GitHub Pages, so
+// it requires network access and returns an error if the catalogue is
+// unreachable.
+func ConformanceProtocols() ([]string, error) {
 	return conformance.AvailableProtocols()
+}
+
+// ConformanceGuidance is the full set of requirements a protocol imposes,
+// together with its metadata.
+type ConformanceGuidance = conformance.Guidance
+
+// ProtocolGuidance returns the requirement checklist a protocol imposes,
+// extracted from the SHACL shapes RevAIse publishes, together with the protocol's
+// metadata. It is advisory — it helps plan a conforming review before any record
+// exists — and does not constrain the order in which prismAId's tools are used.
+// It requires network access.
+func ProtocolGuidance(protocol string) (ConformanceGuidance, error) {
+	guidance, err := conformance.ProtocolGuidance(protocol)
+	if err != nil {
+		return ConformanceGuidance{}, err
+	}
+	return *guidance, nil
 }
 
 // Screening processes a list of manuscripts to identify items for exclusion based on various criteria.

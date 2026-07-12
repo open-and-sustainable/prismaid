@@ -3,19 +3,39 @@ title: Home
 layout: default
 ---
 
-# Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
+# prismAId
 
-## Purpose and Benefits
-prismAId changes the way researchers conduct systematic reviews using generative AI. Designed for scholars and professionals alike, it provides a comprehensive toolkit that simplifies the screening, extraction, and analysis of data from scientific literature without requiring coding skills. Whether you're exploring established fields or pioneering new research areas, prismAId ensures that your review processes are efficient, accurate, and reproducible.
+### Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
-### Key Advantages
+**Run systematic literature reviews with generative AI: transparent, reproducible, and verifiable against reporting standards — with no coding required.**
 
-- **Accessibility**: Easy-to-use interfaces ensure that anyone can leverage advanced AI tools for literature reviews, whether working from the command line or a web browser.
-- **Flexibility**: Supports a wide range of literature review protocols, including the Prisma 2020, so teams can align the toolkit with existing workflows.
-- **Replicability**: Enables seamless saving and sharing of review inputs, ensuring that any researcher can reproduce or continue the analysis effortlessly, even across institutions.
-- **Efficiency**: Optimized for handling large datasets with minimal setup, reducing the time from research to results by automating repetitive screening steps.
-- **Innovation**: Continuously updated to incorporate the latest AI advancements, keeping your research at the cutting edge with modern language models.
-- **Multi-platform**: Available through multiple programming languages (Go, Python, R, Julia) and as standalone binaries, enabling integration into diverse analytical stacks.
+prismAId screens, acquires, converts, and extracts data from scientific literature, and lets you check the result against reporting protocols such as PRISMA 2020. It is **Open Science first**: every step is built to be shared, reproduced, and machine-checked against public standards.
+
+[Get started](installation/setup-overview) · [Use it from an AI agent](mcp-server) · [Source on GitHub](https://github.com/open-and-sustainable/prismaid)
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11210796.svg)](https://doi.org/10.5281/zenodo.11210796) · Free and open source under AGPL-3.0
+
+## Why prismAId
+
+prismAId is built for Open Science, and every feature serves that goal:
+
+- **Open by design** — free and open source under AGPL-3.0, archived on [Zenodo](https://doi.org/10.5281/zenodo.11210796), and usable with no coding skills, so anyone can run and reproduce a review.
+- **Reproducible** — each review is defined by shareable configuration files and cumulative [RevAIse](review/revaise-integration) records, so any researcher can rerun or continue an analysis, even across institutions.
+- **Verifiable against standards** — conformance to reporting protocols such as PRISMA 2020 is decided by machine-checked [SHACL shapes](conformance), not asserted by the model. It is a reproducible claim, not a promise — and you can see a protocol's [full requirement checklist](guidance) before you start.
+- **Accessible everywhere** — drive the whole toolkit from an [AI agent](mcp-server), the command line, a web form, or Go/Python/R/Julia.
+- **Current** — supports the latest models from OpenAI, Google, Anthropic, Cohere, DeepSeek and others, plus cloud and self-hosted endpoints.
+
+## Quickstart
+
+**Fastest — with an AI agent.** Connect an assistant to the [MCP server](mcp-server) and describe your review; it generates and validates the configuration, runs the tools, and checks conformance for you.
+
+**Or install and run directly:**
+
+```bash
+pip install prismaid   # also available for Go, R, and Julia, or as a no-coding binary
+```
+
+Create a configuration with the [web configurator](review/review-configurator) or the `-init` command, then run your review. Full instructions: [Installation & Setup](installation/setup-overview).
 
 ## The prismAId Toolkit
 
@@ -33,37 +53,47 @@ prismAId offers a suite of tools to support every stage of your systematic revie
 5. **RevAIse documentation support** - Optionally document review stages as [RevAIse](https://revaise-model.readthedocs.io/stable/) review records
 
 ### Access Methods
-- **Command Line Interface** - For users who prefer terminal-based workflows
-- **Web Initializer** - A browser-based setup tool for configuring reviews
-- **Programming Libraries** - API access through multiple languages:
-  - Go (native implementation)
-  - Python package
-  - R package
-  - Julia package
+
+prismAId can be used two complementary ways:
+
+- **Through an AI agent (MCP server)** — a main entry point for anyone exploring prismAId. Connect an AI assistant to the [prismAId MCP server](mcp-server) and work in conversation: it helps you generate and validate configurations, run the tools, and check and plan for protocol conformance, exposing every capability below through one interface.
+- **Directly, on your platform of choice** — granular, multi-platform access to the same tools:
+  - **Command Line Interface** — for terminal-based workflows
+  - **Web Initializer** — a browser-based setup tool for configuring reviews
+  - **Programming Libraries** — Go (native implementation), Python, R, and Julia packages
 
 ## Workflow
 Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review. Optional RevAIse support can document Zotero download, screening, and review/extraction stages in one cumulative review record.
 
 <div style="text-align: left;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
 </div>
 
-## Table of Contents
-Explore this website for comprehensive guidance on using the prismAId toolkit:
-1. [Installation & Setup](installation/setup-overview): Learn how to install prismAId tools and configure them for different environments.
-2. [Screening Tool](tools/screening-tool): Filter manuscripts with multiple screening filters:
-   - [Deduplication](filters/deduplication) - Identify and remove duplicate manuscripts
-   - [Language Detection](filters/language) - Filter by manuscript language
-   - [Article Type](filters/article-type) - Classify publication types
-   - [Topic Relevance](filters/topic-relevance) - Score relevance to research topics
-3. [Download Tool](tools/download-tool): Discover how to efficiently acquire papers from Zotero collections or URL lists.
-4. [Convert Tool](tools/convert-tool): Learn to transform documents from various formats into plain text for analysis.
-5. [Review Tool](tools/review-tool): Master the core systematic review functionality for extracting structured information.
-6. [Review Support](review/review-workflow): Learn about methodologies and best practices for systematic reviews with prismAId.
-7. [Review Configurator](review/review-configurator): Quickly set up your review project with the web initializer tool.
-8. [RevAIse Integration](review/revaise-integration): Learn how to maintain cumulative RevAIse review records across prismAId stages.
-9. [Protocol Conformance](conformance): Declaratively check a review record against a reporting protocol such as PRISMA 2020, using the SHACL shapes published by RevAIse.
-10. [Help & Development](support/help): Find troubleshooting tips and answers to frequently asked questions about prismAId features and results and how you can contribute to its advancement.
+## Documentation
+
+**Get started**
+- [Installation & Setup](installation/setup-overview) — install prismAId and configure it for your environment
+- [Recipes](recipes) — short, task-oriented guides for common workflows
+- [MCP Server](mcp-server) — drive the whole toolkit from an AI agent
+
+**Tools**
+- [Screening](tools/screening-tool) — filter manuscripts: [deduplication](filters/deduplication), [language](filters/language), [article type](filters/article-type), [topic relevance](filters/topic-relevance)
+- [Download](tools/download-tool) — acquire papers from Zotero collections or URL lists
+- [Convert](tools/convert-tool) — transform PDF, DOCX, and HTML into plain text
+- [Review](tools/review-tool) — extract structured information from the literature
+
+**Reviews & records**
+- [Review Workflow](review/review-workflow) — methodology and best practices
+- [Review Configurator](review/review-configurator) — build a configuration in the browser
+- [RevAIse Integration](review/revaise-integration) — maintain a cumulative review record across stages
+
+**Protocol conformance**
+- [Protocol Conformance](conformance) — check a review record against a protocol such as PRISMA 2020
+- [Protocol Guidance](guidance) — a protocol's full requirement checklist, up front
+
+**Help & contributing**
+- [Help](support/help) — troubleshooting and FAQ
+- [Development](support/development) — how prismAId is built and how to contribute
 
 ## New Releases and Updates
 Follow the Matrix [prismAId Announcements Room](https://matrix.to/#/#prismAId-announcements:matrix.org) for the latest updates and release notifications.

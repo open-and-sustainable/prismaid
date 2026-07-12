@@ -189,3 +189,10 @@ Current RevAIse hooks:
 - Zotero download TOML: full-text output artifact for `zotero.output_dir`.
 
 Unsupported hooks are ignored unless implemented in a future release.
+
+## Next Steps
+
+Once stages are recorded in a RevAIse review record, [check it for protocol conformance](../conformance) against a reporting protocol such as PRISMA 2020, and use [Protocol Guidance](../guidance) to see the protocol's full requirement checklist.
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

@@ -1,5 +1,5 @@
 ---
-title: Go Package 
+title: Go Package
 layout: default
 ---
 
@@ -54,9 +54,12 @@ reviewTOML := prismaid.GenerateReviewConfig(prismaid.ReviewConfigParams{ /* proj
 
 // Check a RevAIse review record against a reporting protocol's shapes
 report, err := prismaid.CheckConformance(recordJSON, "prisma-2020")
+
+// Get a protocol's full requirement checklist, to plan a conforming review
+guidance, err := prismaid.ProtocolGuidance("prisma-2020")
 ```
 
-Refer to full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
+See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do, and the full [documentation on pkg.go.dev](https://pkg.go.dev/github.com/open-and-sustainable/prismaid) for additional details.
 
 
 <div id="wcb" class="carbonbadge"></div>

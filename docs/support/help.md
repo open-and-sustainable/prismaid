@@ -23,7 +23,7 @@ If you need assistance with any prismAId tool, you can:
 - **Feature Requests**: To submit requests for new functionalities, participate in [GitHub Discussions](https://github.com/open-and-sustainable/prismaid/discussions).
 
 ### Screening Tool Issues
-- **False Positives in Deduplication**: Adjust the similarity threshold (increase from 0.85 to 0.95 for stricter matching).
+- **False Positives in Deduplication**: Narrow the compared fields (`compare_fields`) or enable AI-based matching (`use_ai`) for more reliable duplicate detection.
 - **Language Detection Errors**: Enable AI-based detection for mixed-language documents or check text encoding.
 - **Article Type Misclassification**: Review classification rules or use AI-based classification for ambiguous cases.
 

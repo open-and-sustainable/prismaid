@@ -59,6 +59,10 @@ _CheckConformancePython = lib.CheckConformancePython
 _CheckConformancePython.argtypes = [c_char_p, c_char_p]
 _CheckConformancePython.restype = c_char_p
 
+_ProtocolGuidancePython = lib.ProtocolGuidancePython
+_ProtocolGuidancePython.argtypes = [c_char_p]
+_ProtocolGuidancePython.restype = c_char_p
+
 _FreeCString = lib.FreeCString
 _FreeCString.argtypes = [c_char_p]
 _FreeCString.restype = None
@@ -239,3 +243,35 @@ def check_conformance(record_json: str, protocol: str) -> dict:
     if isinstance(report, dict) and report.get("error"):
         raise Exception(report["error"])
     return report
+
+
+def protocol_guidance(protocol: str) -> dict:
+    """
+    Return a protocol's full requirement checklist.
+
+    The checklist is extracted from the protocol's SHACL shapes published by the
+    RevAIse model. It is advisory: it describes what a conforming review needs
+    and does not constrain the order in which prismAId's tools are used.
+
+    Args:
+        protocol (str): The protocol identifier (e.g. "prisma-2020").
+
+    Returns:
+        dict: The guidance with keys "protocol", "name", "version", "status", and
+            "requirements" (each with a "target_class" and a "message").
+
+    Raises:
+        Exception: If guidance fails, for example an unknown protocol.
+    """
+    result = cast(
+        bytes | None,
+        _ProtocolGuidancePython(protocol.encode("utf-8")),
+    )
+    if not result:
+        raise Exception("protocol guidance returned no result")
+    raw = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    guidance = json.loads(raw)
+    if isinstance(guidance, dict) and guidance.get("error"):
+        raise Exception(guidance["error"])
+    return guidance
