@@ -199,7 +199,35 @@ function check_conformance(record_json::String, protocol::String)
     return result
 end
 
+"""
+    protocol_guidance(protocol::String)
+
+Return a protocol's full requirement checklist. `protocol` selects the protocol
+(for example `"prisma-2020"`). The checklist is extracted from the protocol's SHACL
+shapes published by the RevAIse model; it is advisory and does not constrain the
+order in which prismAId's tools are used.
+
+Returns the guidance as a JSON string — an object with `protocol`, `name`,
+`version`, `status`, and `requirements` (each with a `target_class` and a
+`message`), or an `error` field when guidance fails. Parse it with a JSON package
+such as JSON.jl.
+"""
+function protocol_guidance(protocol::String)
+    if isempty(protocol)
+        throw(ArgumentError("Protocol cannot be empty"))
+    end
+
+    c_output = ccall((:ProtocolGuidancePython, library_path), Ptr{Cchar}, (Cstring,), protocol)
+    if c_output == C_NULL
+        throw(ErrorException("protocol guidance returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
 # Export public functions
-export run_review, download_zotero, download_url_list, convert, screening, validate_config, check_conformance
+export run_review, download_zotero, download_url_list, convert, screening, validate_config, check_conformance, protocol_guidance
 
 end # module PrismAId

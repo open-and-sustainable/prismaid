@@ -48,6 +48,7 @@ func main() {
 
 	conformancePath := flag.String("conformance", "", "Path to a RevAIse review-record JSON file to check for protocol conformance")
 	protocol := flag.String("protocol", "prisma-2020", "Protocol to check conformance against (used with -conformance)")
+	guidanceProtocol := flag.String("guidance", "", "Protocol name to print the requirement checklist for (e.g. 'prisma-2020')")
 
 	flag.Parse()
 
@@ -77,6 +78,13 @@ func main() {
 	if *conformancePath != "" {
 		logger.SetupLogging(logger.Stdout, "")
 		handleConformance(*conformancePath, *protocol)
+		return
+	}
+
+	// Protocol guidance: print a protocol's requirement checklist (no execution)
+	if *guidanceProtocol != "" {
+		logger.SetupLogging(logger.Stdout, "")
+		handleGuidance(*guidanceProtocol)
 		return
 	}
 
@@ -397,6 +405,25 @@ func handleConformance(recordPath, protocol string) {
 		logger.Info("  - " + v.Message)
 	}
 	os.Exit(1)
+}
+
+// handleGuidance prints a protocol's requirement checklist, each item labelled
+// with the record class it applies to. It exits with status code 1 on error.
+func handleGuidance(protocol string) {
+	guidance, err := prismaid.ProtocolGuidance(protocol)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Guidance failed: %v", err))
+		os.Exit(1)
+	}
+
+	logger.Info(fmt.Sprintf("%s requirements (%d):", protocol, len(guidance.Requirements)))
+	for _, r := range guidance.Requirements {
+		if r.TargetClass != "" {
+			logger.Info(fmt.Sprintf("  [%s] %s", r.TargetClass, r.Message))
+		} else {
+			logger.Info("  " + r.Message)
+		}
+	}
 }
 
 func handleZoteroDownload(configPath string) {
