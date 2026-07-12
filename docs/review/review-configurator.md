@@ -1,13 +1,15 @@
 ---
-title: Config Generator
+title: Review Configurator
 layout: default
 ---
 
 <link rel="stylesheet" href="/assets/css/styles.css">
 
-# Generate Your Review Configuration File
+# Review Configurator
 
-This configurator helps you create a TOML configuration file for the prismAId Review tool, which processes systematic literature reviews using AI models. For other tools in the prismAId toolkit (Download, Convert), please refer to their respective documentation.
+---
+
+This configurator helps you create a TOML configuration file for the prismAId [Review tool](../tools/review-tool), which processes systematic literature reviews using AI models. For other tools in the prismAId toolkit, see the [Download](../tools/download-tool) and [Convert](../tools/convert-tool) tool pages.
 
 <form id="configForm">
     <h2 id="project-information">Project Information</h2>

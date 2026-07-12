@@ -42,10 +42,10 @@ The Download tool can be accessed through multiple interfaces to fit your prefer
 import "github.com/open-and-sustainable/prismaid"
 
 // Download from URL list
-err := prismaid.DownloadURLList("path/to/urls.txt")
+urlResult, err := prismaid.DownloadURLList("path/to/urls.txt")
 
 // Download from Zotero
-err := prismaid.DownloadZotero(zoteroTomlConfig)
+zoteroResult, err := prismaid.DownloadZotero(zoteroTomlConfig)
 ```
 
 ### Python Package
@@ -337,7 +337,7 @@ The Zotero integration allows direct access to papers stored in your Zotero libr
    - Your **user ID** is displayed at the top:
 
    <div style="text-align: center;">
-       <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 600px;">
+       <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/zotero_user.png" alt="Zotero User ID" style="width: 600px;">
    </div>
 
 2. **Generate an API Key**:
@@ -348,7 +348,7 @@ The Zotero integration allows direct access to papers stored in your Zotero libr
    - Click "Save Key" and copy your new API key
 
    <div style="text-align: center;">
-       <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 600px;">
+       <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/zotero_apikey.png" alt="Zotero API Key" style="width: 600px;">
    </div>
 
 ### Specifying Collections and Groups

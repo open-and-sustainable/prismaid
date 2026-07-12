@@ -53,7 +53,15 @@ prismaid.review(toml_config)
 # Validate a configuration without executing it
 # config type is one of "review", "screening", or "zotero"
 prismaid.validate_config("review", toml_config)
+
+# Check a RevAIse review record against a reporting protocol (returns a dict)
+report = prismaid.check_conformance(record_json, "prisma-2020")
+
+# Get a protocol's full requirement checklist, to plan a conforming review
+guidance = prismaid.protocol_guidance("prisma-2020")
 ```
+
+See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do.
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

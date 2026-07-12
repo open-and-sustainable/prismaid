@@ -1,4 +1,4 @@
-# ![logo](https://raw.githubusercontent.com/ricboer0/prismAId/main/figures/prismAId_logo.png) prismAId
+# ![logo](https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/prismAId_logo.png) prismAId
 # Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 
 prismAId offers a suite of tools using generative AI models to streamline systematic reviews of scientific literature.
@@ -39,10 +39,11 @@ prismAId offers a comprehensive set of tools for systematic literature reviews:
 Our tools support a comprehensive systematic review workflow following the standard sequence: Search → Screen → Download → Convert → Review. RevAIse support can document Zotero download, screening, and review/extraction stages in one cumulative review record.
 
 <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/ricboer0/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
+    <img src="https://raw.githubusercontent.com/open-and-sustainable/prismaid/main/figures/prismAId_workflow.png" alt="Workflow Diagram" style="width: 600px;">
 </div>
 
 ### Access Methods
+- **AI agents via the MCP server** - A main entry point: connect an AI assistant to the [prismAId MCP server](https://prismaid.review/mcp-server.html) and drive every tool in conversation
 - **Command Line Interface** - For users who prefer terminal-based workflows
 - **Web Initializer** - A browser-based setup tool for configuring reviews
 - **Programming Libraries** - API access through multiple languages:
@@ -54,8 +55,9 @@ Our tools support a comprehensive systematic review workflow following the stand
 ---
 
 ## Specifications
-- **Review protocol**: Supports any literature review protocol with a preference for [Prisma 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
+- **Review protocol**: Supports any literature review protocol with a preference for [PRISMA 2020](https://www.prisma-statement.org/prisma-2020), which inspired our project name.
 - **Review documentation**: Optional [RevAIse](https://revaise-model.readthedocs.io/stable/) review-record support with cumulative updates and automatic backups; see the [RevAIse integration guide](https://prismaid.review/review/revaise-integration.html).
+- **Protocol conformance**: Check RevAIse review records against reporting protocols such as PRISMA 2020, and get a protocol's full requirement checklist, using the SHACL shapes published by RevAIse; see the [conformance](https://prismaid.review/conformance.html) and [guidance](https://prismaid.review/guidance.html) docs.
 - **Distribution**: Available as:
   - Go [package](https://pkg.go.dev/github.com/open-and-sustainable/prismaid)
   - Python [package](https://pypi.org/project/prismaid/)

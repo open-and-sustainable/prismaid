@@ -7,6 +7,8 @@ layout: default
 
 ---
 
+This page explains the methodology and best practices behind systematic reviews with prismAId. For the individual operations the workflow orchestrates, see the [Screening](../tools/screening-tool), [Download](../tools/download-tool), [Convert](../tools/convert-tool), and [Review](../tools/review-tool) tools.
+
 ## Reasons to Use
 
 - **Objective**: prismAId leverages Large Language Models (LLMs) for systematic scientific literature reviews, making them accessible and efficient without coding.
@@ -182,7 +184,7 @@ toml_config = read("project.toml", String)
 PrismAId.run_review(toml_config)
 ```
 
-You can use the [Review Configurator](../review/review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
+You can use the [Review Configurator](review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
 
 ## Information Extraction
 
@@ -251,6 +253,10 @@ Follow these methodologies for effective systematic reviews:
 5. **Q: Is it always better to analyze literature by extracting one piece of information at a time (one piece of information per prismAId project)?**<br>
    **A:** Yes, separate projects for each information piece is highly effective. This approach allows tailored prompts for more accurate answers. Combining multiple information retrieval tasks requires longer prompts that can confuse the AI model. The only drawback is increased cost, as separating questions approximately doubles the API expense. Therefore, quality is primarily constrained by budget.<br>
    **Further reading:** [OpenAI API Prices](https://openai.com/api/pricing/) - [https://doi.org/10.48550/arXiv.2404.08865](https://doi.org/10.48550/arXiv.2404.08865)
+
+## Next Steps
+
+Once a review has run, you can document it as a cumulative [RevAIse record](revaise-integration), then [check it for protocol conformance](../conformance) and consult the protocol's [requirement checklist](../guidance) to see what a fully conforming review still needs.
 
 <div id="wcb" class="carbonbadge"></div>
 <script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

@@ -1,4 +1,13 @@
+---
+title: Deduplication Filter
+layout: default
+---
+
 # Deduplication Filter
+
+---
+
+Part of the prismAId [Screening Tool](../tools/screening-tool).
 
 ## Overview
 
@@ -120,3 +129,6 @@ temperature = 0.01
 ## Filter Order
 
 Deduplication is applied first in the screening pipeline to maximize efficiency by removing duplicates before other processing.
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>

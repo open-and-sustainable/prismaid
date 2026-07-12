@@ -43,7 +43,7 @@ import "github.com/open-and-sustainable/prismaid"
 
 // Run screening with a TOML configuration string
 tomlConfig := "..." // Your TOML configuration as a string
-err := prismaid.Screening(tomlConfig)
+screeningResult, err := prismaid.Screening(tomlConfig)
 ```
 
 ### Python Package
@@ -787,7 +787,7 @@ Result files remain separate from logs:
 
 ---
 
-For more information on systematic review workflows, see the [Review Support](../Review/review-workflow) documentation.
+For more information on systematic review workflows, see the [Review Workflow](../review/review-workflow) documentation.
 
 
 <div id="wcb" class="carbonbadge"></div>

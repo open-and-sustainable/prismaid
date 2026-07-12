@@ -1,4 +1,13 @@
+---
+title: Topic Relevance Filter
+layout: default
+---
+
 # Topic Relevance Filter
+
+---
+
+Part of the prismAId [Screening Tool](../tools/screening-tool).
 
 ## Overview
 
@@ -164,7 +173,7 @@ The filter adds these fields to each manuscript record:
 | 0.5 - 0.7 | Good relevance | Usually include |
 | 0.7 - 1.0 | High relevance | Definitely include |
 
-## Example Use Cases
+## Example Configurations
 
 ### Focused Literature Review
 ```toml
@@ -317,6 +326,13 @@ Papers using CNNs for any medical imaging task would score high, regardless of s
 4. **Confidence Scoring**: Provides reliability metric for each assessment
 5. **Detailed Reasoning**: Explains why manuscripts are considered relevant or not
 
+## Best Practices
+
+1. **Use AI Selectively**: Apply AI mode after initial filtering to reduce costs
+2. **Batch Processing**: The filter supports efficient batch processing
+3. **Rate Limit Configuration**: Adjust TPM/RPM limits based on your API tier
+4. **Hybrid Approach**: Use rule-based for initial screening, AI for borderline cases
+
 ## Performance Considerations
 
 ### Rule-Based Mode
@@ -335,13 +351,6 @@ Papers using CNNs for any medical imaging task would score high, regardless of s
   - Emerging research areas with evolving terminology
   - High-precision screening requirements
 
-### Optimization Tips
-
-1. **Use AI Selectively**: Apply AI mode after initial filtering to reduce costs
-2. **Batch Processing**: The filter supports efficient batch processing
-3. **Rate Limit Configuration**: Adjust TPM/RPM limits based on your API tier
-4. **Hybrid Approach**: Use rule-based for initial screening, AI for borderline cases
-
 ## Filter Order
 
 Topic relevance is applied after:
@@ -350,3 +359,6 @@ Topic relevance is applied after:
 3. Article type classification
 
 This ensures efficient processing by removing duplicates and non-target language papers first.
+
+<div id="wcb" class="carbonbadge"></div>
+<script src="https://unpkg.com/website-carbon-badges@1.1.3/b.min.js" defer></script>
