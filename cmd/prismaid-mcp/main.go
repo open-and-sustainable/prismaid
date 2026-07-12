@@ -115,7 +115,7 @@ func main() {
 
 	srv := server.NewMCPServer(
 		"prismaid-mcp",
-		"0.0.0",
+		"0.15.0",
 		server.WithToolCapabilities(true),
 		server.WithLogging(),
 	)

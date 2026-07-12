@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.14.0 - Added protocol conformance checking against RevAIse SHACL shapes and headless configuration generators, and made tool operations return structured results.
+  v0.15.0 - Added an MCP server exposing the toolkit to AI agents and protocol guidance across all channels, and moved protocol conformance to the SHACL shapes published by RevAIse.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
