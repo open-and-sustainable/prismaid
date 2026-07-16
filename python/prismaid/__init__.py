@@ -63,6 +63,22 @@ _ProtocolGuidancePython = lib.ProtocolGuidancePython
 _ProtocolGuidancePython.argtypes = [c_char_p]
 _ProtocolGuidancePython.restype = c_char_p
 
+_GenerateRevAIseRecordPython = lib.GenerateRevAIseRecordPython
+_GenerateRevAIseRecordPython.argtypes = [c_char_p]
+_GenerateRevAIseRecordPython.restype = c_char_p
+
+_RevAIseSchemaPython = lib.RevAIseSchemaPython
+_RevAIseSchemaPython.argtypes = [c_char_p]
+_RevAIseSchemaPython.restype = c_char_p
+
+_MergeRecordStagePython = lib.MergeRecordStagePython
+_MergeRecordStagePython.argtypes = [c_char_p, c_char_p]
+_MergeRecordStagePython.restype = c_char_p
+
+_ValidateRecordPython = lib.ValidateRecordPython
+_ValidateRecordPython.argtypes = [c_char_p]
+_ValidateRecordPython.restype = c_char_p
+
 _FreeCString = lib.FreeCString
 _FreeCString.argtypes = [c_char_p]
 _FreeCString.restype = None
@@ -275,3 +291,146 @@ def protocol_guidance(protocol: str) -> dict:
     if isinstance(guidance, dict) and guidance.get("error"):
         raise Exception(guidance["error"])
     return guidance
+
+
+def generate_revaise_record(params: dict) -> str:
+    """
+    Build a seed RevAIse review record from parameters.
+
+    The record always contains a valid review header; when
+    "include_manual_stage_stubs" is true it also includes empty stubs for the
+    stages prismAId does not perform (registration, search, risk of bias,
+    synthesis), ready to fill in.
+
+    Args:
+        params (dict): Record parameters, for example {"title": "...",
+            "authors": ["..."], "type": "SYSTEMATIC_REVIEW", "status": "PROTOCOL",
+            "include_manual_stage_stubs": True}.
+
+    Returns:
+        str: The seed review record as a JSON string, suitable for writing to the
+            configuration's record_file.
+
+    Raises:
+        Exception: If record generation fails.
+    """
+    result = cast(
+        bytes | None,
+        _GenerateRevAIseRecordPython(json.dumps(params).encode("utf-8")),
+    )
+    if not result:
+        raise Exception("record generation returned no result")
+    raw = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+    if isinstance(parsed, dict) and parsed.get("error"):
+        raise Exception(parsed["error"])
+    return raw
+
+
+def revaise_schema(type_name: str = "", raw: bool = False, context: bool = False) -> dict:
+    """
+    Serve the RevAIse data model from the released, verified artifacts.
+
+    By default it describes a type, or lists the available classes and enums when
+    type_name is empty. The artifacts (JSON Schema and JSON-LD context) are fetched
+    live; the LinkML source is never used.
+
+    Args:
+        type_name (str): A class or enum name to describe. Empty lists the
+            available classes and enums.
+        raw (bool): Return the full released JSON Schema instead of a description.
+        context (bool): Return the released JSON-LD context instead of a
+            description.
+
+    Returns:
+        dict: A description with keys such as "version", "classes"/"enums", or (for
+            a type) "required"/"properties"/"enum_values"; or, when raw or context
+            is set, {"raw": "<artifact JSON string>"}.
+
+    Raises:
+        Exception: If the artifact cannot be retrieved or the type is unknown.
+    """
+    params = {"type": type_name, "raw": raw, "context": context}
+    result = cast(
+        bytes | None,
+        _RevAIseSchemaPython(json.dumps(params).encode("utf-8")),
+    )
+    if not result:
+        raise Exception("revaise schema returned no result")
+    raw_out = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    parsed = json.loads(raw_out)
+    if isinstance(parsed, dict) and parsed.get("error"):
+        raise Exception(parsed["error"])
+    return parsed
+
+
+def merge_record_stage(record_json: str, stage_json: str) -> str:
+    """
+    Merge a stage into an existing RevAIse review record.
+
+    The stage (a JSON object with at least a "stage_type") fills a matching stub —
+    matched by stage_type and stage_label — or is appended when none matches.
+
+    Args:
+        record_json (str): The existing review record as a JSON string.
+        stage_json (str): The stage to merge, as a JSON object string.
+
+    Returns:
+        str: The updated review record as a JSON string.
+
+    Raises:
+        Exception: If the merge fails, for example unparsable input.
+    """
+    result = cast(
+        bytes | None,
+        _MergeRecordStagePython(
+            record_json.encode("utf-8"), stage_json.encode("utf-8")
+        ),
+    )
+    if not result:
+        raise Exception("record merge returned no result")
+    raw = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+    if isinstance(parsed, dict) and parsed.get("error"):
+        raise Exception(parsed["error"])
+    return raw
+
+
+def validate_record(record_json: str) -> dict:
+    """
+    Validate a RevAIse review record against the data-model JSON Schema.
+
+    This checks structural validity (field names, types, required slots) against
+    the released schema, fetched live. It is distinct from check_conformance, which
+    checks a reporting protocol.
+
+    Args:
+        record_json (str): The review record as a JSON string.
+
+    Returns:
+        dict: {"valid": bool, "errors": [str, ...]}.
+
+    Raises:
+        Exception: If the schema cannot be retrieved.
+    """
+    result = cast(
+        bytes | None,
+        _ValidateRecordPython(record_json.encode("utf-8")),
+    )
+    if not result:
+        raise Exception("record validation returned no result")
+    raw = ctypes.string_at(result).decode("utf-8")
+    _FreeCString(result)
+    parsed = json.loads(raw)
+    if isinstance(parsed, dict) and parsed.get("error"):
+        raise Exception(parsed["error"])
+    return parsed

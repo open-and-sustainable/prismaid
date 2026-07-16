@@ -397,3 +397,96 @@ ProtocolGuidance <- function(protocol) {
     result <- .Call("ProtocolGuidanceR_wrap", protocol, PACKAGE = "prismaid")
     return(result)
 }
+
+#' Generate a Seed RevAIse Review Record
+#'
+#' This function builds a seed RevAIse review record from a JSON parameters
+#' object.
+#'
+#' @description
+#' Produces a valid review header from the supplied parameters; when
+#' \code{include_manual_stage_stubs} is true it also adds empty stubs for the
+#' stages prismAId does not perform (registration, search, risk of bias,
+#' synthesis), ready to fill in.
+#'
+#' @param params_json A JSON string of record parameters, for example
+#'   \code{'{"title":"...","authors":["..."],"type":"SYSTEMATIC_REVIEW","status":"PROTOCOL","include_manual_stage_stubs":true}'}.
+#' @return A JSON string: the seed review record, suitable for writing to the
+#'   configuration's record_file. On failure the JSON has an \code{error} field.
+#' @export
+#' @examples
+#' \dontrun{
+#' record <- GenerateRevAIseRecord('{"title":"My review","include_manual_stage_stubs":true}')
+#' writeLines(record, "review.revaise.json")
+#' }
+GenerateRevAIseRecord <- function(params_json) {
+    result <- .Call("GenerateRevAIseRecordR_wrap", params_json, PACKAGE = "prismaid")
+    return(result)
+}
+
+#' Serve the RevAIse Data Model Schema
+#'
+#' This function serves the RevAIse data model from the released, verified
+#' artifacts published by RevAIse (JSON Schema and JSON-LD context), fetched live.
+#'
+#' @description
+#' By default it describes a type, or lists the available classes and enums when
+#' no type is given. The LinkML source is never used.
+#'
+#' @param params_json A JSON string of parameters, for example
+#'   \code{'{"type":"SearchStage"}'} to describe a type, \code{'{}'} to list
+#'   classes and enums, \code{'{"raw":true}'} for the full JSON Schema, or
+#'   \code{'{"context":true}'} for the JSON-LD context.
+#' @return A JSON string with the description (or the raw artifact). On failure the
+#'   JSON has an \code{error} field. Parse it with \code{jsonlite::fromJSON}.
+#' @export
+#' @examples
+#' \dontrun{
+#' searchstage <- RevAIseSchema('{"type":"SearchStage"}')
+#' }
+RevAIseSchema <- function(params_json) {
+    result <- .Call("RevAIseSchemaR_wrap", params_json, PACKAGE = "prismaid")
+    return(result)
+}
+
+#' Merge a Stage into a RevAIse Review Record
+#'
+#' @description
+#' Merges a stage into an existing RevAIse review record. The stage (a JSON object
+#' with at least a \code{stage_type}) fills a matching stub (matched by stage_type
+#' and stage_label) or is appended when none matches.
+#'
+#' @param record_json The existing review record as a JSON string.
+#' @param stage_json The stage to merge, as a JSON object string.
+#' @return A JSON string: the updated review record. On failure the JSON has an
+#'   \code{error} field.
+#' @export
+#' @examples
+#' \dontrun{
+#' updated <- MergeRecordStage(record, '{"stage_type":"search","stage_label":"Search"}')
+#' }
+MergeRecordStage <- function(record_json, stage_json) {
+    result <- .Call("MergeRecordStageR_wrap", record_json, stage_json, PACKAGE = "prismaid")
+    return(result)
+}
+
+#' Validate a RevAIse Review Record
+#'
+#' @description
+#' Validates a RevAIse review record against the released data-model JSON Schema,
+#' fetched live. This checks structural validity (field names, types, required
+#' slots), distinct from \code{CheckConformance}, which checks a reporting protocol.
+#'
+#' @param record_json The review record as a JSON string.
+#' @return A JSON string with \code{valid} and \code{errors}. On an operational
+#'   failure the JSON has an \code{error} field. Parse it with
+#'   \code{jsonlite::fromJSON}.
+#' @export
+#' @examples
+#' \dontrun{
+#' result <- ValidateRecord(record)
+#' }
+ValidateRecord <- function(record_json) {
+    result <- .Call("ValidateRecordR_wrap", record_json, PACKAGE = "prismaid")
+    return(result)
+}

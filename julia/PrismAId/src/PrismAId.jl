@@ -227,7 +227,101 @@ function protocol_guidance(protocol::String)
     return result
 end
 
+"""
+    generate_revaise_record(params_json::String)
+
+Build a seed RevAIse review record from a JSON parameters object. `params_json`
+is a JSON string such as
+`{"title":"...","authors":["..."],"type":"SYSTEMATIC_REVIEW","status":"PROTOCOL","include_manual_stage_stubs":true}`.
+
+Returns the seed review record as a JSON string, suitable for writing to the
+configuration's record_file, or an object with an `error` field when generation
+fails.
+"""
+function generate_revaise_record(params_json::String)
+    if isempty(params_json)
+        throw(ArgumentError("Parameters cannot be empty"))
+    end
+
+    c_output = ccall((:GenerateRevAIseRecordPython, library_path), Ptr{Cchar}, (Cstring,), params_json)
+    if c_output == C_NULL
+        throw(ErrorException("record generation returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
+"""
+    revaise_schema(params_json::String)
+
+Serve the RevAIse data model from the released, verified artifacts. `params_json`
+is a JSON string such as `{"type":"SearchStage"}` to describe a type, `{}` to list
+the available classes and enums, `{"raw":true}` for the full JSON Schema, or
+`{"context":true}` for the JSON-LD context. Artifacts are fetched live; the LinkML
+source is never used.
+
+Returns the result as a JSON string, or an object with an `error` field on failure.
+"""
+function revaise_schema(params_json::String)
+    if isempty(params_json)
+        throw(ArgumentError("Parameters cannot be empty"))
+    end
+
+    c_output = ccall((:RevAIseSchemaPython, library_path), Ptr{Cchar}, (Cstring,), params_json)
+    if c_output == C_NULL
+        throw(ErrorException("revaise schema returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
+"""
+    merge_record_stage(record_json::String, stage_json::String)
+
+Merge a stage into an existing RevAIse review record. `stage_json` is a JSON
+object with at least a `stage_type`; it fills a matching stub (matched by
+stage_type and stage_label) or is appended when none matches.
+
+Returns the updated review record as a JSON string, or an object with an `error`
+field on failure.
+"""
+function merge_record_stage(record_json::String, stage_json::String)
+    c_output = ccall((:MergeRecordStagePython, library_path), Ptr{Cchar}, (Cstring, Cstring), record_json, stage_json)
+    if c_output == C_NULL
+        throw(ErrorException("record merge returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
+"""
+    validate_record(record_json::String)
+
+Validate a RevAIse review record against the data-model JSON Schema, fetched live.
+This checks structural validity (field names, types, required slots), distinct
+from `check_conformance` which checks a reporting protocol.
+
+Returns the result as a JSON string — an object with `valid` and `errors` — or an
+object with an `error` field when the schema cannot be retrieved.
+"""
+function validate_record(record_json::String)
+    c_output = ccall((:ValidateRecordPython, library_path), Ptr{Cchar}, (Cstring,), record_json)
+    if c_output == C_NULL
+        throw(ErrorException("record validation returned no result"))
+    end
+
+    result = unsafe_string(c_output)
+    ccall((:FreeCString, library_path), Cvoid, (Ptr{Cchar},), c_output)
+    return result
+end
+
 # Export public functions
-export run_review, download_zotero, download_url_list, convert, screening, validate_config, check_conformance, protocol_guidance
+export run_review, download_zotero, download_url_list, convert, screening, validate_config, check_conformance, protocol_guidance, generate_revaise_record, revaise_schema, merge_record_stage, validate_record
 
 end # module PrismAId

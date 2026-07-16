@@ -87,6 +87,74 @@ func runCheckConformance(record, protocol *C.char) string {
 	return string(data)
 }
 
+// runGenerateRevAIseRecord builds a seed RevAIse review record from a JSON
+// parameters object and returns the record as a JSON string. On error it returns
+// a JSON object with an "error" field.
+func runGenerateRevAIseRecord(paramsJSON *C.char) string {
+	var params prismaid.RevAIseRecordParams
+	if err := json.Unmarshal([]byte(C.GoString(paramsJSON)), &params); err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	record, err := prismaid.GenerateRevAIseRecord(params)
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	return record
+}
+
+// runRevAIseSchema serves the RevAIse data model from a JSON parameters object
+// and returns the result as a JSON string. On error it returns a JSON object
+// with an "error" field.
+func runRevAIseSchema(paramsJSON *C.char) string {
+	var params prismaid.RevAIseSchemaParams
+	if err := json.Unmarshal([]byte(C.GoString(paramsJSON)), &params); err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	result, err := prismaid.RevAIseSchema(params)
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(errData)
+	}
+	return string(data)
+}
+
+// runMergeRecordStage merges a stage into an existing RevAIse record and returns
+// the updated record as a JSON string. On error it returns a JSON object with an
+// "error" field.
+func runMergeRecordStage(record, stage *C.char) string {
+	merged, err := prismaid.MergeRecordStage(C.GoString(record), C.GoString(stage))
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	return merged
+}
+
+// runValidateRecord validates a RevAIse record against the data-model schema and
+// returns the result (valid, errors) as a JSON string. On an operational failure
+// it returns a JSON object with an "error" field.
+func runValidateRecord(record *C.char) string {
+	result, err := prismaid.ValidateRecord(C.GoString(record))
+	if err != nil {
+		data, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(data)
+	}
+	data, err := json.Marshal(result)
+	if err != nil {
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		return string(errData)
+	}
+	return string(data)
+}
+
 // runProtocolGuidance returns a protocol's requirement checklist as a JSON
 // string. On error it returns a JSON object with an "error" field.
 func runProtocolGuidance(protocol *C.char) string {
@@ -171,6 +239,30 @@ func ProtocolGuidancePython(protocol *C.char) *C.char {
 	return C.CString(runProtocolGuidance(protocol))
 }
 
+//export GenerateRevAIseRecordPython
+func GenerateRevAIseRecordPython(paramsJSON *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runGenerateRevAIseRecord(paramsJSON))
+}
+
+//export RevAIseSchemaPython
+func RevAIseSchemaPython(paramsJSON *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runRevAIseSchema(paramsJSON))
+}
+
+//export MergeRecordStagePython
+func MergeRecordStagePython(record, stage *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runMergeRecordStage(record, stage))
+}
+
+//export ValidateRecordPython
+func ValidateRecordPython(record *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runValidateRecord(record))
+}
+
 // R-specific exports
 //
 //export RunReviewR
@@ -237,6 +329,30 @@ func CheckConformanceR(record, protocol *C.char) *C.char {
 func ProtocolGuidanceR(protocol *C.char) *C.char {
 	defer handlePanic()
 	return C.CString(runProtocolGuidance(protocol))
+}
+
+//export GenerateRevAIseRecordR
+func GenerateRevAIseRecordR(paramsJSON *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runGenerateRevAIseRecord(paramsJSON))
+}
+
+//export RevAIseSchemaR
+func RevAIseSchemaR(paramsJSON *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runRevAIseSchema(paramsJSON))
+}
+
+//export MergeRecordStageR
+func MergeRecordStageR(record, stage *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runMergeRecordStage(record, stage))
+}
+
+//export ValidateRecordR
+func ValidateRecordR(record *C.char) *C.char {
+	defer handlePanic()
+	return C.CString(runValidateRecord(record))
 }
 
 // Free memory function used by both interfaces

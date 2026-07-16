@@ -133,6 +133,59 @@ SEXP ProtocolGuidanceR_wrap(SEXP protocol) {
     return result;
 }
 
+SEXP GenerateRevAIseRecordR_wrap(SEXP paramsJson) {
+    const char *c_params = (const char*)paramsJson;
+    const char *c_result = GenerateRevAIseRecordR((char *)c_params);
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP RevAIseSchemaR_wrap(SEXP paramsJson) {
+    const char *c_params = (const char*)paramsJson;
+    const char *c_result = RevAIseSchemaR((char *)c_params);
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP MergeRecordStageR_wrap(SEXP record, SEXP stage) {
+    const char *c_record = (const char*)record;
+    const char *c_stage = (const char*)stage;
+    const char *c_result = MergeRecordStageR((char *)c_record, (char *)c_stage);
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ValidateRecordR_wrap(SEXP record) {
+    const char *c_record = (const char*)record;
+    const char *c_result = ValidateRecordR((char *)c_record);
+
+    SEXP result = Rf_mkString(c_result);
+    if (c_result) {
+        FreeCString((char *)c_result);
+    }
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
 #else
 
 // Stub implementation for unsupported platforms
@@ -187,6 +240,34 @@ SEXP CheckConformanceR_wrap(SEXP record, SEXP protocol) {
 }
 
 SEXP ProtocolGuidanceR_wrap(SEXP protocol) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP GenerateRevAIseRecordR_wrap(SEXP paramsJson) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP RevAIseSchemaR_wrap(SEXP paramsJson) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP MergeRecordStageR_wrap(SEXP record, SEXP stage) {
+    SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
+    PROTECT(result);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP ValidateRecordR_wrap(SEXP record) {
     SEXP result = Rf_mkString(UNSUPPORTED_PLATFORM_MSG);
     PROTECT(result);
     UNPROTECT(1);

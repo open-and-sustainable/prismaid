@@ -12,6 +12,10 @@ char* ScreeningR(char* input);
 char* ValidateConfigR(char* configType, char* input);
 char* CheckConformanceR(char* record, char* protocol);
 char* ProtocolGuidanceR(char* protocol);
+char* GenerateRevAIseRecordR(char* paramsJson);
+char* RevAIseSchemaR(char* paramsJson);
+char* MergeRecordStageR(char* record, char* stage);
+char* ValidateRecordR(char* record);
 void FreeCString(char* str);
 
 #endif // CGO_EXPORT_H

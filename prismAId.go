@@ -1,6 +1,7 @@
 package prismaid
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/open-and-sustainable/prismaid/conversion"
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
+	"github.com/open-and-sustainable/prismaid/revaise"
 	"github.com/open-and-sustainable/prismaid/review/logic"
 	screening "github.com/open-and-sustainable/prismaid/screening/logic"
 )
@@ -182,6 +184,127 @@ func CheckConformance(recordJSON, protocol string) (ConformanceReport, error) {
 // unreachable.
 func ConformanceProtocols() ([]string, error) {
 	return conformance.AvailableProtocols()
+}
+
+// RevAIseRecordParams are the inputs for GenerateRevAIseRecord: the review
+// header, and whether to include empty stubs for the stages prismAId does not
+// perform. Type, Status, and Authors default to sensible values when omitted.
+type RevAIseRecordParams struct {
+	ID       string   `json:"id,omitempty"`
+	Title    string   `json:"title,omitempty"`
+	Type     string   `json:"type,omitempty"`
+	Status   string   `json:"status,omitempty"`
+	Version  string   `json:"version,omitempty"`
+	Language string   `json:"language,omitempty"`
+	Country  string   `json:"country,omitempty"`
+	Authors  []string `json:"authors,omitempty"`
+
+	// IncludeManualStageStubs adds empty placeholder stages for the stages
+	// prismAId does not perform (registration, search, risk of bias, synthesis),
+	// so they can be documented by hand and tracked by CheckConformance.
+	IncludeManualStageStubs bool `json:"include_manual_stage_stubs,omitempty"`
+}
+
+// GenerateRevAIseRecord builds a seed RevAIse review record and returns it as an
+// indented JSON string. It always produces a valid review header from the
+// provided parameters; when IncludeManualStageStubs is set it also adds empty
+// stubs for the stages prismAId does not perform (registration, search, risk of
+// bias, synthesis), ready to fill in and track with CheckConformance.
+func GenerateRevAIseRecord(params RevAIseRecordParams) (string, error) {
+	record := revaise.NewRecord(revaise.RecordSeed{
+		ReviewSeed: revaise.ReviewSeed{
+			ID:       params.ID,
+			Title:    params.Title,
+			Type:     params.Type,
+			Status:   params.Status,
+			Version:  params.Version,
+			Language: params.Language,
+			Country:  params.Country,
+			Authors:  params.Authors,
+		},
+		IncludeManualStageStubs: params.IncludeManualStageStubs,
+	})
+	data, err := json.MarshalIndent(record, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// RevAIseSchemaParams selects what GenerateRevAIseSchema returns: a description
+// of a type, the list of types (when Type is empty), or a raw released artifact.
+type RevAIseSchemaParams struct {
+	// Type is a class or enum name to describe. Empty lists the available
+	// classes and enums.
+	Type string `json:"type,omitempty"`
+	// Raw returns the full released JSON Schema instead of a description.
+	Raw bool `json:"raw,omitempty"`
+	// Context returns the released JSON-LD context instead of a description.
+	Context bool `json:"context,omitempty"`
+}
+
+// RevAIseSchemaDescription describes the RevAIse data model or one of its types.
+type RevAIseSchemaDescription = revaise.SchemaDescription
+
+// RevAIseSchemaResult carries either a structured description or, when Raw or
+// Context is requested, the raw released artifact as a JSON string.
+type RevAIseSchemaResult struct {
+	Description *revaise.SchemaDescription `json:"description,omitempty"`
+	Raw         string                     `json:"raw,omitempty"`
+}
+
+// RevAIseSchema serves the RevAIse data model from the released, verified
+// artifacts RevAIse publishes (JSON Schema and JSON-LD context), fetched live —
+// nothing is vendored, and the LinkML source is never used. By default it
+// describes a type (or lists the available classes and enums when Type is
+// empty); Raw returns the full JSON Schema and Context returns the JSON-LD
+// context. It requires network access.
+func RevAIseSchema(params RevAIseSchemaParams) (RevAIseSchemaResult, error) {
+	switch {
+	case params.Raw:
+		raw, err := revaise.FetchSchema()
+		if err != nil {
+			return RevAIseSchemaResult{}, err
+		}
+		return RevAIseSchemaResult{Raw: raw}, nil
+	case params.Context:
+		ctx, err := revaise.FetchContext()
+		if err != nil {
+			return RevAIseSchemaResult{}, err
+		}
+		return RevAIseSchemaResult{Raw: ctx}, nil
+	default:
+		desc, err := revaise.DescribeSchema(params.Type)
+		if err != nil {
+			return RevAIseSchemaResult{}, err
+		}
+		return RevAIseSchemaResult{Description: desc}, nil
+	}
+}
+
+// MergeRecordStage merges a stage into an existing RevAIse review record and
+// returns the updated record as JSON. The stage (a JSON object with at least a
+// stage_type) fills a matching stub — matched by stage_type and stage_label — or
+// is appended when none matches. This is the "append each stage to the record"
+// step of the review lifecycle.
+func MergeRecordStage(recordJSON, stageJSON string) (string, error) {
+	return revaise.MergeStage(recordJSON, stageJSON)
+}
+
+// RecordValidation is the outcome of validating a RevAIse record against the
+// data-model JSON Schema.
+type RecordValidation = revaise.RecordValidation
+
+// ValidateRecord validates a RevAIse review-record JSON string against the
+// released RevAIse data-model JSON Schema, fetched live. This checks structural
+// validity (field names, types, required slots) — distinct from CheckConformance,
+// which checks a reporting protocol. It requires network access.
+func ValidateRecord(recordJSON string) (RecordValidation, error) {
+	result, err := revaise.ValidateRecord(recordJSON)
+	if err != nil {
+		return RecordValidation{}, err
+	}
+	return *result, nil
 }
 
 // ConformanceGuidance is the full set of requirements a protocol imposes,

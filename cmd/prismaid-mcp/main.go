@@ -37,6 +37,39 @@ type ProtocolRequest struct {
 	Protocol string `json:"protocol" jsonschema_description:"Protocol identifier, e.g. prisma-2020" jsonschema:"required"`
 }
 
+// EmptyRequest is used by tools that take no input.
+type EmptyRequest struct{}
+
+// MergeRequest carries an existing record and the stage to merge into it.
+type MergeRequest struct {
+	RecordJSON string `json:"record_json" jsonschema_description:"Existing RevAIse review-record JSON" jsonschema:"required"`
+	StageJSON  string `json:"stage_json" jsonschema_description:"Stage to merge, as a JSON object with at least a stage_type" jsonschema:"required"`
+}
+
+// RecordJSONRequest carries a RevAIse review-record JSON.
+type RecordJSONRequest struct {
+	RecordJSON string `json:"record_json" jsonschema_description:"RevAIse review-record JSON" jsonschema:"required"`
+}
+
+// MergeResponse returns the updated record after merging a stage.
+type MergeResponse struct {
+	Record string     `json:"record,omitempty" jsonschema_description:"Updated RevAIse review record (JSON)"`
+	Error  *ErrorInfo `json:"error,omitempty" jsonschema_description:"Error details, if any"`
+}
+
+// RecordValidationResponse returns whether a record is valid and any messages.
+type RecordValidationResponse struct {
+	Valid  bool       `json:"valid" jsonschema_description:"Whether the record is valid against the data model"`
+	Errors []string   `json:"errors,omitempty" jsonschema_description:"Validation messages, if any"`
+	Error  *ErrorInfo `json:"error,omitempty" jsonschema_description:"Operational error, if any"`
+}
+
+// ProtocolsResponse lists the accepted protocol identifiers.
+type ProtocolsResponse struct {
+	Protocols []string   `json:"protocols" jsonschema_description:"Protocol identifiers accepted by prismaid_check_conformance"`
+	Error     *ErrorInfo `json:"error,omitempty" jsonschema_description:"Error details, if any"`
+}
+
 // ConvertRequest carries the inputs for a file conversion run.
 type ConvertRequest struct {
 	InputDir   string `json:"input_dir" jsonschema_description:"Directory containing files to convert" jsonschema:"required"`
@@ -66,6 +99,19 @@ type ValidationResponse struct {
 // ConfigResponse returns a generated TOML configuration.
 type ConfigResponse struct {
 	TOML string `json:"toml" jsonschema_description:"Generated TOML configuration"`
+}
+
+// RecordResponse returns a generated seed RevAIse review record.
+type RecordResponse struct {
+	Record string     `json:"record,omitempty" jsonschema_description:"Generated RevAIse review record (JSON)"`
+	Error  *ErrorInfo `json:"error,omitempty" jsonschema_description:"Error details, if any"`
+}
+
+// SchemaResponse returns a RevAIse data-model description or a raw released artifact.
+type SchemaResponse struct {
+	Description *prismaid.RevAIseSchemaDescription `json:"description,omitempty" jsonschema_description:"Data-model description: version, classes/enums, or a type's required slots, properties, and enum values"`
+	Raw         string                             `json:"raw,omitempty" jsonschema_description:"Raw released artifact (full JSON Schema or JSON-LD context), when requested"`
+	Error       *ErrorInfo                         `json:"error,omitempty" jsonschema_description:"Error details, if any"`
 }
 
 // ConformanceResponse returns the protocol conformance report.
@@ -153,6 +199,38 @@ func main() {
 		),
 		mcp.NewStructuredToolHandler(handleGenerateZoteroConfig),
 	)
+	srv.AddTool(
+		mcp.NewTool("prismaid_generate_revaise_record",
+			mcp.WithDescription("Seed a new RevAIse review record (JSON) with a valid review header and, optionally, empty stubs for the stages prismAId does not perform (registration, search, risk of bias, synthesis)."),
+			mcp.WithInputSchema[prismaid.RevAIseRecordParams](),
+			mcp.WithOutputSchema[RecordResponse](),
+		),
+		mcp.NewStructuredToolHandler(handleGenerateRevAIseRecord),
+	)
+	srv.AddTool(
+		mcp.NewTool("prismaid_revaise_schema",
+			mcp.WithDescription("Describe the RevAIse data model from the released, verified artifacts (fetched live; never the LinkML source). With no type, lists the classes and enums; with a type, returns its required slots, properties, and enum values. Use 'raw' for the full JSON Schema or 'context' for the JSON-LD context."),
+			mcp.WithInputSchema[prismaid.RevAIseSchemaParams](),
+			mcp.WithOutputSchema[SchemaResponse](),
+		),
+		mcp.NewStructuredToolHandler(handleRevAIseSchema),
+	)
+	srv.AddTool(
+		mcp.NewTool("prismaid_merge_record_stage",
+			mcp.WithDescription("Merge a stage into an existing RevAIse review record. The stage fills a matching stub (by stage_type and stage_label) or is appended. Returns the updated record."),
+			mcp.WithInputSchema[MergeRequest](),
+			mcp.WithOutputSchema[MergeResponse](),
+		),
+		mcp.NewStructuredToolHandler(handleMergeRecordStage),
+	)
+	srv.AddTool(
+		mcp.NewTool("prismaid_validate_record",
+			mcp.WithDescription("Validate a RevAIse review record against the released data-model JSON Schema (fetched live). Checks structural validity — field names, types, required slots — distinct from prismaid_check_conformance, which checks a reporting protocol."),
+			mcp.WithInputSchema[RecordJSONRequest](),
+			mcp.WithOutputSchema[RecordValidationResponse](),
+		),
+		mcp.NewStructuredToolHandler(handleValidateRecord),
+	)
 
 	// Protocol conformance: offline symbolic check.
 	srv.AddTool(
@@ -166,8 +244,10 @@ func main() {
 	srv.AddTool(
 		mcp.NewTool("prismaid_list_protocols",
 			mcp.WithDescription("List the protocol identifiers accepted by prismaid_check_conformance."),
+			mcp.WithInputSchema[EmptyRequest](),
+			mcp.WithOutputSchema[ProtocolsResponse](),
 		),
-		handleListProtocols,
+		mcp.NewStructuredToolHandler(handleListProtocols),
 	)
 	srv.AddTool(
 		mcp.NewTool("prismaid_protocol_guidance",
@@ -252,6 +332,54 @@ func handleGenerateZoteroConfig(ctx context.Context, request mcp.CallToolRequest
 	return ConfigResponse{TOML: prismaid.GenerateZoteroConfig(args)}, nil
 }
 
+func handleGenerateRevAIseRecord(ctx context.Context, request mcp.CallToolRequest, args prismaid.RevAIseRecordParams) (RecordResponse, error) {
+	record, err := prismaid.GenerateRevAIseRecord(args)
+	if err != nil {
+		return RecordResponse{Error: errorInfo(400, err.Error())}, nil
+	}
+	return RecordResponse{Record: record}, nil
+}
+
+func handleMergeRecordStage(ctx context.Context, request mcp.CallToolRequest, args MergeRequest) (MergeResponse, error) {
+	merged, err := prismaid.MergeRecordStage(args.RecordJSON, args.StageJSON)
+	if err != nil {
+		return MergeResponse{Error: errorInfo(400, err.Error())}, nil
+	}
+	return MergeResponse{Record: merged}, nil
+}
+
+func handleValidateRecord(ctx context.Context, request mcp.CallToolRequest, args RecordJSONRequest) (RecordValidationResponse, error) {
+	ctx, cancel := withTimeout(ctx)
+	defer cancel()
+
+	var result prismaid.RecordValidation
+	err := runWithTimeout(ctx, func() error {
+		var err error
+		result, err = prismaid.ValidateRecord(args.RecordJSON)
+		return err
+	})
+	if err != nil {
+		return RecordValidationResponse{Error: errorInfo(400, err.Error())}, nil
+	}
+	return RecordValidationResponse{Valid: result.Valid, Errors: result.Errors}, nil
+}
+
+func handleRevAIseSchema(ctx context.Context, request mcp.CallToolRequest, args prismaid.RevAIseSchemaParams) (SchemaResponse, error) {
+	ctx, cancel := withTimeout(ctx)
+	defer cancel()
+
+	var result prismaid.RevAIseSchemaResult
+	err := runWithTimeout(ctx, func() error {
+		var err error
+		result, err = prismaid.RevAIseSchema(args)
+		return err
+	})
+	if err != nil {
+		return SchemaResponse{Error: errorInfo(400, err.Error())}, nil
+	}
+	return SchemaResponse{Description: result.Description, Raw: result.Raw}, nil
+}
+
 func handleCheckConformance(ctx context.Context, request mcp.CallToolRequest, args ConformanceRequest) (ConformanceResponse, error) {
 	ctx, cancel := withTimeout(ctx)
 	defer cancel()
@@ -268,12 +396,20 @@ func handleCheckConformance(ctx context.Context, request mcp.CallToolRequest, ar
 	return ConformanceResponse{Report: &report}, nil
 }
 
-func handleListProtocols(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	protocols, err := prismaid.ConformanceProtocols()
+func handleListProtocols(ctx context.Context, request mcp.CallToolRequest, args EmptyRequest) (ProtocolsResponse, error) {
+	ctx, cancel := withTimeout(ctx)
+	defer cancel()
+
+	var protocols []string
+	err := runWithTimeout(ctx, func() error {
+		var err error
+		protocols, err = prismaid.ConformanceProtocols()
+		return err
+	})
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return ProtocolsResponse{Error: errorInfo(400, err.Error())}, nil
 	}
-	return mcp.NewToolResultStructured(protocols, ""), nil
+	return ProtocolsResponse{Protocols: protocols}, nil
 }
 
 func handleProtocolGuidance(ctx context.Context, request mcp.CallToolRequest, args ProtocolRequest) (GuidanceResponse, error) {

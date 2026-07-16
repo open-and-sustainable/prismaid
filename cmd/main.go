@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -49,6 +50,11 @@ func main() {
 	conformancePath := flag.String("conformance", "", "Path to a RevAIse review-record JSON file to check for protocol conformance")
 	protocol := flag.String("protocol", "prisma-2020", "Protocol to check conformance against (used with -conformance)")
 	guidanceProtocol := flag.String("guidance", "", "Protocol name to print the requirement checklist for (e.g. 'prisma-2020')")
+	generateRecordParams := flag.String("generate-record", "", "Path to a JSON parameters file; prints a seed RevAIse review record to stdout")
+	revaiseSchema := flag.String("revaise-schema", "", "Describe the RevAIse data model: a type name to describe, 'list' for all classes and enums, 'raw' for the JSON Schema, or 'context' for the JSON-LD context")
+	mergeRecordPath := flag.String("merge-record", "", "Path to a RevAIse record JSON file to merge a stage into (requires -merge-stage); prints the updated record to stdout")
+	mergeStagePath := flag.String("merge-stage", "", "Path to a stage JSON file to merge (used with -merge-record)")
+	validateRecordPath := flag.String("validate-record", "", "Path to a RevAIse record JSON file to validate against the data-model schema")
 
 	flag.Parse()
 
@@ -85,6 +91,30 @@ func main() {
 	if *guidanceProtocol != "" {
 		logger.SetupLogging(logger.Stdout, "")
 		handleGuidance(*guidanceProtocol)
+		return
+	}
+
+	// Generate a seed RevAIse review record (prints JSON to stdout; no execution)
+	if *generateRecordParams != "" {
+		handleGenerateRecord(*generateRecordParams)
+		return
+	}
+
+	// Describe the RevAIse data model (prints JSON to stdout; no execution)
+	if *revaiseSchema != "" {
+		handleRevAIseSchema(*revaiseSchema)
+		return
+	}
+
+	// Merge a stage into a RevAIse record (prints the updated record to stdout)
+	if *mergeRecordPath != "" {
+		handleMergeRecord(*mergeRecordPath, *mergeStagePath)
+		return
+	}
+
+	// Validate a RevAIse record against the data-model schema
+	if *validateRecordPath != "" {
+		handleValidateRecord(*validateRecordPath)
 		return
 	}
 
@@ -423,6 +453,111 @@ func handleGuidance(protocol string) {
 		} else {
 			logger.Info("  " + r.Message)
 		}
+	}
+}
+
+// handleGenerateRecord reads RevAIse record parameters from a JSON file and
+// prints the resulting seed record as JSON to stdout. Errors are written to
+// stderr and exit with status code 1, so the output can be redirected to a file.
+func handleGenerateRecord(paramsPath string) {
+	data, err := os.ReadFile(paramsPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading parameters file: %v\n", err)
+		os.Exit(1)
+	}
+	var params prismaid.RevAIseRecordParams
+	if err := json.Unmarshal(data, &params); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing parameters: %v\n", err)
+		os.Exit(1)
+	}
+	record, err := prismaid.GenerateRevAIseRecord(params)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error generating record: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(record)
+}
+
+// handleRevAIseSchema describes the RevAIse data model and prints the result as
+// JSON to stdout. The argument is a type name to describe, "list" for all classes
+// and enums, "raw" for the JSON Schema, or "context" for the JSON-LD context.
+// Errors are written to stderr and exit with status code 1.
+func handleRevAIseSchema(arg string) {
+	var params prismaid.RevAIseSchemaParams
+	switch strings.ToLower(arg) {
+	case "list":
+		// leave params empty to list classes and enums
+	case "raw":
+		params.Raw = true
+	case "context":
+		params.Context = true
+	default:
+		params.Type = arg
+	}
+	result, err := prismaid.RevAIseSchema(params)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error describing RevAIse schema: %v\n", err)
+		os.Exit(1)
+	}
+	if result.Raw != "" {
+		fmt.Println(result.Raw)
+		return
+	}
+	data, err := json.MarshalIndent(result.Description, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error formatting result: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(data))
+}
+
+// handleMergeRecord merges a stage file into a record file and prints the updated
+// record as JSON to stdout. Errors are written to stderr and exit with status 1.
+func handleMergeRecord(recordPath, stagePath string) {
+	if stagePath == "" {
+		fmt.Fprintln(os.Stderr, "Error: -merge-record requires -merge-stage")
+		os.Exit(1)
+	}
+	recordData, err := os.ReadFile(recordPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading record file: %v\n", err)
+		os.Exit(1)
+	}
+	stageData, err := os.ReadFile(stagePath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading stage file: %v\n", err)
+		os.Exit(1)
+	}
+	merged, err := prismaid.MergeRecordStage(string(recordData), string(stageData))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error merging stage: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(merged)
+}
+
+// handleValidateRecord validates a record file against the RevAIse data-model
+// schema, prints the result as JSON to stdout, and exits with status 1 when the
+// record is invalid, so it can be used in scripts.
+func handleValidateRecord(recordPath string) {
+	data, err := os.ReadFile(recordPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading record file: %v\n", err)
+		os.Exit(1)
+	}
+	result, err := prismaid.ValidateRecord(string(data))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error validating record: %v\n", err)
+		os.Exit(1)
+	}
+	out, err := json.MarshalIndent(result, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error formatting result: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(out))
+	if !result.Valid {
+		os.Exit(1)
 	}
 }
 
