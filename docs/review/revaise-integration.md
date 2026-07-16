@@ -180,6 +180,30 @@ stage_type = "search"
 stage_label = "Zotero full-text download"
 ```
 
+## Authoring the record directly
+
+Beyond the automatic stage updates above, prismAId exposes tools to build and check a review record by hand — useful for the stages prismAId does not run itself (registration, search, risk of bias, synthesis) and for assembling a record across stages:
+
+- **Seed a record** — create a record with a valid review header and, optionally, empty stubs for the manual stages, ready to fill in.
+- **Look up the data model** — describe the released RevAIse schema (field names, required slots, enum values), fetched live from RevAIse, so fields are filled correctly without touching the LinkML source.
+- **Merge a stage** — add a stage to an existing record, or fill a seeded stub.
+- **Validate a record** — check a record against the released data-model JSON Schema (structural validity — distinct from [protocol conformance](../conformance)).
+
+A typical flow: **seed → look up the schema to fill the stubs → merge each stage as it is completed → validate → [check conformance](../conformance)**, planned with [Protocol Guidance](../guidance).
+
+These are available on every channel:
+
+| Channel | Seed | Describe schema | Merge stage | Validate |
+|---|---|---|---|---|
+| CLI | `-generate-record params.json` | `-revaise-schema <type>` | `-merge-record rec.json -merge-stage s.json` | `-validate-record rec.json` |
+| Go | `GenerateRevAIseRecord` | `RevAIseSchema` | `MergeRecordStage` | `ValidateRecord` |
+| Python | `generate_revaise_record` | `revaise_schema` | `merge_record_stage` | `validate_record` |
+| R | `GenerateRevAIseRecord` | `RevAIseSchema` | `MergeRecordStage` | `ValidateRecord` |
+| Julia | `generate_revaise_record` | `revaise_schema` | `merge_record_stage` | `validate_record` |
+| MCP | `prismaid_generate_revaise_record` | `prismaid_revaise_schema` | `prismaid_merge_record_stage` | `prismaid_validate_record` |
+
+The describe-schema and validate tools fetch the released data model live from RevAIse, so they require network access; nothing is vendored.
+
 ## Supported Updates
 
 Current RevAIse hooks:

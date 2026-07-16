@@ -29,7 +29,7 @@ use_ai = false
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `enabled` | boolean | false | Enable/disable the filter |
-| `accepted_languages` | array | ["en"] | ISO 639-1 language codes to accept |
+| `accepted_languages` | array | ["en"] | Languages to accept, as ISO 639-1 codes or English names (see note below) |
 | `use_ai` | boolean | false | Use AI for detection (requires LLM config) |
 
 ## How It Works
@@ -94,6 +94,8 @@ The filter adds these fields to each manuscript record:
 | `exclusion_reason` | string | "Language not accepted: [language]" if excluded |
 
 ## Supported Language Codes
+
+Detection normalizes each manuscript to an ISO 639-1 code (for example `en`). `accepted_languages` entries are matched to that code **case- and format-insensitively**, and may be written as either the code or the English name — `["en"]`, `["EN"]`, and `["English"]` all accept English. (Detection compares by language, so a code and its name are equivalent.)
 
 Common ISO 639-1 language codes:
 - `en` - English

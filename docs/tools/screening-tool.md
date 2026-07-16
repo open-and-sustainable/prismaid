@@ -90,11 +90,14 @@ author = "John Doe"                        # Project author
 version = "1.0"                           # Configuration version
 input_file = "/path/to/manuscripts.csv"    # Input CSV or TXT file
 output_file = "/path/to/results"          # Base output path (without extension)
-text_column = "abstract"                  # Column with text/file paths
+text_column = "abstract"                  # Column with text/file paths (single column)
+# text_columns = ["title", "abstract"]   # Or combine several columns (overrides text_column)
 identifier_column = "doi"                 # Column with unique IDs
 output_format = "csv"                     # "csv" or "json"
 log_level = "medium"                      # "low" (silent), "medium" (stdout), or "high" (files)
 ```
+
+Use `text_column` for a single column, or `text_columns` to combine several (for example title **and** abstract) — their values are concatenated for screening, so there is no need to pre-build a merged column. When `text_columns` is set it overrides `text_column`. Each cell may be inline text or a path to a text file.
 
 ### Filters Section
 
@@ -110,7 +113,7 @@ compare_fields = ["title", "abstract", "doi", "authors", "year"]  # Fields to co
 
 [filters.language]
 enabled = true
-accepted_languages = ["en", "es", "fr"]   # ISO language codes
+accepted_languages = ["en", "es", "fr"]   # ISO 639-1 codes or English names ("English"), matched case/format-insensitively
 use_ai = false                            # Use AI for detection (recommended for better accuracy)
 
 [filters.article_type]
@@ -166,6 +169,15 @@ model = "gpt-4o-mini"                     # Model name
 temperature = 0.01                        # Model temperature
 tpm_limit = 0                             # Tokens per minute limit
 rpm_limit = 0                             # Requests per minute limit
+```
+
+Screening uses a single `[filters.llm]` table (not the numbered `[project.llm.1]` tables of the review tool). It accepts the same cloud and self-hosted settings as the review tool — `base_url`, `endpoint_type`, `region`, `project_id`, `location`, `api_version`. For a local, OpenAI-compatible endpoint use the SelfHosted provider with `base_url`:
+
+```toml
+[filters.llm]
+provider = "SelfHosted"
+base_url = "http://127.0.0.1:11434/v1"    # e.g. a local Ollama endpoint
+model = "llama3.1"
 ```
 
 ### Validating the Configuration

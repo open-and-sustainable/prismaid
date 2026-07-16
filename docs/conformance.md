@@ -86,10 +86,22 @@ Through the [MCP server](mcp-server) the same check is available to AI agents as
 
 Every channel returns the same information:
 
-- `conforms` — whether the record satisfies the protocol.
+- `conforms` — whether the record satisfies the protocol as a whole.
 - `violations` — the unmet constraints; each carries the protocol's message (the checklist item), the focus node, and the property path.
+- `summary` — a progress view: overall `total`, `passed`, `failed`, and `pending` counts, plus `by_class`, the same breakdown for each record class (Review, ScreeningStage, SynthesisStage, and so on).
+- `passed` and `pending` — the requirements already met, and those not started.
 
 The verdict and the messages come entirely from the protocol's shapes, so the report reflects the standard itself, not prismAId's interpretation of it.
+
+### Progress, not just pass or fail
+
+A review in progress is incomplete by design, and a flat "does not conform" would be misleading. The progress view distinguishes three states per requirement:
+
+- **passed** — the requirement is met.
+- **failed** — the requirement's record class is present but the requirement is unmet (a started stage still to complete).
+- **pending** — the requirement's record class is not in the record yet (a stage not started).
+
+So an early-stage record shows most requirements as *pending* rather than *failed*, and `by_class` shows exactly which stages are done, in progress, or untouched — an accurate progress report rather than a broken/complete binary. `conforms` remains the honest whole-protocol verdict.
 
 See [RevAIse Integration](review/revaise-integration) for how the review record is produced and maintained across stages, and [Protocol Guidance](guidance) to see a protocol's full requirement checklist before you check.
 

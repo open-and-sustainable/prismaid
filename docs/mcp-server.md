@@ -17,7 +17,7 @@ The server supports three usage patterns:
 
 ## Available tools
 
-The tools fall into three groups.
+The tools fall into four groups.
 
 **Design and setup** — offline, no API keys, safe on drafts:
 
@@ -31,6 +31,13 @@ The tools fall into three groups.
 - `prismaid_check_conformance` — check a [RevAIse record](review/revaise-integration) against a protocol's SHACL shapes.
 - `prismaid_list_protocols` — list the accepted protocol identifiers.
 - `prismaid_protocol_guidance` — return a protocol's full requirement checklist, grouped by record class, so a user can plan a conforming review before running anything (see [Protocol Guidance](guidance)). Advisory; it does not constrain the order in which tools are used.
+
+**RevAIse records** — build and check a review record by hand (see [RevAIse Integration](review/revaise-integration)); no API keys or file access, and the last two fetch the released data model live (network):
+
+- `prismaid_generate_revaise_record` — seed a review record with a valid header and optional stubs for the stages prismAId does not run (registration, search, risk of bias, synthesis).
+- `prismaid_merge_record_stage` — merge a stage into an existing record, or fill a seeded stub.
+- `prismaid_revaise_schema` — describe the released RevAIse data model (classes, enums, required slots, enum values), fetched live — never the LinkML source.
+- `prismaid_validate_record` — validate a record against the released data-model JSON Schema (structural validity, distinct from conformance).
 
 **Execution** — read and write files, use the network, and read LLM API keys from the environment:
 
@@ -48,6 +55,9 @@ The design, generator, and conformance tools are self-contained. The execution t
 
 - **File paths are resolved inside the server's own filesystem.** A configuration's `input_directory`, `results_file_name`, and similar paths must refer to paths the server can see. When running the container, bind-mount the working directory (for example `-v "$PWD":/work`) and use the mounted paths in the configuration.
 - **API keys come from the environment.** Provider keys placed in the configuration are used as-is; otherwise the standard provider environment variables must be passed into the server process (for example `-e OPENAI_API_KEY`).
+- **Host services are not reachable by default.** The container is network-isolated from the host, so a self-hosted LLM endpoint on the host (for example Ollama on `127.0.0.1:11434`) cannot be reached from the containerized server. To reach it, run the container on the host network — `docker run --rm -i --network host -v "$PWD":/work ghcr.io/open-and-sustainable/prismaid-mcp:<version>` — or point the configuration at an endpoint the container can resolve.
+
+Because of these constraints, a practical pattern is to **use the MCP server to design, validate, and check** (the offline design, RevAIse-record, and conformance tools need none of this setup) and to **run the execution tools with the native binary or a language package on the host**, where local files and services are directly available. Configuration authored through the MCP server runs unchanged there.
 
 ## Use from Go source
 
