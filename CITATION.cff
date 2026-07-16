@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.15.0 - Added an MCP server exposing the toolkit to AI agents and protocol guidance across all channels, and moved protocol conformance to the SHACL shapes published by RevAIse.
+  v0.16.0 - Added RevAIse record lifecycle tools (seed, schema description, merge, validation) across all channels, a conformance progress view, and screening fixes for self-hosted endpoints, multiple text columns, and language matching.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

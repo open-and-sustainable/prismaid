@@ -9,6 +9,20 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.16.0] - Unreleased
+### Added
+- Added RevAIse record lifecycle tools across the Go API, CLI, shared library, Python, R, Julia, and the MCP server: `GenerateRevAIseRecord` (seed a review record with optional stubs for the stages prismAId does not perform), `RevAIseSchema` (describe the released RevAIse data model, fetched live rather than read from the LinkML source), `MergeRecordStage` (merge a stage into a record), and `ValidateRecord` (validate a record against the data-model JSON Schema).
+- Added `text_columns` to the screening configuration to combine several text fields (for example title and abstract) without pre-merging a column.
+
+### Changed
+- Conformance checks now return a progress view: each requirement is classified as passed, failed, or pending (its record class not present yet), summarized overall and per record class, so an in-progress review reads as partial rather than broken.
+- Screening `[filters.llm]` now accepts `base_url` and the other cloud/self-hosted settings, so the SelfHosted provider works in screening as it does in review.
+- Screening `accepted_languages` is matched case- and format-insensitively and accepts ISO 639-1 codes or English names, so `["English"]` no longer silently excludes everything.
+
+### Fixed
+- `prismaid_list_protocols` returned a bare array against an object output schema; it now returns an object.
+- Screening now names the offending key in `[filters.llm]` errors instead of always suggesting numbered tables.
+
 ## [0.15.0] - 2026-07-12
 ### Added
 - Added an MCP server (`cmd/prismaid-mcp`) exposing the toolkit to AI agents over stdio: configuration generation and validation, screening, review, conversion, downloads, protocol conformance checking, and protocol guidance. It is distributed as a container image on GHCR and published to the MCP Registry on release.
