@@ -11,6 +11,29 @@ import (
 	"github.com/open-and-sustainable/alembica/utils/logger"
 )
 
+// languageNameToCode maps common English language names to the ISO 639-1 codes
+// that detection produces, so accepted_languages entries can be written as either
+// codes or names.
+var languageNameToCode = map[string]string{
+	"english": "en", "spanish": "es", "french": "fr", "german": "de",
+	"italian": "it", "portuguese": "pt", "russian": "ru", "chinese": "zh",
+	"japanese": "ja", "arabic": "ar", "dutch": "nl", "swedish": "sv",
+	"norwegian": "no", "danish": "da", "finnish": "fi", "polish": "pl",
+	"czech": "cs", "hungarian": "hu", "romanian": "ro", "greek": "el",
+	"turkish": "tr", "hebrew": "he", "korean": "ko",
+}
+
+// NormalizeLanguage reduces a language value to a canonical lowercase ISO 639-1
+// code, accepting either a code ("EN", "en") or an English name ("English"), so
+// that accepted_languages matching is case- and format-insensitive.
+func NormalizeLanguage(language string) string {
+	normalized := strings.ToLower(strings.TrimSpace(language))
+	if code, ok := languageNameToCode[normalized]; ok {
+		return code
+	}
+	return normalized
+}
+
 // DetectLanguage performs rule-based language detection
 func DetectLanguage(text string) (string, error) {
 	if text == "" {

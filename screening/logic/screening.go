@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,15 +27,16 @@ type ScreeningConfig struct {
 
 // ProjectConfig contains basic project information
 type ProjectConfig struct {
-	Name             string `toml:"name"`
-	Author           string `toml:"author"`
-	Version          string `toml:"version"`
-	InputFile        string `toml:"input_file"`
-	OutputFile       string `toml:"output_file"`
-	TextColumn       string `toml:"text_column"`       // Column containing text/path to text files
-	IdentifierColumn string `toml:"identifier_column"` // Column for unique identifiers
-	OutputFormat     string `toml:"output_format"`     // csv or json
-	LogLevel         string `toml:"log_level"`         // low, medium, high
+	Name             string   `toml:"name"`
+	Author           string   `toml:"author"`
+	Version          string   `toml:"version"`
+	InputFile        string   `toml:"input_file"`
+	OutputFile       string   `toml:"output_file"`
+	TextColumn       string   `toml:"text_column"`       // Column containing text/path to text files
+	TextColumns      []string `toml:"text_columns"`      // Multiple text columns to combine (e.g. title and abstract); overrides text_column when set
+	IdentifierColumn string   `toml:"identifier_column"` // Column for unique identifiers
+	OutputFormat     string   `toml:"output_format"`     // csv or json
+	LogLevel         string   `toml:"log_level"`         // low, medium, high
 }
 
 // FiltersConfig contains settings for each screening filter
@@ -56,7 +58,7 @@ type DeduplicationConfig struct {
 // LanguageConfig for language detection
 type LanguageConfig struct {
 	Enabled           bool     `toml:"enabled"`
-	AcceptedLanguages []string `toml:"accepted_languages"` // e.g., ["en", "es", "fr"]
+	AcceptedLanguages []string `toml:"accepted_languages"` // ISO 639-1 codes or English names, matched case/format-insensitively (e.g., ["en", "English", "es"])
 	UseAI             bool     `toml:"use_ai"`             // Use AI for detection vs rule-based
 }
 
@@ -104,6 +106,14 @@ type LLMConfig struct {
 	Temperature float64 `toml:"temperature"`
 	TPMLimit    int     `toml:"tpm_limit"`
 	RPMLimit    int     `toml:"rpm_limit"`
+	// Cloud and self-hosted endpoint settings, matching the review LLM
+	// configuration. BaseURL is required by the SelfHosted provider.
+	BaseURL      string `toml:"base_url"`
+	EndpointType string `toml:"endpoint_type"`
+	Region       string `toml:"region"`
+	ProjectID    string `toml:"project_id"`
+	Location     string `toml:"location"`
+	APIVersion   string `toml:"api_version"`
 }
 
 // ManuscriptRecord represents a single manuscript with tags
@@ -159,7 +169,16 @@ func parseAndValidateConfig(tomlConfiguration string) (*ScreeningConfig, error) 
 			return nil, fmt.Errorf("invalid screening LLM configuration: screening uses [filters.llm], while [project.llm] is review-only syntax")
 		}
 		if strings.HasPrefix(key, "filters.llm.") {
-			return nil, fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of numbered tables")
+			// A numeric first segment (e.g. filters.llm.1) is a numbered table;
+			// any other unknown segment is simply an unrecognized key.
+			rest := strings.TrimPrefix(key, "filters.llm.")
+			if dot := strings.IndexByte(rest, '.'); dot >= 0 {
+				rest = rest[:dot]
+			}
+			if _, err := strconv.Atoi(rest); err == nil {
+				return nil, fmt.Errorf("invalid screening LLM configuration: screening supports a single AI model, use [filters.llm] instead of numbered tables")
+			}
+			return nil, fmt.Errorf("invalid screening configuration: unknown key %q in [filters.llm]", key)
 		}
 	}
 
@@ -189,7 +208,7 @@ func Screen(tomlConfiguration string) (*ScreeningResult, error) {
 	}
 
 	// Load input data
-	manuscripts, err := loadInputData(config.Project.InputFile, config.Project.TextColumn, config.Project.IdentifierColumn)
+	manuscripts, err := loadInputData(config.Project.InputFile, resolveTextColumns(config.Project), config.Project.IdentifierColumn)
 	if err != nil {
 		return nil, fmt.Errorf("error loading input data: %v", err)
 	}
@@ -280,8 +299,66 @@ func Screen(tomlConfiguration string) (*ScreeningResult, error) {
 	return result, nil
 }
 
+// resolveTextColumns returns the effective text columns: text_columns when set,
+// otherwise the single text_column, otherwise none.
+func resolveTextColumns(p ProjectConfig) []string {
+	if len(p.TextColumns) > 0 {
+		return p.TextColumns
+	}
+	if p.TextColumn != "" {
+		return []string{p.TextColumn}
+	}
+	return nil
+}
+
+// findTextColumnIndices returns the indices of the named columns in header
+// (case-insensitive), erroring if any named column is absent.
+func findTextColumnIndices(header, columns []string) ([]int, error) {
+	indices := make([]int, 0, len(columns))
+	for _, name := range columns {
+		nameLower := strings.ToLower(name)
+		idx := -1
+		for i, col := range header {
+			if strings.ToLower(col) == nameLower {
+				idx = i
+				break
+			}
+		}
+		if idx == -1 {
+			return nil, fmt.Errorf("text column '%s' not found", name)
+		}
+		indices = append(indices, idx)
+	}
+	return indices, nil
+}
+
+// textFromColumns concatenates the text of the given column indices in a record,
+// joined by blank lines. A cell that is a path to an existing file is replaced by
+// the file's contents; empty cells are skipped.
+func textFromColumns(record []string, indices []int) string {
+	parts := make([]string, 0, len(indices))
+	for _, idx := range indices {
+		if idx < 0 || idx >= len(record) {
+			continue
+		}
+		value := record[idx]
+		if value == "" {
+			continue
+		}
+		if fileExists(value) {
+			if content, err := os.ReadFile(value); err == nil {
+				value = string(content)
+			} else {
+				logger.Error(fmt.Sprintf("Could not read file %s: %v", value, err))
+			}
+		}
+		parts = append(parts, value)
+	}
+	return strings.Join(parts, "\n\n")
+}
+
 // loadInputData loads manuscripts from CSV or TXT file
-func loadInputData(inputFile, textColumn, idColumn string) ([]ManuscriptRecord, error) {
+func loadInputData(inputFile string, textColumns []string, idColumn string) ([]ManuscriptRecord, error) {
 	file, err := os.Open(inputFile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open input file: %v", err)
@@ -292,16 +369,16 @@ func loadInputData(inputFile, textColumn, idColumn string) ([]ManuscriptRecord, 
 
 	switch ext {
 	case ".csv":
-		return loadCSVData(file, textColumn, idColumn)
+		return loadCSVData(file, textColumns, idColumn)
 	case ".txt", ".tsv":
-		return loadTSVData(file, textColumn, idColumn)
+		return loadTSVData(file, textColumns, idColumn)
 	default:
 		return nil, fmt.Errorf("unsupported file format: %s", ext)
 	}
 }
 
 // loadCSVData loads data from CSV file
-func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecord, error) {
+func loadCSVData(file io.Reader, textColumns []string, idColumn string) ([]ManuscriptRecord, error) {
 	reader := csv.NewReader(file)
 
 	// Read header
@@ -316,17 +393,10 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 		headerMap[strings.ToLower(col)] = col
 	}
 
-	// Find column indices (case-insensitive)
-	textIdx := -1
-	textColumnLower := strings.ToLower(textColumn)
-	for i, col := range header {
-		if strings.ToLower(col) == textColumnLower {
-			textIdx = i
-		}
-	}
-
-	if textIdx == -1 {
-		return nil, fmt.Errorf("text column '%s' not found in CSV", textColumn)
+	// Find text column indices (case-insensitive)
+	textIdxs, err := findTextColumnIndices(header, textColumns)
+	if err != nil {
+		return nil, fmt.Errorf("%v in CSV", err)
 	}
 
 	// Read records
@@ -364,22 +434,8 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 			}
 		}
 
-		// Get text content (could be a path to file or actual text)
-		if textIdx < len(record) {
-			textContent := record[textIdx]
-			// Check if it's a file path
-			if fileExists(textContent) {
-				content, err := os.ReadFile(textContent)
-				if err != nil {
-					logger.Error(fmt.Sprintf("Could not read file %s: %v", textContent, err))
-					manuscript.Text = textContent // Use as is if file can't be read
-				} else {
-					manuscript.Text = string(content)
-				}
-			} else {
-				manuscript.Text = textContent
-			}
-		}
+		// Get text content from one or more columns (each cell may be a file path)
+		manuscript.Text = textFromColumns(record, textIdxs)
 
 		manuscripts = append(manuscripts, manuscript)
 	}
@@ -388,7 +444,7 @@ func loadCSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 }
 
 // loadTSVData loads data from TSV/TXT file
-func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecord, error) {
+func loadTSVData(file io.Reader, textColumns []string, idColumn string) ([]ManuscriptRecord, error) {
 	scanner := bufio.NewScanner(file)
 
 	// Read header
@@ -403,18 +459,10 @@ func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 		headerMap[strings.ToLower(col)] = col
 	}
 
-	// Find column indices (case-insensitive)
-	textIdx := -1
-	textColumnLower := strings.ToLower(textColumn)
-	for i, col := range header {
-		colLower := strings.ToLower(col)
-		if colLower == textColumnLower {
-			textIdx = i
-		}
-	}
-
-	if textIdx == -1 {
-		return nil, fmt.Errorf("text column '%s' not found in TSV", textColumn)
+	// Find text column indices (case-insensitive)
+	textIdxs, err := findTextColumnIndices(header, textColumns)
+	if err != nil {
+		return nil, fmt.Errorf("%v in TSV", err)
 	}
 
 	// Read records
@@ -447,18 +495,8 @@ func loadTSVData(file io.Reader, textColumn, idColumn string) ([]ManuscriptRecor
 			}
 		}
 
-		// Set text (abstract)
-		if textIdx >= 0 && textIdx < len(values) {
-			manuscript.Text = values[textIdx]
-		}
-
-		// Try to read the text from file if it's a path
-		if manuscript.Text != "" && fileExists(manuscript.Text) {
-			content, err := os.ReadFile(manuscript.Text)
-			if err == nil {
-				manuscript.Text = string(content)
-			}
-		}
+		// Set text from one or more columns (each cell may be a file path)
+		manuscript.Text = textFromColumns(values, textIdxs)
 
 		manuscripts = append(manuscripts, manuscript)
 	}
@@ -570,7 +608,7 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 				// Check if language is accepted
 				isAccepted := false
 				for _, acceptedLang := range config.AcceptedLanguages {
-					if strings.EqualFold(language, acceptedLang) {
+					if filters.NormalizeLanguage(language) == filters.NormalizeLanguage(acceptedLang) {
 						isAccepted = true
 						break
 					}
@@ -639,7 +677,7 @@ func applyLanguageFilter(result *ScreeningResult, config LanguageConfig, llmConf
 			// Check if language is accepted
 			isAccepted := false
 			for _, acceptedLang := range config.AcceptedLanguages {
-				if strings.EqualFold(language, acceptedLang) {
+				if filters.NormalizeLanguage(language) == filters.NormalizeLanguage(acceptedLang) {
 					isAccepted = true
 					break
 				}
@@ -1075,8 +1113,8 @@ func validateConfig(config *ScreeningConfig) error {
 		return fmt.Errorf("output_file is required")
 	}
 
-	if config.Project.TextColumn == "" {
-		return fmt.Errorf("text_column is required")
+	if config.Project.TextColumn == "" && len(config.Project.TextColumns) == 0 {
+		return fmt.Errorf("text_column or text_columns is required")
 	}
 
 	// Check if at least one filter is enabled
@@ -1107,12 +1145,18 @@ func convertLLMConfig(config *LLMConfig) []any {
 
 	return []any{
 		map[string]any{
-			"provider":    config.Provider,
-			"api_key":     config.APIKey,
-			"model":       config.Model,
-			"temperature": config.Temperature,
-			"tpm_limit":   config.TPMLimit,
-			"rpm_limit":   config.RPMLimit,
+			"provider":      config.Provider,
+			"api_key":       config.APIKey,
+			"model":         config.Model,
+			"temperature":   config.Temperature,
+			"tpm_limit":     config.TPMLimit,
+			"rpm_limit":     config.RPMLimit,
+			"base_url":      config.BaseURL,
+			"endpoint_type": config.EndpointType,
+			"region":        config.Region,
+			"project_id":    config.ProjectID,
+			"location":      config.Location,
+			"api_version":   config.APIVersion,
 		},
 	}
 }

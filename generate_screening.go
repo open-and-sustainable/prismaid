@@ -55,6 +55,14 @@ type ScreeningLLM struct {
 	Temperature float64
 	TpmLimit    int64
 	RpmLimit    int64
+	// Cloud and self-hosted endpoint settings. BaseURL is required by the
+	// SelfHosted provider (a local OpenAI-compatible endpoint).
+	BaseURL      string
+	EndpointType string
+	Region       string
+	ProjectID    string
+	Location     string
+	APIVersion   string
 }
 
 // ScreeningRevAIse describes an optional [revaise] block documenting the
@@ -81,6 +89,7 @@ type ScreeningConfigParams struct {
 	InputFile        string
 	OutputFile       string
 	TextColumn       string
+	TextColumns      []string
 	IdentifierColumn string
 	OutputFormat     string
 	LogLevel         string
@@ -107,7 +116,11 @@ func GenerateScreeningConfig(p ScreeningConfigParams) string {
 	fmt.Fprintf(&b, "version = %q\n", p.Version)
 	fmt.Fprintf(&b, "input_file = %q\n", p.InputFile)
 	fmt.Fprintf(&b, "output_file = %q\n", p.OutputFile)
-	fmt.Fprintf(&b, "text_column = %q\n", p.TextColumn)
+	if len(p.TextColumns) > 0 {
+		fmt.Fprintf(&b, "text_columns = %s\n", tomlStringArray(p.TextColumns))
+	} else {
+		fmt.Fprintf(&b, "text_column = %q\n", p.TextColumn)
+	}
 	fmt.Fprintf(&b, "identifier_column = %q\n", p.IdentifierColumn)
 	fmt.Fprintf(&b, "output_format = %q\n", p.OutputFormat)
 	fmt.Fprintf(&b, "log_level = %q\n", p.LogLevel)
@@ -155,6 +168,24 @@ func GenerateScreeningConfig(p ScreeningConfigParams) string {
 		fmt.Fprintf(&b, "temperature = %s\n", formatFloat(p.LLM.Temperature))
 		fmt.Fprintf(&b, "tpm_limit = %d\n", p.LLM.TpmLimit)
 		fmt.Fprintf(&b, "rpm_limit = %d\n", p.LLM.RpmLimit)
+		if p.LLM.BaseURL != "" {
+			fmt.Fprintf(&b, "base_url = %q\n", p.LLM.BaseURL)
+		}
+		if p.LLM.EndpointType != "" {
+			fmt.Fprintf(&b, "endpoint_type = %q\n", p.LLM.EndpointType)
+		}
+		if p.LLM.Region != "" {
+			fmt.Fprintf(&b, "region = %q\n", p.LLM.Region)
+		}
+		if p.LLM.ProjectID != "" {
+			fmt.Fprintf(&b, "project_id = %q\n", p.LLM.ProjectID)
+		}
+		if p.LLM.Location != "" {
+			fmt.Fprintf(&b, "location = %q\n", p.LLM.Location)
+		}
+		if p.LLM.APIVersion != "" {
+			fmt.Fprintf(&b, "api_version = %q\n", p.LLM.APIVersion)
+		}
 	}
 
 	result := strings.TrimSpace(b.String())
