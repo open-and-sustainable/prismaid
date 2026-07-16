@@ -9,7 +9,7 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
-## [0.16.0] - Unreleased
+## [0.16.0] - 2026-07-16
 ### Added
 - Added RevAIse record lifecycle tools across the Go API, CLI, shared library, Python, R, Julia, and the MCP server: `GenerateRevAIseRecord` (seed a review record with optional stubs for the stages prismAId does not perform), `RevAIseSchema` (describe the released RevAIse data model, fetched live rather than read from the LinkML source), `MergeRecordStage` (merge a stage into a record), and `ValidateRecord` (validate a record against the data-model JSON Schema).
 - Added `text_columns` to the screening configuration to combine several text fields (for example title and abstract) without pre-merging a column.
