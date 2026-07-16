@@ -52,11 +52,16 @@ type protocolMeta struct {
 	Status  string `json:"status"`
 }
 
-// Report is the outcome of a conformance check.
+// Report is the outcome of a conformance check. Conforms is the whole-protocol
+// verdict; Summary, Passed, and Pending give a progress view so an in-progress
+// review reads as partial rather than broken.
 type Report struct {
-	Protocol   string      `json:"protocol"`
-	Conforms   bool        `json:"conforms"`
-	Violations []Violation `json:"violations"`
+	Protocol   string        `json:"protocol"`
+	Conforms   bool          `json:"conforms"`
+	Summary    Summary       `json:"summary"`
+	Passed     []Requirement `json:"passed,omitempty"`
+	Pending    []Requirement `json:"pending,omitempty"`
+	Violations []Violation   `json:"violations"`
 }
 
 // Violation is a single unmet constraint, carrying the protocol's own message.
@@ -64,6 +69,29 @@ type Violation struct {
 	FocusNode string `json:"focus_node,omitempty"`
 	Path      string `json:"path,omitempty"`
 	Message   string `json:"message"`
+}
+
+// ClassProgress summarizes how many of a record class's requirements are met.
+// Present is false when the record has no instance of the class yet, in which
+// case its requirements are counted as Pending (not started) rather than failed.
+type ClassProgress struct {
+	Present bool `json:"present"`
+	Total   int  `json:"total"`
+	Passed  int  `json:"passed"`
+	Failed  int  `json:"failed"`
+	Pending int  `json:"pending"`
+}
+
+// Summary is the progress view of a conformance check: overall counts and a
+// per-record-class breakdown. Pending distinguishes requirements for stages that
+// have not been started (class absent) from failed requirements, so an
+// incomplete-by-design review is not mistaken for a broken one.
+type Summary struct {
+	Total   int                      `json:"total"`
+	Passed  int                      `json:"passed"`
+	Failed  int                      `json:"failed"`
+	Pending int                      `json:"pending"`
+	ByClass map[string]ClassProgress `json:"by_class,omitempty"`
 }
 
 // Requirement is one thing a protocol requires, with the record class it applies
@@ -126,7 +154,74 @@ func Check(recordJSON, protocol string) (*Report, error) {
 			Message:   messageText(r.ResultMessages),
 		})
 	}
+	addProgress(report, shapesGraph, recordJSON)
 	return report, nil
+}
+
+// addProgress computes the progress view: every requirement in the shapes is
+// classified as passed, failed (its message appears in a violation), or pending
+// (its record class is not present yet), and summarized overall and per class.
+func addProgress(report *Report, shapesGraph *shacl.Graph, recordJSON string) {
+	requirements := extractRequirements(shapesGraph)
+	violated := make(map[string]bool, len(report.Violations))
+	for _, v := range report.Violations {
+		violated[v.Message] = true
+	}
+	present := presentClasses(recordJSON)
+
+	byClass := make(map[string]ClassProgress)
+	for _, req := range requirements {
+		classPresent := req.TargetClass == "" || present[req.TargetClass]
+		cp := byClass[req.TargetClass]
+		cp.Total++
+		cp.Present = classPresent
+		switch {
+		case !classPresent:
+			cp.Pending++
+			report.Pending = append(report.Pending, req)
+		case violated[req.Message]:
+			cp.Failed++
+		default:
+			cp.Passed++
+			report.Passed = append(report.Passed, req)
+		}
+		byClass[req.TargetClass] = cp
+	}
+
+	summary := Summary{ByClass: byClass}
+	for _, cp := range byClass {
+		summary.Total += cp.Total
+		summary.Passed += cp.Passed
+		summary.Failed += cp.Failed
+		summary.Pending += cp.Pending
+	}
+	report.Summary = summary
+}
+
+// presentClasses returns the record classes that have at least one instance in
+// the record, so requirements for absent classes count as pending rather than
+// failed. It mirrors the typing done by frameRecord.
+func presentClasses(recordJSON string) map[string]bool {
+	present := map[string]bool{"Review": true}
+	var record map[string]any
+	if err := json.Unmarshal([]byte(recordJSON), &record); err != nil {
+		return present
+	}
+	if stages, ok := record["stages"].([]any); ok {
+		for _, s := range stages {
+			stage, ok := s.(map[string]any)
+			if !ok {
+				continue
+			}
+			if class := stageClass(fmt.Sprint(stage["stage_type"])); class != "" {
+				present[class] = true
+			}
+		}
+	}
+	if records, ok := record["literature_records"].([]any); ok && len(records) > 0 {
+		present["LiteratureRecord"] = true
+	}
+	return present
 }
 
 // ProtocolGuidance returns the full requirement checklist a protocol imposes,

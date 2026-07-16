@@ -53,6 +53,20 @@ func TestCheckReportsPrismaGaps(t *testing.T) {
 			t.Errorf("expected a violation mentioning %q; got: %s", w, allMessages(report))
 		}
 	}
+
+	// The progress view must be populated and internally consistent: every
+	// requirement is passed, failed, or pending, and absent stages are pending
+	// rather than failed (an in-progress review is not treated as broken).
+	s := report.Summary
+	if s.Total == 0 {
+		t.Fatal("expected a non-empty progress summary")
+	}
+	if s.Passed+s.Failed+s.Pending != s.Total {
+		t.Errorf("summary counts inconsistent: passed=%d failed=%d pending=%d total=%d", s.Passed, s.Failed, s.Pending, s.Total)
+	}
+	if synth, ok := s.ByClass["SynthesisStage"]; !ok || synth.Present || synth.Pending == 0 {
+		t.Errorf("expected the absent SynthesisStage to be pending, not started; got %+v", synth)
+	}
 }
 
 func TestCheckUnknownProtocol(t *testing.T) {
