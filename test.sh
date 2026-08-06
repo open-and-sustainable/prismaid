@@ -26,6 +26,120 @@ else
     echo "    ✗ Code tests failed"
 fi
 
+echo "###### Testing R WRAPPER STRING BRIDGE ######"
+echo "==> Testing R .Call string conversion..."
+if command -v R >/dev/null 2>&1 && command -v Rscript >/dev/null 2>&1; then
+    R_WRAPPER_TEST_DIR=$(mktemp -d)
+    cp r-package/src/R_wrapper.c r-package/src/_cgo_export.h "$R_WRAPPER_TEST_DIR/"
+    cat > "$R_WRAPPER_TEST_DIR/native_stubs.c" <<'EOF'
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static char* copy_string(const char *value) {
+    if (value == NULL) {
+        value = "<null>";
+    }
+    size_t size = strlen(value) + 1;
+    char *out = (char*)malloc(size);
+    if (out == NULL) {
+        return NULL;
+    }
+    memcpy(out, value, size);
+    return out;
+}
+
+static char* format_string(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    int needed = vsnprintf(NULL, 0, format, args);
+    va_end(args);
+    if (needed < 0) {
+        return copy_string("format error");
+    }
+    char *out = (char*)malloc((size_t)needed + 1);
+    if (out == NULL) {
+        return NULL;
+    }
+    va_start(args, format);
+    vsnprintf(out, (size_t)needed + 1, format, args);
+    va_end(args);
+    return out;
+}
+
+char* RunReviewR(char* input) { return format_string("review:%s", input); }
+char* DownloadZoteroR(char* input) { return format_string("zotero:%s", input); }
+char* DownloadURLListR(char* path) { return format_string("url:%s", path); }
+char* ConvertR(char* inputDir, char* selectedFormats, char* tikaAddress, char* singleFile, char* ocrOnly) {
+    return format_string("convert:%s|%s|%s|%s|%s", inputDir, selectedFormats, tikaAddress, singleFile, ocrOnly);
+}
+char* ScreeningR(char* input) { return format_string("screening:%s", input); }
+char* ValidateConfigR(char* configType, char* input) { return format_string("validate:%s:%s", configType, input); }
+char* CheckConformanceR(char* record, char* protocol) { return format_string("conformance:%s:%s", record, protocol); }
+char* ProtocolGuidanceR(char* protocol) { return format_string("guidance:%s", protocol); }
+char* GenerateRevAIseRecordR(char* paramsJson) { return format_string("generate:%s", paramsJson); }
+char* RevAIseSchemaR(char* paramsJson) { return format_string("schema:%s", paramsJson); }
+char* MergeRecordStageR(char* record, char* stage) { return format_string("merge:%s:%s", record, stage); }
+char* ValidateRecordR(char* record) { return format_string("record:%s", record); }
+void FreeCString(char* str) { free(str); }
+EOF
+    if (cd "$R_WRAPPER_TEST_DIR" && PKG_CPPFLAGS="-DNATIVE_LIBS_AVAILABLE" R CMD SHLIB R_wrapper.c native_stubs.c > build.log 2>&1); then
+        if WRAPPER_TEST_DIR="$R_WRAPPER_TEST_DIR" Rscript - <<'EOF'
+dyn.load(file.path(Sys.getenv("WRAPPER_TEST_DIR"), paste0("R_wrapper", .Platform$dynlib.ext)))
+
+expect_equal <- function(actual, expected) {
+  if (!identical(actual, expected)) {
+    stop(sprintf("Expected %s, got %s", shQuote(expected), shQuote(actual)), call. = FALSE)
+  }
+}
+
+toml <- paste(
+  "[zotero]",
+  'user = "u"',
+  'api_key = "k"',
+  'group = "dummy_records"',
+  'output_dir = "./papers_zotero"',
+  sep = "\n"
+)
+screening <- paste("[project]", 'name = "screening"', sep = "\n")
+record <- '{"review_id":"r1","stages":[]}'
+stage <- '{"stage_type":"search"}'
+params <- '{"title":"My review","include_manual_stage_stubs":true}'
+
+expect_equal(.Call("check_platform_support"), "supported")
+expect_equal(.Call("RunReviewR_wrap", toml), paste0("review:", toml))
+expect_equal(.Call("DownloadZoteroR_wrap", toml), paste0("zotero:", toml))
+expect_equal(.Call("DownloadURLListR_wrap", "urls.txt"), "url:urls.txt")
+expect_equal(.Call("ConvertR_wrap", "papers", "pdf", "localhost:9998", "one.pdf", "true"), "convert:papers|pdf|localhost:9998|one.pdf|true")
+expect_equal(.Call("ScreeningR_wrap", screening), paste0("screening:", screening))
+expect_equal(.Call("ValidateConfigR_wrap", "zotero", toml), paste0("validate:zotero:", toml))
+expect_equal(.Call("CheckConformanceR_wrap", record, "prisma-2020"), paste0("conformance:", record, ":prisma-2020"))
+expect_equal(.Call("ProtocolGuidanceR_wrap", "prisma-2020"), "guidance:prisma-2020")
+expect_equal(.Call("GenerateRevAIseRecordR_wrap", params), paste0("generate:", params))
+expect_equal(.Call("RevAIseSchemaR_wrap", params), paste0("schema:", params))
+expect_equal(.Call("MergeRecordStageR_wrap", record, stage), paste0("merge:", record, ":", stage))
+expect_equal(.Call("ValidateRecordR_wrap", record), paste0("record:", record))
+
+err <- tryCatch(.Call("ValidateConfigR_wrap", NA_character_, toml), error = conditionMessage)
+if (!grepl("configType must not be NA", err, fixed = TRUE)) {
+  stop("Expected NA configType validation error, got: ", err, call. = FALSE)
+}
+EOF
+        then
+            echo "    ✓ R wrapper string bridge passed"
+        else
+            echo "    ✗ R wrapper string bridge failed"
+        fi
+    else
+        echo "    ✗ R wrapper string bridge build failed"
+        cat "$R_WRAPPER_TEST_DIR/build.log"
+    fi
+    rm -rf "$R_WRAPPER_TEST_DIR"
+else
+    echo "    ℹ R not available; skipping R wrapper string bridge test"
+fi
+
 echo "###### Testing SCREENING ######"
 echo "==> Testing screening functionality..."
 if go run cmd/main.go --screening projects/test/configs/screening_test.toml > /dev/null 2>&1; then
