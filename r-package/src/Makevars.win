@@ -2,7 +2,10 @@
 # This file is used specifically for Windows builds
 
 # Compiler Flags
-PKG_CFLAGS = -I$(R_HOME)/include -DNATIVE_LIBS_AVAILABLE
+PKG_CFLAGS = -I$(R_HOME)/include
+
+# Platform Identification
+WIN_ARCH := $(shell $(CC) -dumpmachine 2>/dev/null || echo "unknown")
 
 # Windows Library Linking Configuration
 # For Windows, we link directly to the DLL using its full path
@@ -11,15 +14,27 @@ PKG_CFLAGS = -I$(R_HOME)/include -DNATIVE_LIBS_AVAILABLE
 # Standard R linking
 PKG_LIBS = -L$(R_HOME)/bin$(R_ARCH) -lR
 
-# Link directly to our DLL using its full path
-# The DLL exports the Go functions we need
-PKG_LIBS += ../inst/libs/windows/libprismaid_windows_amd64.dll
+ifeq ($(findstring x86_64,$(WIN_ARCH)),x86_64)
+    PKG_CFLAGS += -DNATIVE_LIBS_AVAILABLE
 
-# Additional Windows linker flags
-PKG_LIBS += -Wl,--enable-auto-import -Wl,--export-all-symbols
+    # Link directly to our DLL using its full path
+    # The DLL exports the Go functions we need
+    PKG_LIBS += ../inst/libs/windows/libprismaid_windows_amd64.dll
+
+    # Additional Windows linker flags
+    PKG_LIBS += -Wl,--enable-auto-import -Wl,--export-all-symbols
+
+    COPY_TARGET = copy_prismaid_dll
+
+    # Print build information
+    $(info Windows x86_64 build: linking directly to DLL and copying to build directory)
+    $(info DLL path: ../inst/libs/windows/libprismaid_windows_amd64.dll)
+else
+    $(info Windows $(WIN_ARCH) not officially supported - building without native libraries)
+endif
 
 # Default target - build R wrapper and copy prismaid DLL
-all: R_wrapper.o copy_prismaid_dll
+all: R_wrapper.o $(COPY_TARGET)
 
 # Compile R_wrapper.c to R_wrapper.o
 R_wrapper.o: R_wrapper.c
@@ -36,7 +51,3 @@ copy_prismaid_dll:
 	fi
 
 .PHONY: copy_prismaid_dll
-
-# Print build information
-$(info Windows build: linking directly to DLL and copying to build directory)
-$(info DLL path: ../inst/libs/windows/libprismaid_windows_amd64.dll)
