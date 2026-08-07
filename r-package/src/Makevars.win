@@ -5,7 +5,7 @@
 PKG_CFLAGS = -I$(R_HOME)/include
 
 # Platform Identification
-WIN_ARCH := $(shell $(CC) -dumpmachine 2>/dev/null || echo "unknown")
+WIN_ARCH := $(shell "$(R_HOME)/bin$(R_ARCH)/Rscript.exe" -e 'cat(R.version$$arch)' 2>/dev/null || Rscript -e 'cat(R.version$$arch)' 2>/dev/null || echo "unknown")
 
 # Windows Library Linking Configuration
 # For Windows, we link directly to the DLL using its full path
