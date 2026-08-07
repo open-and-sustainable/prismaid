@@ -47,7 +47,7 @@ all: R_wrapper.o
 
 # Compile R_wrapper.c to R_wrapper.o
 R_wrapper.o: R_wrapper.c
-	$(CC) $(PKG_CFLAGS) -c R_wrapper.c -o R_wrapper.o
+	$(CC) $(PKG_CFLAGS) $(FPICFLAGS) -c R_wrapper.c -o R_wrapper.o
 
 # Additional safety: check if we can find the required libraries and warn if not
 .PHONY: check-libs

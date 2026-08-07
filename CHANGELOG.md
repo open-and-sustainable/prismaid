@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.16.2] - 2026-08-07
+### Fixed
+- Fixed the Linux R package build by compiling the R wrapper object with position-independent code.
+
 ## [0.16.1] - 2026-08-06
 ### Fixed
 - Fixed R package native string conversion so TOML configuration text is passed correctly to validation and download calls.

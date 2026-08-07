@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.16.1 - Fixed R package native string conversion for TOML configuration validation and download calls.
+  v0.16.2 - Fixed the Linux R package build for the native R wrapper.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:
