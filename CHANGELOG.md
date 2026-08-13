@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.16.4] - 2026-08-13
+### Fixed
+- Fixed review output filename mapping for extraction and chain-of-thought justification responses.
+
 ## [0.16.3] - 2026-08-07
 ### Fixed
 - Fixed Windows ARM64 R package builds by disabling native x86_64 DLL linking on unsupported Windows architectures.

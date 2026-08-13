@@ -83,13 +83,16 @@ func saveJSON(filePath string, resultsString string, filenames []string) error {
 
 	// Write each response separately with provider & model metadata
 	for i, response := range parsedResults.Responses {
-		filenameIndex := i % len(filenames) // Prevent index out of range
-		fmt.Println("Processing response", i+1, "/", len(parsedResults.Responses), "Filename:", filenames[filenameIndex])
+		filename, err := filenameForResponse(response, filenames)
+		if err != nil {
+			return err
+		}
+		fmt.Println("Processing response", i+1, "/", len(parsedResults.Responses), "Filename:", filename)
 
 		modifiedResponse := map[string]interface{}{
 			"provider": response.Provider,
 			"model":    response.Model,
-			"filename": filenames[filenameIndex],
+			"filename": filename,
 		}
 
 		// Merge model response into the modified response map
@@ -161,24 +164,37 @@ func saveCSV(filePath string, resultsString string, filenames []string, keys []s
 	}
 
 	// Process responses
-	for i, response := range parsedResults.Responses {
+	for _, response := range parsedResults.Responses {
 		// Skip justifications & summaries (SequenceNumber > 1)
 		if response.SequenceNumber > 1 {
 			logger.Info(fmt.Sprintf("Skipping justification/summary in CSV (SeqNum: %d)", response.SequenceNumber))
 			continue
 		}
 
-		// Ensure correct filename mapping
-		filenameIndex := i % len(filenames) // Prevent index out of range
+		filename, err := filenameForResponse(response, filenames)
+		if err != nil {
+			return err
+		}
 
 		// Write the main response data
 		for _, modelResponse := range response.ModelResponses {
-			writeCSVData(modelResponse, filenames[filenameIndex], response.Provider, response.Model, writer, keys)
+			writeCSVData(modelResponse, filename, response.Provider, response.Model, writer, keys)
 		}
 	}
 
 	logger.Info(fmt.Sprintf("CSV results successfully saved to: %s", filePath))
 	return nil
+}
+
+func filenameForResponse(response definitions.Response, filenames []string) (string, error) {
+	if len(filenames) == 0 {
+		return "", fmt.Errorf("no filenames provided")
+	}
+	seqIndex, err := strconv.Atoi(response.SequenceID)
+	if err != nil || seqIndex < 1 || seqIndex > len(filenames) {
+		return "", fmt.Errorf("invalid sequence ID %q for %d filenames", response.SequenceID, len(filenames))
+	}
+	return filenames[seqIndex-1], nil
 }
 
 // GetDirectoryPath extracts the directory component from a file path.
