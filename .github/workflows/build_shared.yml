@@ -16,7 +16,7 @@ jobs:
             GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
@@ -115,12 +115,12 @@ jobs:
             GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
             - name: Set up Go
-              uses: actions/setup-go@v5
+              uses: actions/setup-go@v6
               with:
                   go-version: "1.26"
 
@@ -130,7 +130,7 @@ jobs:
                   go build -buildmode=c-shared -o libprismaid_linux_amd64.so export.go
 
             - name: Upload Linux shared library artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: linux-amd64-shared-library
                   path: sharedlib/libprismaid_linux_amd64.so
@@ -213,12 +213,12 @@ jobs:
             GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
             - name: Set up Go
-              uses: actions/setup-go@v5
+              uses: actions/setup-go@v6
               with:
                   go-version: "1.26"
 
@@ -229,7 +229,7 @@ jobs:
                   go build -buildmode=c-shared -o libprismaid_windows_amd64.dll .\export.go
 
             - name: Upload Windows shared library artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: windows-amd64-shared-library
                   path: sharedlib/libprismaid_windows_amd64.dll
@@ -302,12 +302,12 @@ jobs:
             GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
             - name: Set up Go
-              uses: actions/setup-go@v5
+              uses: actions/setup-go@v6
               with:
                   go-version: "1.26"
 
@@ -317,7 +317,7 @@ jobs:
                   go build -buildmode=c-shared -o libprismaid_darwin_arm64.dylib export.go
 
             - name: Upload macOS shared library artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: macos-arm64-shared-library
                   path: sharedlib/libprismaid_darwin_arm64.dylib
@@ -388,7 +388,7 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
@@ -399,19 +399,19 @@ jobs:
 
             # Download artifacts from build jobs
             - name: Download macOS shared library artifact
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v7
               with:
                   name: macos-arm64-shared-library
                   path: python/prismaid/
 
             - name: Download Linux shared library artifact
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v7
               with:
                   name: linux-amd64-shared-library
                   path: python/prismaid/
 
             - name: Download Windows shared library artifact
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v7
               with:
                   name: windows-amd64-shared-library
                   path: python/prismaid/
@@ -430,7 +430,7 @@ jobs:
                   python -m build
 
             - name: Upload Python Package Artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: prismaid-python-package
                   path: python/dist/*.whl
@@ -442,10 +442,10 @@ jobs:
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Download Python Package Artifact
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@v7
               with:
                   name: prismaid-python-package
                   path: dist/
@@ -475,7 +475,7 @@ jobs:
             GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         steps:
             - name: Checkout code
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
               with:
                   fetch-depth: 0
 
@@ -544,7 +544,7 @@ jobs:
 
         steps:
             - name: Checkout Repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v5
 
             - name: Install GitHub CLI
               run: sudo apt-get install gh
