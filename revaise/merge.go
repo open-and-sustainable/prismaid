@@ -41,7 +41,7 @@ func upsertByKey(items []any, replacement map[string]any, same func(map[string]a
 }
 
 func mergeMaps(existing, replacement map[string]any) map[string]any {
-	merged := make(map[string]any, len(existing)+len(replacement))
+	merged := make(map[string]any)
 	for key, value := range existing {
 		merged[key] = value
 	}

@@ -7,6 +7,32 @@ import (
 	"testing"
 )
 
+func TestMergeMapsPreservesExistingValuesAndAppliesNonEmptyReplacements(t *testing.T) {
+	existing := map[string]any{
+		"preserved": "existing value",
+		"replaced":  "old value",
+	}
+	replacement := map[string]any{
+		"replaced": "new value",
+		"added":    "added value",
+		"empty":    "",
+	}
+
+	merged := mergeMaps(existing, replacement)
+	if merged["preserved"] != "existing value" {
+		t.Fatalf("preserved value = %v, want existing value", merged["preserved"])
+	}
+	if merged["replaced"] != "new value" {
+		t.Fatalf("replaced value = %v, want new value", merged["replaced"])
+	}
+	if merged["added"] != "added value" {
+		t.Fatalf("added value = %v, want added value", merged["added"])
+	}
+	if _, ok := merged["empty"]; ok {
+		t.Fatal("empty replacement must not be added")
+	}
+}
+
 func TestUpdateScreeningCreatesRecordAndUpdatesRound(t *testing.T) {
 	tmp := t.TempDir()
 	recordPath := filepath.Join(tmp, "review.revaise.json")
