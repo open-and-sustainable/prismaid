@@ -26,6 +26,10 @@ The tools fall into four groups.
 - `prismaid_generate_screening_config` — build a screening-tool TOML from structured parameters.
 - `prismaid_generate_zotero_config` — build a Zotero-download TOML from structured parameters.
 
+**Local review planning** — read-only, no API keys or model calls:
+
+- `prismaid_plan_review_chunking` — read the source texts named by an enabled review configuration and report full-prompt estimates, chunk counts, and chunk prompt sizes before a review run.
+
 **Protocol conformance** — symbolic check against the latest shapes RevAIse publishes; needs network, but no API keys or file access (see [Protocol Conformance](conformance)):
 
 - `prismaid_check_conformance` — check a [RevAIse record](review/revaise-integration) against a protocol's SHACL shapes.
@@ -47,11 +51,11 @@ The tools fall into four groups.
 - `prismaid_download_zotero` — download attachments from a Zotero collection.
 - `prismaid_download_url_list` — download files from a list of URLs.
 
-Agents discover tool schemas via `tools/list` and call them with `tools/call`. The generator tools accept the same structured parameters as prismAId's Go configuration generators, so an agent can author a configuration field by field, validate it, and then run it — all in one session.
+Agents discover tool schemas via `tools/list` and call them with `tools/call`. The generator tools accept the same structured parameters as prismAId's Go configuration generators, so an agent can author a configuration field by field, validate it, inspect an enabled chunking plan, and then run it — all in one session.
 
 ## Running execution tools
 
-The design, generator, and conformance tools are self-contained. The execution tools are not: they read and write files and call LLM providers. Two conventions apply when running the server in a container:
+The design, generator, and conformance tools are self-contained. `prismaid_plan_review_chunking` is read-only but needs access to the configured input files. The execution tools also read and write files and call LLM providers. Two conventions apply when running the server in a container:
 
 - **File paths are resolved inside the server's own filesystem.** A configuration's `input_directory`, `results_file_name`, and similar paths must refer to paths the server can see. When running the container, bind-mount the working directory (for example `-v "$PWD":/work`) and use the mounted paths in the configuration.
 - **API keys come from the environment.** Provider keys placed in the configuration are used as-is; otherwise the standard provider environment variables must be passed into the server process (for example `-e OPENAI_API_KEY`).

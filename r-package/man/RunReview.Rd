@@ -83,6 +83,12 @@ This function interfaces with a shared library to perform a review process on th
 \item [review.2]: \code{key = "regression models"}, \verb{values = ["yes", "no"]}
 \item [review.3]: \code{key = "geographical scale"}, \verb{values = ["world", "continent", "river basin"]}
 }
+
+\strong{Optional chunking}
+\itemize{
+\item \code{[project.configuration.chunking]} is disabled by default. When enabled, it splits only prompts over the user-defined \code{input_context_tokens} limit.
+\item An enabled plan must define an explicit merge rule for every configured review field. See the Review Tool documentation for the TOML shape.
+}
 }
 }
 \examples{

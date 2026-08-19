@@ -125,6 +125,12 @@
 #'   - \[review.2\]: `key = "regression models"`, `values = ["yes", "no"]`
 #'   - \[review.3\]: `key = "geographical scale"`, `values = ["world", "continent", "river basin"]`
 #'
+#' **Optional chunking**
+#' - `[project.configuration.chunking]` is disabled by default. When enabled,
+#'   it splits only prompts over the user-defined `input_context_tokens` limit.
+#' - An enabled plan must define an explicit merge rule for every configured
+#'   review field. See the Review Tool documentation for the TOML shape.
+#'
 #' @param input_string A string representing the input data.
 #' @return A string indicating the result of the review process.
 #' @export

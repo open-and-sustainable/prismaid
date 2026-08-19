@@ -143,6 +143,33 @@ This configurator helps you create a TOML configuration file for the prismAId [R
     <button type="button" onclick="addReviewBlock()" style="background-color: #ffffff;">Add Review Item</button>
     <br><br>
 
+    <h2 id="document-chunking">Document Chunking (Optional)</h2>
+    <div class="form-group">
+        <p class="description" style="font-style: italic;">Enable only when you have planned how to split over-context documents and merge each review field. The generated configuration is disabled by default.</p>
+        <label for="chunking_enabled" class="form-label">Enable Chunking:</label>
+        <select id="chunking_enabled" name="chunking_enabled" class="form-input">
+            <option value="no" selected>No</option>
+            <option value="yes">Yes</option>
+        </select><br>
+    </div>
+
+    <div id="chunking_options" style="display: none;">
+        <div class="form-group">
+            <p class="description" style="font-style: italic;">Enter the model input-context limit in tokens. A document is only split when its complete generated prompt exceeds this value.</p>
+            <label for="chunking_input_context_tokens" class="form-label">Input Context Tokens:</label>
+            <input type="number" id="chunking_input_context_tokens" name="chunking_input_context_tokens" min="1" step="1" class="form-input"><br>
+        </div>
+
+        <div class="form-group">
+            <p class="description" style="font-style: italic;">Tokens repeated from the end of one chunk at the start of the next. Use 0 for no overlap.</p>
+            <label for="chunking_overlap_tokens" class="form-label">Overlap Tokens:</label>
+            <input type="number" id="chunking_overlap_tokens" name="chunking_overlap_tokens" min="0" step="1" value="0" class="form-input"><br>
+        </div>
+
+        <h3 id="chunking-merge-rules">Merge Rules</h3>
+        <div id="chunking_merge_rules"></div>
+    </div>
+
     <h2 id="revaise-documentation">RevAIse Documentation (Optional)</h2>
     <div class="form-group">
         <p class="description" style="font-style: italic;">Optionally document this review as a data-extraction stage in a shared <a href="https://revaise-model.readthedocs.io/stable/">RevAIse</a> review record. Disabled by default; normal review outputs are unchanged when enabled.</p>

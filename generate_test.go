@@ -75,6 +75,25 @@ func TestGenerateReviewConfigWithRevAIse(t *testing.T) {
 	}
 }
 
+func TestGenerateReviewConfigWithChunking(t *testing.T) {
+	params := sampleReviewConfigParams()
+	params.Chunking = &ReviewChunking{
+		Enabled:            true,
+		InputContextTokens: 30000,
+		OverlapTokens:      500,
+		MergeRules: []ReviewChunkMergeRule{
+			{Key: "interest rate", Rule: "unique_text", Separator: "\n\n", MaxLength: 4000},
+		},
+	}
+	toml := GenerateReviewConfig(params)
+	if err := ValidateConfig("review", toml); err != nil {
+		t.Fatalf("generated chunking config failed validation: %v\n---\n%s", err, toml)
+	}
+	if !strings.Contains(toml, "[project.configuration.chunking]") {
+		t.Fatalf("expected chunking configuration block:\n%s", toml)
+	}
+}
+
 // TestGenerateReviewConfigIsSeparateFromValidation confirms generation and
 // validation are independent: a partial config is still produced, and it is
 // validation that reports the missing pieces.

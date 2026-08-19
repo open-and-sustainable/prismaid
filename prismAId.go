@@ -11,7 +11,9 @@ import (
 	"github.com/open-and-sustainable/prismaid/download/list"
 	"github.com/open-and-sustainable/prismaid/download/zotero"
 	"github.com/open-and-sustainable/prismaid/revaise"
+	"github.com/open-and-sustainable/prismaid/review/config"
 	"github.com/open-and-sustainable/prismaid/review/logic"
+	"github.com/open-and-sustainable/prismaid/review/prompt"
 	screening "github.com/open-and-sustainable/prismaid/screening/logic"
 )
 
@@ -26,6 +28,12 @@ type PDFOptions = conversion.PDFOptions
 // The tomlConfiguration parameter should contain a valid TOML string with all the
 // necessary settings for the review process, including project details, LLM configuration,
 // and review criteria. See the documentation for format details.
+//
+// By default each source text is sent as one prompt. An optional
+// [project.configuration.chunking] block can split only prompts over a
+// user-defined safe input-context limit. An enabled chunking plan must declare
+// an explicit merge rule for every review field; call PlanReviewChunking first
+// to inspect the plan without contacting a model.
 //
 // Returns an error if the review process fails for any reason, such as invalid configuration,
 // inaccessible files, or API errors.
@@ -50,6 +58,57 @@ type ReviewResult struct {
 	ManuscriptsProcessed int
 	ReviewItems          int
 	Models               []string
+}
+
+// ReviewChunkingPlan describes the chunking decision for a review configuration
+// without calling an LLM or writing review results. It is useful for inspecting
+// a user-authored context and merge plan before running Review.
+type ReviewChunkingPlan struct {
+	Documents []ReviewChunkingDocumentPlan
+}
+
+// ReviewChunkingDocumentPlan describes how one source document fits within the
+// explicit chunking plan. FullPromptTokens and ChunkPromptTokens use the
+// reported CounterMethod, which can be either a model tokenizer or the
+// conservative UTF-8 byte estimate.
+type ReviewChunkingDocumentPlan struct {
+	Filename          string
+	CounterMethod     string
+	FullPromptTokens  int
+	ChunkPromptTokens []int
+	ChunkCount        int
+}
+
+type emptyReviewEnvReader struct{}
+
+func (emptyReviewEnvReader) GetEnv(string) string { return "" }
+
+// PlanReviewChunking reads a review configuration and its source text files to
+// report the chunking plan that Review will use. It does not call an LLM or
+// write result files. Chunking must be explicitly enabled in the configuration.
+func PlanReviewChunking(tomlConfiguration string) (ReviewChunkingPlan, error) {
+	cfg, err := config.LoadConfig(tomlConfiguration, emptyReviewEnvReader{})
+	if err != nil {
+		return ReviewChunkingPlan{}, err
+	}
+	if !cfg.Project.Configuration.Chunking.Enabled {
+		return ReviewChunkingPlan{}, fmt.Errorf("project.configuration.chunking.enabled must be true to plan chunking")
+	}
+	prepared, err := prompt.PreparePlan(cfg)
+	if err != nil {
+		return ReviewChunkingPlan{}, err
+	}
+	plan := ReviewChunkingPlan{Documents: make([]ReviewChunkingDocumentPlan, 0, len(prepared.ChunkReports))}
+	for _, report := range prepared.ChunkReports {
+		plan.Documents = append(plan.Documents, ReviewChunkingDocumentPlan{
+			Filename:          report.Filename,
+			CounterMethod:     report.CounterMethod,
+			FullPromptTokens:  report.FullPromptTokens,
+			ChunkPromptTokens: report.ChunkPromptTokens,
+			ChunkCount:        report.ChunkCount,
+		})
+	}
+	return plan, nil
 }
 
 // DownloadZotero downloads PDF documents from a Zotero collection using TOML configuration.
@@ -136,9 +195,10 @@ type ConvertResult = conversion.ConvertResult
 // tomlConfiguration parameter is the TOML configuration string.
 //
 // Validation is read-only: it parses the configuration and checks required
-// fields and value constraints, including any optional [revaise] block. It
-// performs no network access, file reads, or API-key resolution, so it is safe
-// to call on draft configurations.
+// fields and value constraints, including any optional [revaise] block. An
+// enabled review chunking block must include its input limit and explicit merge
+// rules for every review field. It performs no network access, file reads, or
+// API-key resolution, so it is safe to call on draft configurations.
 //
 // It returns nil if the configuration is valid, or an error describing the
 // problem found. An empty or unrecognized configType is itself reported as an

@@ -90,7 +90,10 @@ def review(toml_configuration: str) -> None:
     Run the PrismAId review process with the given TOML configuration.
 
     Args:
-        toml_configuration (str): TOML configuration as a string
+        toml_configuration (str): TOML configuration as a string. The optional
+            [project.configuration.chunking] block can split only prompts that
+            exceed a user-defined input-context limit; when enabled it requires
+            explicit merge rules for every review field.
 
     Raises:
         Exception: If the review process fails

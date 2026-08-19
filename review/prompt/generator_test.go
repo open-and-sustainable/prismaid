@@ -1,10 +1,12 @@
 package prompt
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/open-and-sustainable/alembica/definitions"
 	"github.com/open-and-sustainable/prismaid/review/config"
 )
 
@@ -72,5 +74,80 @@ func TestSortReviewKeysAlphabetically(t *testing.T) {
 	result := SortReviewKeysAlphabetically(cfg)
 	if len(result) != len(expected) || result[0] != expected[0] || result[1] != expected[1] {
 		t.Errorf("Expected %v, got %v", expected, result)
+	}
+}
+
+func TestPreparePlanSplitsOnlyOverContextDocuments(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "long.txt"), []byte("First paragraph is deliberately long enough to exceed the small configured limit.\n\nSecond paragraph is also deliberately long enough to require splitting."), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, "short.txt"), []byte("short"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := &config.Config{
+		Project: config.ProjectConfig{
+			Configuration: config.ProjectConfiguration{
+				InputDirectory: directory,
+				Chunking: config.ChunkingConfig{
+					Enabled:            true,
+					InputContextTokens: 120,
+					Merge: map[string]config.MergeRule{
+						"status": {Rule: "ordinal", Order: []string{"no", "yes"}},
+					},
+				},
+			},
+			LLM: map[string]config.LLMItem{"1": {Provider: "SelfHosted", Model: "local"}},
+		},
+		Prompt: config.PromptConfig{Task: "Extract", ExpectedResult: "JSON"},
+		Review: map[string]config.ReviewItem{"1": {Key: "status", Values: []string{"no", "yes"}}},
+	}
+
+	prepared, err := PreparePlan(cfg)
+	if err != nil {
+		t.Fatalf("PreparePlan returned an error: %v", err)
+	}
+	if !prepared.HasChunks {
+		t.Fatal("expected the long document to be chunked")
+	}
+	if len(prepared.Filenames) != 2 {
+		t.Fatalf("expected two source filenames, got %d", len(prepared.Filenames))
+	}
+	var input definitions.Input
+	if err := json.Unmarshal([]byte(prepared.JSON), &input); err != nil {
+		t.Fatalf("unmarshal prepared input: %v", err)
+	}
+	if len(input.Prompts) <= 2 {
+		t.Fatalf("expected more prompts than documents, got %d", len(input.Prompts))
+	}
+	if len(prepared.Bindings) != len(input.Prompts) {
+		t.Fatalf("expected a binding for every prompt, got %d bindings for %d prompts", len(prepared.Bindings), len(input.Prompts))
+	}
+	chunkCounts := make(map[string]int)
+	for sequenceID, binding := range prepared.Bindings {
+		if binding.ChunkCount < 1 || binding.ChunkIndex < 0 || binding.ChunkIndex >= binding.ChunkCount {
+			t.Fatalf("invalid binding for sequence %s: %+v", sequenceID, binding)
+		}
+		chunkCounts[binding.Filename]++
+	}
+	if chunkCounts["long"] < 2 || chunkCounts["short"] != 1 {
+		t.Fatalf("unexpected prompt-to-document chunk mapping: %+v", chunkCounts)
+	}
+	foundLongReport := false
+	for _, report := range prepared.ChunkReports {
+		if report.Filename == "long" {
+			foundLongReport = true
+			if report.FullPromptTokens <= 120 || report.ChunkCount < 2 {
+				t.Fatalf("expected an over-limit long document report, got %+v", report)
+			}
+		}
+	}
+	if !foundLongReport {
+		t.Fatal("missing chunk report for long document")
+	}
+	for _, prompt := range input.Prompts {
+		if len([]byte(prompt.PromptContent)) > 120 {
+			t.Fatalf("prompt %s exceeds configured byte fallback limit", prompt.SequenceID)
+		}
 	}
 }

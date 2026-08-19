@@ -16,6 +16,14 @@ end
 
 const library_path = get_library_path()
 
+"""
+    run_review(input::String)
+
+Run a review from TOML configuration. The optional
+`[project.configuration.chunking]` block splits only prompts over a
+user-defined input-context limit. An enabled chunking plan must provide an
+explicit merge rule for every configured review field.
+"""
 function run_review(input::String)
     # Validate input
     if isempty(input)

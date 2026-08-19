@@ -10,9 +10,20 @@ document.addEventListener("DOMContentLoaded", function () {
     if (downloadButton) {
         downloadButton.addEventListener("click", downloadConfiguration);
     }
+
+    const chunkingEnabled = document.getElementById("chunking_enabled");
+    if (chunkingEnabled) {
+        chunkingEnabled.addEventListener("change", updateChunkingOptions);
+        updateChunkingOptions();
+    }
 });
 
 function generateConfig() {
+    const chunking = collectChunkingData();
+    if (chunking === null) {
+        return;
+    }
+
     // Gather data from form fields
     var data = {
         project: {
@@ -41,6 +52,7 @@ function generateConfig() {
             failsafe: document.getElementById("failsafe").value,
         },
         review_items: collectReviewData(),
+        chunking: chunking,
         revaise: collectRevaiseData(),
     };
 
@@ -85,6 +97,340 @@ function collectReviewData() {
     return data;
 }
 
+function updateChunkingOptions() {
+    const enabled = document.getElementById("chunking_enabled")?.value === "yes";
+    const options = document.getElementById("chunking_options");
+    if (!options) {
+        return;
+    }
+
+    options.style.display = enabled ? "block" : "none";
+    if (enabled) {
+        syncChunkingMergeRules();
+    }
+}
+
+function chunkingReviewKeys() {
+    const keys = [];
+    const seen = new Set();
+    for (const input of document.querySelectorAll(".review-key")) {
+        const key = input.value.trim();
+        if (!key) {
+            return { error: "Chunking requires a key for every review item." };
+        }
+        if (seen.has(key)) {
+            return { error: `Chunking requires unique review keys; \"${key}\" is repeated.` };
+        }
+        seen.add(key);
+        keys.push(key);
+    }
+    if (keys.length === 0) {
+        return { error: "Chunking requires at least one review item." };
+    }
+    return { keys: keys };
+}
+
+function existingChunkingRuleStates() {
+    const states = new Map();
+    for (const element of document.querySelectorAll(".chunking-merge-rule")) {
+        const getValue = (selector) => element.querySelector(selector)?.value || "";
+        states.set(element.dataset.key, {
+            rule: getValue(".chunking-rule-type"),
+            sentinels: getValue(".chunking-rule-sentinels"),
+            order: getValue(".chunking-rule-order"),
+            defaults: getValue(".chunking-rule-defaults"),
+            tieBreak: getValue(".chunking-rule-tie-break"),
+            separator: getValue(".chunking-rule-separator"),
+            maxLength: getValue(".chunking-rule-max-length"),
+            operation: getValue(".chunking-rule-operation"),
+            onMismatch: getValue(".chunking-rule-on-mismatch"),
+        });
+    }
+    return states;
+}
+
+function syncChunkingMergeRules() {
+    const container = document.getElementById("chunking_merge_rules");
+    if (!container) {
+        return;
+    }
+
+    const states = existingChunkingRuleStates();
+    const reviewKeys = chunkingReviewKeys();
+    container.replaceChildren();
+    if (reviewKeys.error) {
+        const message = document.createElement("p");
+        message.className = "description";
+        message.textContent = reviewKeys.error;
+        container.appendChild(message);
+        return;
+    }
+
+    reviewKeys.keys.forEach((key, index) => {
+        container.appendChild(createChunkingMergeRule(key, index, states.get(key)));
+    });
+}
+
+function createChunkingMergeRule(key, index, state = {}) {
+    const ruleElement = document.createElement("div");
+    ruleElement.className = "form-group chunking-merge-rule";
+    ruleElement.dataset.key = key;
+
+    const heading = document.createElement("h4");
+    heading.className = "form-heading";
+    heading.textContent = `Review key: ${key}`;
+    ruleElement.appendChild(heading);
+
+    const ruleLabel = document.createElement("label");
+    ruleLabel.className = "form-label";
+    ruleLabel.htmlFor = `chunking_rule_${index}`;
+    ruleLabel.textContent = "Merge Rule:";
+    ruleElement.appendChild(ruleLabel);
+
+    const ruleSelect = document.createElement("select");
+    ruleSelect.id = `chunking_rule_${index}`;
+    ruleSelect.className = "form-input chunking-rule-type";
+    const rules = [
+        ["", "Select a rule"],
+        ["union", "Union controlled values"],
+        ["ordinal", "Strongest ordered status"],
+        ["categorical", "Categorical majority"],
+        ["unique_text", "Concatenate unique text"],
+        ["numeric", "Numeric operation"],
+        ["metadata", "Metadata consistency"],
+    ];
+    for (const [value, label] of rules) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        option.selected = value === state.rule;
+        ruleSelect.appendChild(option);
+    }
+    ruleElement.appendChild(ruleSelect);
+    ruleElement.appendChild(document.createElement("br"));
+
+    const parameters = document.createElement("div");
+    parameters.className = "chunking-rule-parameters";
+    ruleElement.appendChild(parameters);
+    renderChunkingRuleParameters(parameters, ruleSelect.value, state);
+    ruleSelect.addEventListener("change", () => {
+        renderChunkingRuleParameters(parameters, ruleSelect.value, {});
+    });
+
+    return ruleElement;
+}
+
+function appendChunkingInput(container, labelText, className, value, options = {}) {
+    const label = document.createElement("label");
+    label.className = "form-label";
+    label.textContent = labelText;
+    container.appendChild(label);
+
+    const input = document.createElement("input");
+    input.type = options.type || "text";
+    input.className = `form-input ${className}`;
+    input.value = value || "";
+    if (options.min !== undefined) {
+        input.min = options.min;
+    }
+    if (options.step !== undefined) {
+        input.step = options.step;
+    }
+    container.appendChild(input);
+    container.appendChild(document.createElement("br"));
+}
+
+function appendChunkingSelect(container, labelText, className, value, options) {
+    const label = document.createElement("label");
+    label.className = "form-label";
+    label.textContent = labelText;
+    container.appendChild(label);
+
+    const select = document.createElement("select");
+    select.className = `form-input ${className}`;
+    for (const [optionValue, optionLabel] of options) {
+        const option = document.createElement("option");
+        option.value = optionValue;
+        option.textContent = optionLabel;
+        option.selected = optionValue === value;
+        select.appendChild(option);
+    }
+    container.appendChild(select);
+    container.appendChild(document.createElement("br"));
+}
+
+function renderChunkingRuleParameters(container, rule, state) {
+    container.replaceChildren();
+    switch (rule) {
+        case "union":
+            appendChunkingInput(
+                container,
+                "Sentinel Values (comma-separated):",
+                "chunking-rule-sentinels",
+                state.sentinels,
+            );
+            break;
+        case "ordinal":
+            appendChunkingInput(
+                container,
+                "Values from Weakest to Strongest (comma-separated):",
+                "chunking-rule-order",
+                state.order,
+            );
+            break;
+        case "categorical":
+            appendChunkingInput(
+                container,
+                "Default Values (comma-separated):",
+                "chunking-rule-defaults",
+                state.defaults,
+            );
+            appendChunkingSelect(
+                container,
+                "Tie Break:",
+                "chunking-rule-tie-break",
+                state.tieBreak,
+                [["", "Select a tie break"], ["first", "First chunk"]],
+            );
+            break;
+        case "unique_text":
+            appendChunkingInput(
+                container,
+                "Fragment Separator:",
+                "chunking-rule-separator",
+                state.separator,
+            );
+            appendChunkingInput(
+                container,
+                "Maximum Merged Length:",
+                "chunking-rule-max-length",
+                state.maxLength,
+                { type: "number", min: "1", step: "1" },
+            );
+            break;
+        case "numeric":
+            appendChunkingSelect(
+                container,
+                "Numeric Operation:",
+                "chunking-rule-operation",
+                state.operation,
+                [["", "Select an operation"], ["max", "Maximum"], ["mean", "Mean"], ["min", "Minimum"]],
+            );
+            break;
+        case "metadata":
+            appendChunkingSelect(
+                container,
+                "On Mismatch:",
+                "chunking-rule-on-mismatch",
+                state.onMismatch,
+                [["", "Select mismatch handling"], ["warn", "Warn and keep the first value"], ["error", "Stop with an error"]],
+            );
+            break;
+    }
+}
+
+function parseChunkingList(value) {
+    return value.split(",").map((item) => item.trim()).filter((item) => item);
+}
+
+function positiveInteger(value) {
+    const number = Number(value);
+    return Number.isInteger(number) && number > 0 ? number : null;
+}
+
+function nonNegativeInteger(value) {
+    const number = Number(value);
+    return Number.isInteger(number) && number >= 0 ? number : null;
+}
+
+function collectChunkingData() {
+    if (document.getElementById("chunking_enabled")?.value !== "yes") {
+        return { enabled: false };
+    }
+
+    const reviewKeys = chunkingReviewKeys();
+    if (reviewKeys.error) {
+        window.alert(reviewKeys.error);
+        return null;
+    }
+    syncChunkingMergeRules();
+
+    const contextLimit = positiveInteger(
+        document.getElementById("chunking_input_context_tokens")?.value || "",
+    );
+    if (contextLimit === null) {
+        window.alert("Chunking requires a positive input-context token limit.");
+        return null;
+    }
+    const overlap = nonNegativeInteger(
+        document.getElementById("chunking_overlap_tokens")?.value || "",
+    );
+    if (overlap === null) {
+        window.alert("Chunk overlap must be a non-negative integer.");
+        return null;
+    }
+
+    const mergeRules = [];
+    for (const element of document.querySelectorAll(".chunking-merge-rule")) {
+        const key = element.dataset.key;
+        const rule = element.querySelector(".chunking-rule-type")?.value || "";
+        const getValue = (selector) => element.querySelector(selector)?.value.trim() || "";
+        if (!rule) {
+            window.alert(`Select a merge rule for review key \"${key}\".`);
+            return null;
+        }
+
+        const mergeRule = { key: key, rule: rule };
+        if (rule === "union") {
+            mergeRule.sentinels = parseChunkingList(getValue(".chunking-rule-sentinels"));
+            if (mergeRule.sentinels.length === 0) {
+                window.alert(`Provide sentinel values for review key \"${key}\".`);
+                return null;
+            }
+        } else if (rule === "ordinal") {
+            mergeRule.order = parseChunkingList(getValue(".chunking-rule-order"));
+            if (mergeRule.order.length === 0) {
+                window.alert(`Provide an ordered value list for review key \"${key}\".`);
+                return null;
+            }
+        } else if (rule === "categorical") {
+            mergeRule.defaults = parseChunkingList(getValue(".chunking-rule-defaults"));
+            mergeRule.tie_break = getValue(".chunking-rule-tie-break");
+            if (mergeRule.defaults.length === 0 || mergeRule.tie_break !== "first") {
+                window.alert(`Provide default values and a tie break for review key \"${key}\".`);
+                return null;
+            }
+        } else if (rule === "unique_text") {
+            mergeRule.separator = getValue(".chunking-rule-separator");
+            mergeRule.max_length = positiveInteger(getValue(".chunking-rule-max-length"));
+            if (!mergeRule.separator || mergeRule.max_length === null) {
+                window.alert(`Provide a separator and positive maximum length for review key \"${key}\".`);
+                return null;
+            }
+        } else if (rule === "numeric") {
+            mergeRule.operation = getValue(".chunking-rule-operation");
+            if (!mergeRule.operation) {
+                window.alert(`Select a numeric operation for review key \"${key}\".`);
+                return null;
+            }
+        } else if (rule === "metadata") {
+            mergeRule.on_mismatch = getValue(".chunking-rule-on-mismatch");
+            if (!mergeRule.on_mismatch) {
+                window.alert(`Select mismatch handling for review key \"${key}\".`);
+                return null;
+            }
+        }
+        mergeRules.push(mergeRule);
+    }
+
+    return {
+        enabled: true,
+        input_context_tokens: contextLimit,
+        overlap_tokens: overlap,
+        merge_rules: mergeRules,
+    };
+}
+
 function collectRevaiseData() {
     // Reads the optional RevAIse fields. Missing elements default to disabled.
     return {
@@ -125,6 +471,8 @@ function generateTOMLString(data) {
         }
         toml.push(`${key} = "${value}"`);
     });
+
+    appendChunkingTOML(toml, data.chunking);
 
     toml.push("\n[project.llm]");
     // Append LLM provider configurations to the TOML string
@@ -193,6 +541,54 @@ function generateTOMLString(data) {
     }
 
     return toml.join("\n");
+}
+
+function tomlString(value) {
+    return JSON.stringify(value);
+}
+
+function tomlStringArray(values) {
+    return `[${values.map((value) => tomlString(value)).join(", ")}]`;
+}
+
+function appendChunkingTOML(toml, chunking) {
+    if (!chunking?.enabled) {
+        return;
+    }
+
+    toml.push("\n[project.configuration.chunking]");
+    toml.push("enabled = true");
+    toml.push(`input_context_tokens = ${chunking.input_context_tokens}`);
+    toml.push(`overlap_tokens = ${chunking.overlap_tokens}`);
+
+    for (const rule of chunking.merge_rules) {
+        toml.push(`\n[project.configuration.chunking.merge.${tomlString(rule.key)}]`);
+        toml.push(`rule = ${tomlString(rule.rule)}`);
+        if (rule.sentinels) {
+            toml.push(`sentinels = ${tomlStringArray(rule.sentinels)}`);
+        }
+        if (rule.order) {
+            toml.push(`order = ${tomlStringArray(rule.order)}`);
+        }
+        if (rule.defaults) {
+            toml.push(`defaults = ${tomlStringArray(rule.defaults)}`);
+        }
+        if (rule.tie_break) {
+            toml.push(`tie_break = ${tomlString(rule.tie_break)}`);
+        }
+        if (rule.separator) {
+            toml.push(`separator = ${tomlString(rule.separator)}`);
+        }
+        if (rule.max_length) {
+            toml.push(`max_length = ${rule.max_length}`);
+        }
+        if (rule.operation) {
+            toml.push(`operation = ${tomlString(rule.operation)}`);
+        }
+        if (rule.on_mismatch) {
+            toml.push(`on_mismatch = ${tomlString(rule.on_mismatch)}`);
+        }
+    }
 }
 
 function addLLMProvider() {
@@ -472,11 +868,24 @@ function addReviewBlock() {
 
     // Append the review block to the container
     container.appendChild(reviewDiv);
+
+    const keyInput = reviewDiv.querySelector(".review-key");
+    keyInput.addEventListener("input", () => {
+        if (document.getElementById("chunking_enabled")?.value === "yes") {
+            syncChunkingMergeRules();
+        }
+    });
+    if (document.getElementById("chunking_enabled")?.value === "yes") {
+        syncChunkingMergeRules();
+    }
 }
 
 function removeReviewBlock(element) {
     if (element) {
         element.parentNode.removeChild(element);
+        if (document.getElementById("chunking_enabled")?.value === "yes") {
+            syncChunkingMergeRules();
+        }
     }
 }
 

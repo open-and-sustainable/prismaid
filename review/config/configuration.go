@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/open-and-sustainable/prismaid/revaise"
@@ -45,6 +46,44 @@ type ProjectConfiguration struct {
 	CotJustification string `toml:"cot_justification"`
 	Duplication      string `toml:"duplication"`
 	Summary          string `toml:"summary"`
+	// Chunking is an optional, explicit plan for prompts exceeding a known
+	// input-context limit. It is disabled unless Chunking.Enabled is true.
+	Chunking ChunkingConfig `toml:"chunking"`
+}
+
+// ChunkingConfig defines an explicit plan for safely processing manuscripts
+// that exceed a user-defined input-context limit. Enabled defaults to false.
+// When enabled, InputContextTokens and one Merge rule for every configured
+// ReviewItem key are required. OverlapTokens defaults to zero. The input limit
+// applies to the complete generated prompt, not merely the source text.
+type ChunkingConfig struct {
+	Enabled            bool                 `toml:"enabled"`
+	InputContextTokens int                  `toml:"input_context_tokens"`
+	OverlapTokens      int                  `toml:"overlap_tokens"`
+	Merge              map[string]MergeRule `toml:"merge"`
+}
+
+// MergeRule defines the user-selected rule for combining one review field
+// across document chunks. The required parameters depend on Rule:
+//
+//   - union: Sentinels
+//   - ordinal: Order from weakest to strongest
+//   - categorical: Defaults and TieBreak (currently "first")
+//   - unique_text: Separator and MaxLength
+//   - numeric: Operation ("max", "mean", or "min")
+//   - metadata: OnMismatch ("warn" or "error")
+//
+// Rules are intentionally not inferred from model output or review values.
+type MergeRule struct {
+	Rule       string   `toml:"rule"`
+	Sentinels  []string `toml:"sentinels"`
+	Defaults   []string `toml:"defaults"`
+	TieBreak   string   `toml:"tie_break"`
+	Order      []string `toml:"order"`
+	Separator  string   `toml:"separator"`
+	MaxLength  int      `toml:"max_length"`
+	Operation  string   `toml:"operation"`
+	OnMismatch string   `toml:"on_mismatch"`
 }
 
 // LLMConfig holds the configuration settings specific to the AI model being used.
@@ -205,6 +244,82 @@ func validate(c *Config) error {
 		if item.Key == "" {
 			return fmt.Errorf("review.%s.key is required", key)
 		}
+	}
+	if err := validateChunking(c); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateChunking(c *Config) error {
+	chunking := c.Project.Configuration.Chunking
+	if !chunking.Enabled {
+		return nil
+	}
+
+	issues := make([]string, 0)
+	if chunking.InputContextTokens <= 0 {
+		issues = append(issues, "project.configuration.chunking.input_context_tokens is required")
+	}
+	if chunking.OverlapTokens < 0 {
+		issues = append(issues, "project.configuration.chunking.overlap_tokens cannot be negative")
+	}
+
+	reviewKeys := make(map[string]struct{}, len(c.Review))
+	for _, item := range c.Review {
+		reviewKeys[item.Key] = struct{}{}
+		if rule, ok := chunking.Merge[item.Key]; !ok {
+			issues = append(issues, fmt.Sprintf("project.configuration.chunking.merge.%s is required", item.Key))
+		} else if err := validateMergeRule(item.Key, rule); err != nil {
+			issues = append(issues, err.Error())
+		}
+	}
+	for key := range chunking.Merge {
+		if _, ok := reviewKeys[key]; !ok {
+			issues = append(issues, fmt.Sprintf("project.configuration.chunking.merge.%s does not match a review field", key))
+		}
+	}
+	if len(issues) > 0 {
+		return fmt.Errorf("chunking is enabled but the plan is incomplete:\n- %s", strings.Join(issues, "\n- "))
+	}
+	return nil
+}
+
+func validateMergeRule(key string, rule MergeRule) error {
+	prefix := "project.configuration.chunking.merge." + key
+	switch rule.Rule {
+	case "union":
+		if rule.Sentinels == nil {
+			return fmt.Errorf("%s.sentinels is required for the union rule", prefix)
+		}
+	case "ordinal":
+		if len(rule.Order) == 0 {
+			return fmt.Errorf("%s.order is required for the ordinal rule", prefix)
+		}
+	case "categorical":
+		if rule.Defaults == nil {
+			return fmt.Errorf("%s.defaults is required for the categorical rule", prefix)
+		}
+		if rule.TieBreak != "first" {
+			return fmt.Errorf("%s.tie_break must be \"first\" for the categorical rule", prefix)
+		}
+	case "unique_text":
+		if rule.Separator == "" {
+			return fmt.Errorf("%s.separator is required for the unique_text rule", prefix)
+		}
+		if rule.MaxLength <= 0 {
+			return fmt.Errorf("%s.max_length must be greater than zero for the unique_text rule", prefix)
+		}
+	case "numeric":
+		if rule.Operation != "max" && rule.Operation != "mean" && rule.Operation != "min" {
+			return fmt.Errorf("%s.operation must be \"max\", \"mean\", or \"min\" for the numeric rule", prefix)
+		}
+	case "metadata":
+		if rule.OnMismatch != "warn" && rule.OnMismatch != "error" {
+			return fmt.Errorf("%s.on_mismatch must be \"warn\" or \"error\" for the metadata rule", prefix)
+		}
+	default:
+		return fmt.Errorf("%s.rule must be one of \"union\", \"ordinal\", \"categorical\", \"unique_text\", \"numeric\", or \"metadata\"", prefix)
 	}
 	return nil
 }

@@ -186,6 +186,18 @@ PrismAId.run_review(toml_config)
 
 You can use the [Review Configurator](review-configurator) web tool to easily create TOML configurations or use the `-init` flag with the binary.
 
+### Planning Long-Document Reviews
+
+Some self-hosted serving layers can silently truncate a prompt that exceeds the configured model context. When a review includes long full texts, plan chunking before running the model rather than relying on a server-side limit.
+
+1. Define the review fields first. For every field, select and document one merge rule: array union, ordered status, categorical value, unique text, numeric aggregation, or metadata comparison.
+2. Enable `[project.configuration.chunking]` and set `input_context_tokens` to the safe input budget for the complete prompt. This is a budget for prompt instructions, response schema, and manuscript text together, so leave any desired output capacity in the model's raw context outside this value.
+3. Optionally set `overlap_tokens` when relationships may span adjacent paragraphs. The only splitting method is roughly equal contiguous parts, preferring paragraph and sentence endings.
+4. Validate the TOML, then inspect the document plan with `prismaid.PlanReviewChunking(...)` in Go or `prismaid_plan_review_chunking` through MCP. The plan reports the counting method, full-prompt estimate, number of chunks, and chunk prompt sizes without calling an LLM.
+5. Run the review. Documents under the supplied limit remain single prompts; only documents over it are chunked. Review the logged field conflicts alongside the normal extraction results.
+
+For the complete TOML reference and merge-rule examples, see the [Review Tool](../tools/review-tool) page.
+
 ## Information Extraction
 
 ### LLMs Basics

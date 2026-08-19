@@ -240,6 +240,10 @@ func RunInteractiveConfigCreation() {
 		fmt.Println("You will have to fill in review items, definitions and examples in your project configuration file.")
 	}
 
+	// Chunking can only be planned after the review keys are known because every
+	// key must have one explicit result-merge rule.
+	chunking := collectReviewChunking(review_items)
+
 	// Prompt for failsafe part of prompt
 	failsafe := ""
 	choice_failsafe, err := prompt.New().Ask("Do you confirm the standard 'failsafe' part of the review prompt?").
@@ -281,6 +285,7 @@ func RunInteractiveConfigCreation() {
 		Definitions:      definitions,
 		Example:          example,
 		ReviewItems:      toReviewItems(review_items),
+		Chunking:         chunking,
 		RevAIse:          revaise,
 	})
 
@@ -560,6 +565,141 @@ func collectReviewItems() []ReviewItem {
 	}
 
 	return reviewItems
+}
+
+// collectReviewChunking gathers an opt-in, complete long-document plan. It
+// intentionally asks for every merge rule parameter instead of inferring
+// result semantics from a review key or its possible values.
+func collectReviewChunking(reviewItems []ReviewItem) *prismaid.ReviewChunking {
+	enabled, err := prompt.New().Ask("Enable chunked parsing for documents exceeding a known input-context limit?").
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "no", Note: "Keep one model request per document. This is the default."},
+				{Text: "yes", Note: "Split only prompts that exceed the context limit you provide, then merge their results."},
+			},
+			choose.WithHelp(true))
+	checkErr(err)
+	if enabled == "no" {
+		return nil
+	}
+
+	if len(reviewItems) == 0 {
+		checkErr(fmt.Errorf("chunked parsing requires at least one review item"))
+	}
+
+	inputContextTokens, err := prompt.New().Ask("Enter the model input-context limit in tokens:").Input(
+		"", input.WithHelp(true), input.WithValidateFunc(validatePositiveInteger))
+	checkErr(err)
+	contextLimit, err := strconv.Atoi(inputContextTokens)
+	checkErr(err)
+
+	overlapTokens, err := prompt.New().Ask("Enter chunk overlap in tokens (0 for none):").Input(
+		"0", input.WithHelp(true), input.WithValidateFunc(validateNonNegativeInteger))
+	checkErr(err)
+	overlap, err := strconv.Atoi(overlapTokens)
+	checkErr(err)
+
+	rules := make([]prismaid.ReviewChunkMergeRule, 0, len(reviewItems))
+	seenKeys := make(map[string]bool, len(reviewItems))
+	for _, item := range reviewItems {
+		key := strings.TrimSpace(item.Key)
+		if key == "" {
+			checkErr(fmt.Errorf("chunked parsing requires every review item to have a key"))
+		}
+		if seenKeys[key] {
+			checkErr(fmt.Errorf("chunked parsing requires unique review item keys; %q is repeated", key))
+		}
+		seenKeys[key] = true
+		rules = append(rules, collectReviewChunkMergeRule(key))
+	}
+
+	return &prismaid.ReviewChunking{
+		Enabled:            true,
+		InputContextTokens: contextLimit,
+		OverlapTokens:      overlap,
+		MergeRules:         rules,
+	}
+}
+
+// collectReviewChunkMergeRule collects the rule and the parameters required to
+// merge one field across chunks. The available choices mirror the TOML schema.
+func collectReviewChunkMergeRule(key string) prismaid.ReviewChunkMergeRule {
+	rule, err := prompt.New().Ask(fmt.Sprintf("Choose the merge rule for review key %q:", key)).
+		AdvancedChoose(
+			[]choose.Choice{
+				{Text: "union", Note: "Combine controlled multi-value fields and remove duplicate values."},
+				{Text: "ordinal", Note: "Keep the strongest ordered status found in any chunk."},
+				{Text: "categorical", Note: "Use a non-default category, then majority vote; ties use the first chunk."},
+				{Text: "unique_text", Note: "Concatenate unique free-text fragments."},
+				{Text: "numeric", Note: "Combine numeric values with an explicit operation."},
+				{Text: "metadata", Note: "Use the first metadata value and report mismatches."},
+			},
+			choose.WithHelp(true))
+	checkErr(err)
+
+	mergeRule := prismaid.ReviewChunkMergeRule{Key: key, Rule: rule}
+	switch rule {
+	case "union":
+		sentinels, err := prompt.New().Ask(fmt.Sprintf("Enter comma-separated sentinel values for %q:", key)).Input(
+			"", input.WithHelp(true), input.WithValidateFunc(validateCommaSeparatedValues))
+		checkErr(err)
+		mergeRule.Sentinels = splitCommaSeparatedValues(sentinels)
+	case "ordinal":
+		order, err := prompt.New().Ask(fmt.Sprintf("Enter comma-separated values for %q from weakest to strongest:", key)).Input(
+			"", input.WithHelp(true), input.WithValidateFunc(validateCommaSeparatedValues))
+		checkErr(err)
+		mergeRule.Order = splitCommaSeparatedValues(order)
+	case "categorical":
+		defaults, err := prompt.New().Ask(fmt.Sprintf("Enter comma-separated default values for %q:", key)).Input(
+			"", input.WithHelp(true), input.WithValidateFunc(validateCommaSeparatedValues))
+		checkErr(err)
+		mergeRule.Defaults = splitCommaSeparatedValues(defaults)
+		mergeRule.TieBreak = "first"
+	case "unique_text":
+		separator, err := prompt.New().Ask(fmt.Sprintf("Enter the separator to use between unique %q fragments:", key)).Input(
+			"", input.WithHelp(true), input.WithValidateFunc(validateNonEmpty))
+		checkErr(err)
+		mergeRule.Separator = separator
+		maxLength, err := prompt.New().Ask(fmt.Sprintf("Enter the maximum merged text length for %q:", key)).Input(
+			"", input.WithHelp(true), input.WithValidateFunc(validatePositiveInteger))
+		checkErr(err)
+		mergeRule.MaxLength, err = strconv.Atoi(maxLength)
+		checkErr(err)
+	case "numeric":
+		operation, err := prompt.New().Ask(fmt.Sprintf("Choose the numeric merge operation for %q:", key)).
+			AdvancedChoose(
+				[]choose.Choice{
+					{Text: "max", Note: "Keep the largest value."},
+					{Text: "mean", Note: "Use the arithmetic mean."},
+					{Text: "min", Note: "Keep the smallest value."},
+				},
+				choose.WithHelp(true))
+		checkErr(err)
+		mergeRule.Operation = operation
+	case "metadata":
+		onMismatch, err := prompt.New().Ask(fmt.Sprintf("Choose how to handle differing %q values across chunks:", key)).
+			AdvancedChoose(
+				[]choose.Choice{
+					{Text: "warn", Note: "Keep the first value and log the mismatch."},
+					{Text: "error", Note: "Stop the review with an error."},
+				},
+				choose.WithHelp(true))
+		checkErr(err)
+		mergeRule.OnMismatch = onMismatch
+	}
+
+	return mergeRule
+}
+
+func splitCommaSeparatedValues(value string) []string {
+	values := strings.Split(value, ",")
+	result := make([]string, 0, len(values))
+	for _, item := range values {
+		if item = strings.TrimSpace(item); item != "" {
+			result = append(result, item)
+		}
+	}
+	return result
 }
 
 // collectDefinitions interactively prompts the user to provide definitions for review items.
@@ -899,6 +1039,36 @@ func validateNonNegative(value string) error {
 	}
 	if value[0] == '-' {
 		return fmt.Errorf("value cannot be negative")
+	}
+	return nil
+}
+
+func validateNonEmpty(value string) error {
+	if strings.TrimSpace(value) == "" {
+		return fmt.Errorf("value cannot be empty")
+	}
+	return nil
+}
+
+func validatePositiveInteger(value string) error {
+	number, err := strconv.Atoi(value)
+	if err != nil || number <= 0 {
+		return fmt.Errorf("value must be a positive integer")
+	}
+	return nil
+}
+
+func validateNonNegativeInteger(value string) error {
+	number, err := strconv.Atoi(value)
+	if err != nil || number < 0 {
+		return fmt.Errorf("value must be a non-negative integer")
+	}
+	return nil
+}
+
+func validateCommaSeparatedValues(value string) error {
+	if len(splitCommaSeparatedValues(value)) == 0 {
+		return fmt.Errorf("provide at least one comma-separated value")
 	}
 	return nil
 }

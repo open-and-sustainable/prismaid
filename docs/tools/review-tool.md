@@ -50,6 +50,9 @@ import "github.com/open-and-sustainable/prismaid"
 // Run a systematic review with a TOML configuration string
 tomlConfig := "..." // Your TOML configuration as a string
 reviewResult, err := prismaid.Review(tomlConfig)
+
+// Inspect an enabled chunking plan before calling a model.
+chunkPlan, err := prismaid.PlanReviewChunking(tomlConfig)
 ```
 
 ### Python Package
@@ -136,9 +139,71 @@ summary = "no"
     - `no`: Default.
     - `yes`: A summary is generated for each manuscript and saved in the same directory.
 
+### Explicit Chunking for Long Documents
+
+By default, review prompts are sent as one complete manuscript and chunking is disabled. Enable it only when you have planned the context limit and merge behavior for the review form. When enabled, prismAId compares each generated full prompt with the user-provided safe input limit. Documents that fit remain single prompts; only documents over the limit are split and then merged back into one primary extraction result per source document.
+
+```toml
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 30000
+overlap_tokens = 500
+
+[project.configuration.chunking.merge.endpoints]
+rule = "union"
+sentinels = ["none", "not_specified"]
+
+[project.configuration.chunking.merge.integration_degree]
+rule = "ordinal"
+order = ["none", "implicit", "explicit"]
+
+[project.configuration.chunking.merge.geography_scope]
+rule = "categorical"
+defaults = ["not_specified", "none", "other"]
+tie_break = "first"
+
+[project.configuration.chunking.merge.method_detail]
+rule = "unique_text"
+separator = "\n\n"
+max_length = 4000
+
+[project.configuration.chunking.merge.relevance_score]
+rule = "numeric"
+operation = "max"
+
+[project.configuration.chunking.merge.doi]
+rule = "metadata"
+on_mismatch = "warn"
+```
+
+The chunking settings are deliberately small:
+
+- **`enabled`** defaults to `false`.
+- **`input_context_tokens`** is required when enabled. It is the safe maximum for the complete input prompt, including prismAId instructions, the response schema, and source text. Choose it below the model's raw context window when output space or an additional safety margin is required.
+- **`overlap_tokens`** defaults to `0`. It repeats the tail of the preceding chunk in the next chunk.
+
+There is no automatic policy, separate maximum-chunk setting, or selectable split strategy. Once enabled, the explicit plan is applied only to over-limit prompts. Chunks are roughly equal contiguous parts, preferring paragraph ends, then sentence ends, and finally a rune boundary when a single paragraph or sentence is too long. All source text remains covered in order.
+
+Both the web [Review Configurator](../review/review-configurator) and the terminal `-init` configurator collect this optional section after the review items. They keep it disabled by default and require the context limit, overlap, and an explicit merge rule with its required parameters for every review key before generating TOML.
+
+Every configured `[review]` key must have exactly one corresponding `[project.configuration.chunking.merge.<key>]` table. Validation rejects an enabled but incomplete plan. The available user-selected rules are:
+
+- **`union`** for arrays, with an explicit `sentinels` list. Values are deduplicated and sentinels are removed when real values exist.
+- **`ordinal`** for ordered strings or booleans, with an explicit weakest-to-strongest `order` list.
+- **`categorical`** for unordered single values, with explicit low-priority `defaults` and `tie_break = "first"`. Non-default values take priority; otherwise the majority value is selected.
+- **`unique_text`** for free text, with `separator` and `max_length`. Exact and containment-style near duplicates are removed before concatenation.
+- **`numeric`** with `operation = "max"`, `"mean"`, or `"min"`.
+- **`metadata`** with `on_mismatch = "warn"` or `"error"`; the first value is retained.
+
+Chunk-level disagreements are reported with the filename and field in the review log. They do not add undocumented fields to the configured extraction schema. When `cot_justification` or `summary` is enabled, prismAId retains the per-chunk auxiliary responses as one deduplicated, concatenated auxiliary response for the source document.
+
+For a single compatible OpenAI model, prismAId uses the model's available `tiktoken` encoding to count generated prompts. Ensembles and other or unsupported configurations use the conservative UTF-8 byte estimate: this can create more chunks than strictly necessary, but avoids applying one model's tokenizer to another or treating an unknown local-model tokenizer as exact. The log and the MCP plan both identify the method used.
+
+Use the MCP tool `prismaid_plan_review_chunking` after validating an enabled configuration to inspect the full-prompt estimate, chunk count, and prompt size of every chunk before calling `prismaid_review`. The same TOML works unchanged with the CLI and Go, Python, R, and Julia review APIs.
+
 ### Validating the Configuration
 
-You can check a review configuration without running the review. Validation parses the TOML and verifies the required fields — input directory, results file, at least one LLM with a `provider`, the prompt `task` and `expected_result`, and at least one `[review]` item — including any optional `[revaise]` block. It performs no network access, file reads, or API-key resolution.
+You can check a review configuration without running the review. Validation parses the TOML and verifies the required fields — input directory, results file, at least one LLM with a `provider`, the prompt `task` and `expected_result`, and at least one `[review]` item — including any optional `[revaise]` block. When chunking is enabled, it also requires its context limit and a complete merge rule for every review field. It performs no network access, file reads, or API-key resolution.
 
 ```bash
 ./prismaid -validate -project your_project.toml

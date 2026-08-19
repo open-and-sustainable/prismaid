@@ -9,6 +9,7 @@ import (
 	"github.com/open-and-sustainable/alembica/extraction"
 	"github.com/open-and-sustainable/alembica/utils/logger"
 	"github.com/open-and-sustainable/prismaid/revaise"
+	"github.com/open-and-sustainable/prismaid/review/chunking"
 	"github.com/open-and-sustainable/prismaid/review/config"
 	"github.com/open-and-sustainable/prismaid/review/debug"
 	"github.com/open-and-sustainable/prismaid/review/prompt"
@@ -135,27 +136,51 @@ func Review(tomlConfiguration string) (*ReviewResult, error) {
 	}
 
 	// generate prompts
-	jsonString, filenames, err := prompt.PrepareInput(config)
+	preparedInput, err := prompt.PreparePlan(config)
 	if err != nil {
 		logger.Error("Error generating prompts:", err)
 		return nil, err
 	}
-	logger.Info("Found", len(filenames), "files")
+	logger.Info("Found", len(preparedInput.Filenames), "files")
+	if config.Project.Configuration.Chunking.Enabled {
+		for _, report := range preparedInput.ChunkReports {
+			logger.Info("Chunking plan for", report.Filename,
+				"counter:", report.CounterMethod,
+				"full prompt tokens:", report.FullPromptTokens,
+				"chunks:", report.ChunkCount,
+				"chunk prompt tokens:", report.ChunkPromptTokens)
+		}
+	}
 
 	// run review
-	reviewResults, err := extraction.Extract(jsonString)
+	reviewResults, err := extraction.Extract(preparedInput.JSON)
+	if err != nil {
+		logger.Error("Error extracting review results:", err)
+		return nil, err
+	}
+	if preparedInput.HasChunks {
+		var report chunking.MergeReport
+		reviewResults, report, err = chunking.Merge(reviewResults, preparedInput.Bindings, config.Project.Configuration.Chunking)
+		if err != nil {
+			logger.Error("Error merging chunked review results:", err)
+			return nil, err
+		}
+		for _, conflict := range report.Conflicts {
+			logger.Info("Chunk merge conflict for", conflict.Filename, "field:", conflict.Field)
+		}
+	}
 
-	logger.Info(fmt.Sprintf("Results:\n%s", reviewResults))
+	logger.Info("Results:\n", reviewResults)
 
 	// save results
 	keys := prompt.SortReviewKeysAlphabetically(config)
-	err = results.Save(config, reviewResults, filenames, keys)
+	err = results.Save(config, reviewResults, preparedInput.Filenames, keys)
 	if err != nil {
 		logger.Error("Error saving results:", err)
 		return nil, err
 	}
 
-	if err := updateRevAIseExtraction(config, reviewResults, filenames, keys); err != nil {
+	if err := updateRevAIseExtraction(config, reviewResults, preparedInput.Filenames, keys); err != nil {
 		logger.Error("Error updating RevAIse record:", err)
 		return nil, err
 	}
@@ -173,7 +198,7 @@ func Review(tomlConfiguration string) (*ReviewResult, error) {
 	logger.Info("Done!")
 	return &ReviewResult{
 		OutputFile:           config.Project.Configuration.ResultsFileName + "." + config.Project.Configuration.OutputFormat,
-		ManuscriptsProcessed: len(filenames),
+		ManuscriptsProcessed: len(preparedInput.Filenames),
 		ReviewItems:          len(keys),
 		Models:               models,
 	}, nil
