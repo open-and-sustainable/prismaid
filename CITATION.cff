@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 title: prismAId - Open Science AI Tools for Systematic, Protocol-Based Literature Reviews
 message: >-
-  v0.16.4 - Fixed review output filename mapping for extraction and chain-of-thought justification responses.
+  v0.17.0 - Added explicit chunked review parsing with configurable result merging, MCP planning, and configurator support.
 type: software
 doi: 10.5281/zenodo.11210796
 authors:

@@ -9,6 +9,14 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.17.0] - 2026-08-19
+### Added
+- Added explicit opt-in chunked parsing for over-context review prompts, with user-defined per-field merge rules, conflict reporting, and one merged extraction per source document.
+- Added chunking configuration and planning support to the MCP server and the web and terminal review configurators.
+
+### Security
+- Updated Go dependencies, including Alembica v0.3.5 with its security fix.
+
 ## [0.16.4] - 2026-08-13
 ### Fixed
 - Fixed review output filename mapping for extraction and chain-of-thought justification responses.
