@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/prismaid/review/chunking"
 	"github.com/open-and-sustainable/prismaid/review/config"
 
 	"github.com/open-and-sustainable/alembica/utils/logger"
@@ -36,6 +37,34 @@ JSON object format for response:
   "summary": "Your concise summary here."
 }`
 
+type sourceDocument struct {
+	Filename string
+	Text     string
+}
+
+// ChunkReport describes the prompt-size assessment and selected chunk plan for
+// one source document. Counts use CounterMethod and therefore represent either
+// a compatible model tokenizer or the conservative UTF-8 byte estimate.
+type ChunkReport struct {
+	Filename          string
+	CounterMethod     string
+	FullPromptTokens  int
+	ChunkPromptTokens []int
+	ChunkCount        int
+}
+
+// PreparedInput contains Alembica input JSON and the internal source-document
+// bindings needed to merge chunk responses before saving results. Bindings are
+// retained only for internal orchestration; result writers continue to receive
+// document-level sequence IDs after a chunked extraction is merged.
+type PreparedInput struct {
+	JSON         string
+	Filenames    []string
+	Bindings     map[string]chunking.Binding
+	ChunkReports []ChunkReport
+	HasChunks    bool
+}
+
 // parsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
 // The function combines different parts of the prompts (persona, task, expected results, failsafe,
 // definitions, and example) with the content of text files to create a structured list of inputs.
@@ -52,45 +81,54 @@ JSON object format for response:
 //   - The second slice contains the filenames (without extensions) associated with each prompt.
 //   - If there's an error reading a file, both return values may be nil.
 func parsePrompts(config *config.Config) ([]string, []string) {
-	// This slice will store all combined prompts
-	var prompts []string
-	// This slice will store the filenames corresponding to each prompt
-	var filenames []string
-
-	// The common part of prompts
-	expected_result := parseExpectedResults(config)
-	common_part := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
-		config.Prompt.Persona, config.Prompt.Task, expected_result,
-		config.Prompt.Failsafe, config.Prompt.Definitions, config.Prompt.Example)
-
-	// Load text files
-	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
+	documents, err := readDocuments(config)
 	if err != nil {
 		logger.Error(err)
+		return nil, nil
 	}
-
-	for _, file := range files {
-		if filepath.Ext(file.Name()) == ".txt" {
-			filePath := filepath.Join(config.Project.Configuration.InputDirectory, file.Name())
-			documentText, err := os.ReadFile(filePath)
-			if err != nil {
-				logger.Error("Error reading file:", err)
-				return nil, nil
-			}
-
-			// Combine prompt elements
-			prompt := fmt.Sprintf("%s \n\n%s", common_part, documentText)
-			// Append the combined text to the slice
-			prompts = append(prompts, prompt)
-
-			// Get the filename without extension
-			fileNameWithoutExt := strings.TrimSuffix(file.Name(), filepath.Ext(file.Name()))
-			// Append the filename to the filenames slice
-			filenames = append(filenames, fileNameWithoutExt)
-		}
+	commonPart := commonPrompt(config)
+	prompts := make([]string, 0, len(documents))
+	filenames := make([]string, 0, len(documents))
+	for _, document := range documents {
+		prompts = append(prompts, buildPrompt(commonPart, document.Text))
+		filenames = append(filenames, document.Filename)
 	}
-
 	return prompts, filenames
+}
+
+func commonPrompt(config *config.Config) string {
+	expectedResult := parseExpectedResults(config)
+	return fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+		config.Prompt.Persona, config.Prompt.Task, expectedResult,
+		config.Prompt.Failsafe, config.Prompt.Definitions, config.Prompt.Example)
+}
+
+func buildPrompt(commonPart, documentText string) string {
+	return fmt.Sprintf("%s \n\n%s", commonPart, documentText)
+}
+
+func readDocuments(config *config.Config) ([]sourceDocument, error) {
+	files, err := os.ReadDir(config.Project.Configuration.InputDirectory)
+	if err != nil {
+		return nil, err
+	}
+
+	documents := make([]sourceDocument, 0)
+	for _, file := range files {
+		if filepath.Ext(file.Name()) != ".txt" {
+			continue
+		}
+		filePath := filepath.Join(config.Project.Configuration.InputDirectory, file.Name())
+		documentText, err := os.ReadFile(filePath)
+		if err != nil {
+			return nil, fmt.Errorf("read %s: %w", filePath, err)
+		}
+		documents = append(documents, sourceDocument{
+			Filename: strings.TrimSuffix(file.Name(), filepath.Ext(file.Name())),
+			Text:     string(documentText),
+		})
+	}
+	return documents, nil
 }
 
 // parseExpectedResults generates the expected result format to be included in prompts.
@@ -190,10 +228,33 @@ func SortReviewKeysAlphabetically(config *config.Config) []string {
 // - A string containing the JSON-formatted input structure ready for processing.
 // - A slice of strings containing the filenames associated with each prompt for result correlation.
 // - An error if any issues occur during the JSON preparation process.
+//
+// PrepareInput preserves the historical return shape. Review execution uses
+// PreparePlan when it must retain chunk bindings for post-extraction merging.
 func PrepareInput(config *config.Config) (string, []string, error) {
-	prompts, filenames := parsePrompts(config)
+	prepared, err := PreparePlan(config)
+	if err != nil {
+		return "", nil, err
+	}
+	return prepared.JSON, prepared.Filenames, nil
+}
 
-	logger.Info(fmt.Sprintf("Generating input JSON with %d prompts.", len(prompts)))
+// PreparePlan builds Alembica input JSON and retains the source-document
+// bindings required for an enabled chunking plan. With chunking disabled it
+// produces the same one-prompt-per-document input used by PrepareInput. With
+// chunking enabled it compares every complete prompt against the user-provided
+// input limit and splits only prompts over that limit.
+func PreparePlan(config *config.Config) (*PreparedInput, error) {
+	documents, err := readDocuments(config)
+	if err != nil {
+		return nil, err
+	}
+	commonPart := commonPrompt(config)
+	counter := chunking.CounterForModels(config.Project.LLM)
+	prepared := &PreparedInput{
+		Filenames: make([]string, 0, len(documents)),
+		Bindings:  make(map[string]chunking.Binding),
+	}
 
 	// Populate metadata
 	jsonSchema := definitions.Input{
@@ -205,7 +266,13 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 	}
 
 	// Populate models
-	for _, llm := range config.Project.LLM {
+	llmKeys := make([]string, 0, len(config.Project.LLM))
+	for key := range config.Project.LLM {
+		llmKeys = append(llmKeys, key)
+	}
+	sort.Strings(llmKeys)
+	for _, key := range llmKeys {
+		llm := config.Project.LLM[key]
 		jsonSchema.Models = append(jsonSchema.Models, definitions.Model{
 			Provider:     llm.Provider,
 			APIKey:       llm.ApiKey,
@@ -223,37 +290,76 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 	}
 	logger.Info(fmt.Sprintf("Added %d models to input JSON.", len(jsonSchema.Models)))
 
-	// Populate prompts
-	for i, promptText := range prompts {
-		sequenceNumber := 1 // Track sequence numbering dynamically
-
-		// Append the main prompt
-		jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-			PromptContent:  promptText,
-			SequenceID:     strconv.Itoa(i + 1),
-			SequenceNumber: sequenceNumber,
-		})
-
-		// Add justification query if enabled
-		if config.Project.Configuration.CotJustification == "yes" {
-			sequenceNumber++
-			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-				PromptContent:  justification_query,
-				SequenceID:     strconv.Itoa(i + 1),
-				SequenceNumber: sequenceNumber,
-			})
+	sequenceID := 1
+	for documentIndex, document := range documents {
+		prepared.Filenames = append(prepared.Filenames, document.Filename)
+		fullPrompt := buildPrompt(commonPart, document.Text)
+		fullPromptTokens := counter.Count(fullPrompt)
+		chunks := []chunking.Chunk{{
+			Text:            document.Text,
+			CoreText:        document.Text,
+			EstimatedTokens: fullPromptTokens,
+		}}
+		if config.Project.Configuration.Chunking.Enabled && fullPromptTokens > config.Project.Configuration.Chunking.InputContextTokens {
+			var splitErr error
+			chunks, splitErr = chunking.Split(document.Text, buildPrompt(commonPart, ""), config.Project.Configuration.Chunking.InputContextTokens, config.Project.Configuration.Chunking.OverlapTokens, counter)
+			if splitErr != nil {
+				return nil, fmt.Errorf("plan chunks for %s: %w", document.Filename, splitErr)
+			}
+			prepared.HasChunks = true
 		}
 
-		// Add summary query if enabled
-		if config.Project.Configuration.Summary == "yes" {
-			sequenceNumber++
+		report := ChunkReport{
+			Filename:         document.Filename,
+			CounterMethod:    counter.Method(),
+			FullPromptTokens: fullPromptTokens,
+			ChunkCount:       len(chunks),
+		}
+
+		for chunkIndex, chunk := range chunks {
+			promptText := buildPrompt(commonPart, chunk.Text)
+			report.ChunkPromptTokens = append(report.ChunkPromptTokens, counter.Count(promptText))
+			sequenceNumber := 1 // Track sequence numbering dynamically
+			currentSequenceID := strconv.Itoa(sequenceID)
+			prepared.Bindings[currentSequenceID] = chunking.Binding{
+				DocumentIndex: documentIndex,
+				Filename:      document.Filename,
+				ChunkIndex:    chunkIndex,
+				ChunkCount:    len(chunks),
+			}
+
+			// Append the main prompt
 			jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
-				PromptContent:  summary_query,
-				SequenceID:     strconv.Itoa(i + 1),
+				PromptContent:  promptText,
+				SequenceID:     currentSequenceID,
 				SequenceNumber: sequenceNumber,
 			})
+
+			// Add justification query if enabled
+			if config.Project.Configuration.CotJustification == "yes" {
+				sequenceNumber++
+				jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+					PromptContent:  justification_query,
+					SequenceID:     currentSequenceID,
+					SequenceNumber: sequenceNumber,
+				})
+			}
+
+			// Add summary query if enabled
+			if config.Project.Configuration.Summary == "yes" {
+				sequenceNumber++
+				jsonSchema.Prompts = append(jsonSchema.Prompts, definitions.Prompt{
+					PromptContent:  summary_query,
+					SequenceID:     currentSequenceID,
+					SequenceNumber: sequenceNumber,
+				})
+			}
+			sequenceID++
 		}
+		prepared.ChunkReports = append(prepared.ChunkReports, report)
 	}
+
+	logger.Info(fmt.Sprintf("Generating input JSON with %d prompts.", len(jsonSchema.Prompts)))
 
 	logger.Info(fmt.Sprintf("Total prompts generated: %d", len(jsonSchema.Prompts)))
 
@@ -266,10 +372,11 @@ func PrepareInput(config *config.Config) (string, []string, error) {
 	jsonData, err := json.MarshalIndent(jsonSchema, "", "  ")
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error marshaling JSON: %v", err))
-		return "", nil, err
+		return nil, err
 	}
 
 	logger.Info("Input JSON successfully generated.")
 
-	return string(jsonData), filenames, nil
+	prepared.JSON = string(jsonData)
+	return prepared, nil
 }

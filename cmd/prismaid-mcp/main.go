@@ -101,6 +101,12 @@ type ConfigResponse struct {
 	TOML string `json:"toml" jsonschema_description:"Generated TOML configuration"`
 }
 
+// ChunkingPlanResponse returns a read-only document chunking plan.
+type ChunkingPlanResponse struct {
+	Plan  *prismaid.ReviewChunkingPlan `json:"plan,omitempty" jsonschema_description:"Per-document prompt estimates and chunk counts"`
+	Error *ErrorInfo                   `json:"error,omitempty" jsonschema_description:"Error details, if any"`
+}
+
 // RecordResponse returns a generated seed RevAIse review record.
 type RecordResponse struct {
 	Record string     `json:"record,omitempty" jsonschema_description:"Generated RevAIse review record (JSON)"`
@@ -182,6 +188,14 @@ func main() {
 			mcp.WithOutputSchema[ConfigResponse](),
 		),
 		mcp.NewStructuredToolHandler(handleGenerateReviewConfig),
+	)
+	srv.AddTool(
+		mcp.NewTool("prismaid_plan_review_chunking",
+			mcp.WithDescription("Read source texts and report the explicit review chunking plan without calling an LLM or writing results. Chunking must be enabled in the TOML."),
+			mcp.WithInputSchema[TOMLRequest](),
+			mcp.WithOutputSchema[ChunkingPlanResponse](),
+		),
+		mcp.NewStructuredToolHandler(handlePlanReviewChunking),
 	)
 	srv.AddTool(
 		mcp.NewTool("prismaid_generate_screening_config",
@@ -322,6 +336,22 @@ func handleValidateConfig(ctx context.Context, request mcp.CallToolRequest, args
 
 func handleGenerateReviewConfig(ctx context.Context, request mcp.CallToolRequest, args prismaid.ReviewConfigParams) (ConfigResponse, error) {
 	return ConfigResponse{TOML: prismaid.GenerateReviewConfig(args)}, nil
+}
+
+func handlePlanReviewChunking(ctx context.Context, request mcp.CallToolRequest, args TOMLRequest) (ChunkingPlanResponse, error) {
+	ctx, cancel := withTimeout(ctx)
+	defer cancel()
+
+	var plan prismaid.ReviewChunkingPlan
+	err := runWithTimeout(ctx, func() error {
+		var err error
+		plan, err = prismaid.PlanReviewChunking(args.TOML)
+		return err
+	})
+	if err != nil {
+		return ChunkingPlanResponse{Error: errorInfo(400, err.Error())}, nil
+	}
+	return ChunkingPlanResponse{Plan: &plan}, nil
 }
 
 func handleGenerateScreeningConfig(ctx context.Context, request mcp.CallToolRequest, args prismaid.ScreeningConfigParams) (ConfigResponse, error) {

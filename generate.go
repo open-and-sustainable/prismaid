@@ -68,8 +68,37 @@ type ReviewConfigParams struct {
 	Example        string
 
 	ReviewItems []ReviewItem
+	Chunking    *ReviewChunking
 
 	RevAIse *ReviewRevAIse
+}
+
+// ReviewChunking is an explicit, opt-in plan for splitting over-context review
+// prompts and merging their extraction results. When Enabled is true,
+// InputContextTokens and MergeRules covering every ReviewItem are required by
+// validation. OverlapTokens defaults to zero. The generated TOML deliberately
+// does not select a trigger or merge defaults on the user's behalf.
+type ReviewChunking struct {
+	Enabled            bool
+	InputContextTokens int
+	OverlapTokens      int
+	MergeRules         []ReviewChunkMergeRule
+}
+
+// ReviewChunkMergeRule defines one user-selected merge rule for a review key.
+// Its parameters mirror config.MergeRule and are emitted only when supplied,
+// allowing ValidateConfig to report an incomplete draft configuration.
+type ReviewChunkMergeRule struct {
+	Key        string
+	Rule       string
+	Sentinels  []string
+	Defaults   []string
+	TieBreak   string
+	Order      []string
+	Separator  string
+	MaxLength  int
+	Operation  string
+	OnMismatch string
 }
 
 // GenerateReviewConfig builds a review-tool TOML configuration from params.
@@ -96,6 +125,10 @@ func GenerateReviewConfig(p ReviewConfigParams) string {
 	fmt.Fprintf(&b, "duplication = %q\n", p.Duplication)
 	fmt.Fprintf(&b, "cot_justification = %q\n", p.CotJustification)
 	fmt.Fprintf(&b, "summary = %q\n", p.Summary)
+	if p.Chunking != nil {
+		b.WriteString("\n")
+		b.WriteString(reviewChunkingSection(*p.Chunking))
+	}
 
 	b.WriteString("\n[project.llm]\n")
 	b.WriteString(reviewLLMSection(p.LLMs))
@@ -116,6 +149,61 @@ func GenerateReviewConfig(p ReviewConfigParams) string {
 		result += "\n\n" + reviewRevAIseSection(*p.RevAIse)
 	}
 	return result
+}
+
+func reviewChunkingSection(chunking ReviewChunking) string {
+	var b strings.Builder
+	b.WriteString("[project.configuration.chunking]\n")
+	fmt.Fprintf(&b, "enabled = %t\n", chunking.Enabled)
+	if chunking.InputContextTokens != 0 {
+		fmt.Fprintf(&b, "input_context_tokens = %d\n", chunking.InputContextTokens)
+	}
+	if chunking.OverlapTokens != 0 {
+		fmt.Fprintf(&b, "overlap_tokens = %d\n", chunking.OverlapTokens)
+	}
+
+	for _, rule := range chunking.MergeRules {
+		fmt.Fprintf(&b, "\n[project.configuration.chunking.merge.%q]\n", rule.Key)
+		fmt.Fprintf(&b, "rule = %q\n", rule.Rule)
+		if rule.Sentinels != nil {
+			fmt.Fprintf(&b, "sentinels = %s\n", reviewTOMLStringArray(rule.Sentinels))
+		}
+		if rule.Defaults != nil {
+			fmt.Fprintf(&b, "defaults = %s\n", reviewTOMLStringArray(rule.Defaults))
+		}
+		if rule.TieBreak != "" {
+			fmt.Fprintf(&b, "tie_break = %q\n", rule.TieBreak)
+		}
+		if rule.Order != nil {
+			fmt.Fprintf(&b, "order = %s\n", reviewTOMLStringArray(rule.Order))
+		}
+		if rule.Separator != "" {
+			fmt.Fprintf(&b, "separator = %q\n", rule.Separator)
+		}
+		if rule.MaxLength != 0 {
+			fmt.Fprintf(&b, "max_length = %d\n", rule.MaxLength)
+		}
+		if rule.Operation != "" {
+			fmt.Fprintf(&b, "operation = %q\n", rule.Operation)
+		}
+		if rule.OnMismatch != "" {
+			fmt.Fprintf(&b, "on_mismatch = %q\n", rule.OnMismatch)
+		}
+	}
+	return strings.TrimSpace(b.String())
+}
+
+func reviewTOMLStringArray(values []string) string {
+	var b strings.Builder
+	b.WriteString("[")
+	for index, value := range values {
+		if index > 0 {
+			b.WriteString(", ")
+		}
+		fmt.Fprintf(&b, "%q", value)
+	}
+	b.WriteString("]")
+	return b.String()
 }
 
 func reviewLLMSection(llms []ReviewLLM) string {

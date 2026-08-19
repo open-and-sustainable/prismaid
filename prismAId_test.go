@@ -254,3 +254,50 @@ output_dir = "papers/zotero"
 		t.Error("expected an error for an empty config type")
 	}
 }
+
+func TestPlanReviewChunking(t *testing.T) {
+	directory := t.TempDir()
+	if err := os.WriteFile(filepath.Join(directory, "paper.txt"), []byte("A deliberately long first paragraph for chunk planning.\n\nA deliberately long second paragraph for chunk planning."), 0644); err != nil {
+		t.Fatal(err)
+	}
+	configuration := fmt.Sprintf(`
+[project]
+name = "Chunk plan"
+author = "Tester"
+version = "1"
+
+[project.configuration]
+input_directory = %q
+results_file_name = %q
+
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 100
+
+[project.configuration.chunking.merge.status]
+rule = "ordinal"
+order = ["no", "yes"]
+
+[project.llm.1]
+provider = "SelfHosted"
+model = "local"
+
+[prompt]
+task = "Extract"
+expected_result = "JSON"
+
+[review.1]
+key = "status"
+values = ["no", "yes"]
+`, directory, filepath.Join(directory, "results"))
+	plan, err := PlanReviewChunking(configuration)
+	if err != nil {
+		t.Fatalf("PlanReviewChunking returned an error: %v", err)
+	}
+	if len(plan.Documents) != 1 || plan.Documents[0].ChunkCount < 2 {
+		t.Fatalf("expected one document with multiple chunks, got %+v", plan)
+	}
+	if plan.Documents[0].CounterMethod != "conservative UTF-8 byte estimate" {
+		t.Fatalf("unexpected counter method: %q", plan.Documents[0].CounterMethod)
+	}
+}

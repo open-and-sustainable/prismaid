@@ -2,6 +2,7 @@ package config
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -185,4 +186,114 @@ values = ["world", "continent", "river basin"]
 	if !reflect.DeepEqual(config, expectedConfig) {
 		t.Errorf("Loaded config does not match expected config.\nExpected: %+v\nGot: %+v", expectedConfig, config)
 	}
+}
+
+func TestLoadConfigRequiresCompleteChunkingPlan(t *testing.T) {
+	configuration := minimalChunkingConfig(`
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 100
+`)
+	_, err := LoadConfig(configuration, &MockEnvReader{})
+	if err == nil || !strings.Contains(err.Error(), "merge.status is required") {
+		t.Fatalf("expected missing merge-rule error, got %v", err)
+	}
+}
+
+func TestLoadConfigAcceptsExplicitChunkingPlan(t *testing.T) {
+	configuration := minimalChunkingConfig(`
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 100
+overlap_tokens = 0
+
+[project.configuration.chunking.merge.status]
+rule = "ordinal"
+order = ["no", "yes"]
+`)
+	loaded, err := LoadConfig(configuration, &MockEnvReader{})
+	if err != nil {
+		t.Fatalf("LoadConfig returned an unexpected error: %v", err)
+	}
+	if !loaded.Project.Configuration.Chunking.Enabled {
+		t.Fatal("expected chunking to be enabled")
+	}
+}
+
+func TestLoadConfigValidatesEveryChunkingRule(t *testing.T) {
+	validRules := []struct {
+		name string
+		rule string
+	}{
+		{"union", "rule = \"union\"\nsentinels = [\"none\"]"},
+		{"ordinal", "rule = \"ordinal\"\norder = [\"no\", \"yes\"]"},
+		{"categorical", "rule = \"categorical\"\ndefaults = [\"not_specified\"]\ntie_break = \"first\""},
+		{"unique text", "rule = \"unique_text\"\nseparator = \"\\n\\n\"\nmax_length = 100"},
+		{"numeric", "rule = \"numeric\"\noperation = \"max\""},
+		{"metadata", "rule = \"metadata\"\non_mismatch = \"warn\""},
+	}
+	for _, test := range validRules {
+		t.Run(test.name, func(t *testing.T) {
+			configuration := minimalChunkingConfig(`
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 100
+
+[project.configuration.chunking.merge.status]
+` + test.rule)
+			if _, err := LoadConfig(configuration, &MockEnvReader{}); err != nil {
+				t.Fatalf("expected valid chunking configuration, got %v", err)
+			}
+		})
+	}
+}
+
+func TestLoadConfigRejectsIncompleteChunkingRules(t *testing.T) {
+	invalidRules := []struct {
+		name     string
+		chunking string
+		expected string
+	}{
+		{"missing input limit", "enabled = true", "input_context_tokens is required"},
+		{"union missing sentinels", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"union\"", "sentinels is required"},
+		{"ordinal missing order", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"ordinal\"", "order is required"},
+		{"categorical missing defaults", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"categorical\"\ntie_break = \"first\"", "defaults is required"},
+		{"text missing length", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"unique_text\"\nseparator = \" | \"", "max_length must be greater than zero"},
+		{"numeric bad operation", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"numeric\"\noperation = \"sum\"", "operation must be"},
+		{"metadata bad mismatch action", "enabled = true\ninput_context_tokens = 100\n\n[project.configuration.chunking.merge.status]\nrule = \"metadata\"\non_mismatch = \"ignore\"", "on_mismatch must be"},
+	}
+	for _, test := range invalidRules {
+		t.Run(test.name, func(t *testing.T) {
+			configuration := minimalChunkingConfig("\n[project.configuration.chunking]\n" + test.chunking + "\n")
+			_, err := LoadConfig(configuration, &MockEnvReader{})
+			if err == nil || !strings.Contains(err.Error(), test.expected) {
+				t.Fatalf("expected %q in validation error, got %v", test.expected, err)
+			}
+		})
+	}
+}
+
+func minimalChunkingConfig(chunking string) string {
+	return `
+[project]
+name = "Test"
+author = "Tester"
+version = "1"
+
+[project.configuration]
+input_directory = "/tmp/input"
+results_file_name = "/tmp/results"
+` + chunking + `
+[project.llm.1]
+provider = "SelfHosted"
+model = "local"
+
+[prompt]
+task = "Extract"
+expected_result = "JSON"
+
+[review.status]
+key = "status"
+values = ["no", "yes"]
+`
 }
