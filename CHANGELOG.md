@@ -9,6 +9,10 @@ Removed: For features removed in this release.
 Fixed: For any bug fixes.
 Security: For vulnerabilities.
 
+## [0.17.1] - 2026-08-20
+### Fixed
+- Made chunked review merging resilient to inconsistent model value types and preserved successful results when individual documents fail.
+
 ## [0.17.0] - 2026-08-19
 ### Added
 - Added explicit opt-in chunked parsing for over-context review prompts, with user-defined per-field merge rules, conflict reporting, and one merged extraction per source document.
