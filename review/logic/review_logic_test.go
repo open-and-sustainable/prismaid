@@ -1,10 +1,16 @@
 package logic
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/open-and-sustainable/alembica/definitions"
+	"github.com/open-and-sustainable/prismaid/review/results"
 )
 
 const mockConfigDataTemplate = `
@@ -107,6 +113,109 @@ func TestRunReviewWithTempFiles(t *testing.T) {
 	// Clean up the output file if it was created
 	if err := os.Remove(outputFilePath); err != nil {
 		t.Fatalf("Failed to clean up the output file: %v", err)
+	}
+}
+
+func TestReviewWritesPartialOutputAndChunkingReport(t *testing.T) {
+	tmpDir := t.TempDir()
+	inputDir := filepath.Join(tmpDir, "input")
+	if err := os.Mkdir(inputDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(inputDir, "good.txt"), []byte("GOOD_DOCUMENT"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(inputDir, "bad.txt"), []byte(strings.Repeat("BROKEN_DOCUMENT ", 200)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	configuration := fmt.Sprintf(`
+[project]
+name = "Partial output test"
+author = "Test"
+version = "1.0"
+
+[project.configuration]
+input_directory = %q
+results_file_name = %q
+output_format = "csv"
+log_level = "low"
+duplication = "no"
+cot_justification = "no"
+summary = "no"
+
+[project.configuration.chunking]
+enabled = true
+input_context_tokens = 500
+overlap_tokens = 0
+
+[project.configuration.chunking.merge.status]
+rule = "ordinal"
+order = ["no", "yes"]
+
+[project.llm.1]
+provider = "SelfHosted"
+model = "test-model"
+base_url = "http://example.invalid"
+
+[prompt]
+task = "Extract status"
+expected_result = "Return JSON"
+
+[review.1]
+key = "status"
+values = ["no", "yes"]
+`, inputDir, filepath.Join(tmpDir, "results"))
+
+	originalExtract := extractReview
+	defer func() { extractReview = originalExtract }()
+	extractReview = func(input string) (string, error) {
+		var parsed definitions.Input
+		if err := json.Unmarshal([]byte(input), &parsed); err != nil {
+			return "", err
+		}
+		output := definitions.Output{Metadata: definitions.OutputMetadata{SchemaVersion: "v1"}}
+		for _, prompt := range parsed.Prompts {
+			if prompt.SequenceNumber != 1 {
+				continue
+			}
+			response := `{"status":"yes"}`
+			if strings.Contains(prompt.PromptContent, "BROKEN_DOCUMENT") {
+				response = "not json"
+			}
+			output.Responses = append(output.Responses, definitions.Response{
+				Provider: "SelfHosted", Model: "test-model", SequenceID: prompt.SequenceID,
+				SequenceNumber: 1, ModelResponses: []string{response},
+			})
+		}
+		encoded, err := json.Marshal(output)
+		return string(encoded), err
+	}
+
+	result, err := Review(configuration)
+	var partial *PartialReviewError
+	if !errors.As(err, &partial) {
+		t.Fatalf("expected partial review error, got result=%#v err=%v", result, err)
+	}
+	if result == nil || result.ManuscriptsProcessed != 2 || result.ManuscriptsSucceeded != 1 || result.ManuscriptsFailed != 1 {
+		t.Fatalf("unexpected partial result: %#v", result)
+	}
+	csvData, err := os.ReadFile(result.OutputFile)
+	if err != nil {
+		t.Fatalf("expected preserved results file: %v", err)
+	}
+	if !strings.Contains(string(csvData), "good") || strings.Contains(string(csvData), "bad") {
+		t.Fatalf("expected only good document in partial CSV:\n%s", csvData)
+	}
+	reportData, err := os.ReadFile(result.ChunkingReportFile)
+	if err != nil {
+		t.Fatalf("expected chunking report: %v", err)
+	}
+	var report results.ChunkingReport
+	if err := json.Unmarshal(reportData, &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Documents) != 2 || len(report.Documents[0].Failures) == 0 {
+		t.Fatalf("expected failure recorded for first (bad) document, got %#v", report)
 	}
 }
 

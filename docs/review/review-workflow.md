@@ -194,7 +194,7 @@ Some self-hosted serving layers can silently truncate a prompt that exceeds the 
 2. Enable `[project.configuration.chunking]` and set `input_context_tokens` to the safe input budget for the complete prompt. This is a budget for prompt instructions, response schema, and manuscript text together, so leave any desired output capacity in the model's raw context outside this value.
 3. Optionally set `overlap_tokens` when relationships may span adjacent paragraphs. The only splitting method is roughly equal contiguous parts, preferring paragraph and sentence endings.
 4. Validate the TOML, then inspect the document plan with `prismaid.PlanReviewChunking(...)` in Go or `prismaid_plan_review_chunking` through MCP. The plan reports the counting method, full-prompt estimate, number of chunks, and chunk prompt sizes without calling an LLM.
-5. Run the review. Documents under the supplied limit remain single prompts; only documents over it are chunked. Review the logged field conflicts alongside the normal extraction results.
+5. Run the review. Documents under the supplied limit remain single prompts; only documents over it are chunked. Review the logged field conflicts alongside the normal extraction results. The run also writes `<results_file_name>.chunking-report.json`, with prompt estimates, coercions, conflict resolutions, and document failures. A failed document leaves successful documents in the normal results file and causes a clearly reported partial run rather than discarding the batch.
 
 For the complete TOML reference and merge-rule examples, see the [Review Tool](../tools/review-tool) page.
 

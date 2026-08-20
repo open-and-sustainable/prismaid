@@ -195,6 +195,10 @@ Every configured `[review]` key must have exactly one corresponding `[project.co
 - **`numeric`** with `operation = "max"`, `"mean"`, or `"min"`.
 - **`metadata`** with `on_mismatch = "warn"` or `"error"`; the first value is retained.
 
+LLM output is normalized defensively before these rules are applied. For example, `union` accepts arrays, scalar strings, numbers, booleans, `null`, and omitted fields; ordinal arrays use their strongest recognized member; numeric strings and arrays of numbers are accepted; and unusable values are skipped. Coercions and unknown enum values never abort an otherwise valid batch.
+
+Every chunked review also writes `<results_file_name>.chunking-report.json`. It records the per-document chunk plan, coercions, conflicts and their resolution, and any document-level failures. If one document cannot be merged—for example, because it returned invalid JSON or a configured metadata mismatch uses `on_mismatch = "error"`—the normal CSV or JSON results file is still written with successful documents. The review reports a partial-run error/non-zero CLI status and the sidecar identifies the failed document; it never discards successful extraction results.
+
 Chunk-level disagreements are reported with the filename and field in the review log. They do not add undocumented fields to the configured extraction schema. When `cot_justification` or `summary` is enabled, prismAId retains the per-chunk auxiliary responses as one deduplicated, concatenated auxiliary response for the source document.
 
 For a single compatible OpenAI model, prismAId uses the model's available `tiktoken` encoding to count generated prompts. Ensembles and other or unsupported configurations use the conservative UTF-8 byte estimate: this can create more chunks than strictly necessary, but avoids applying one model's tokenizer to another or treating an unknown local-model tokenizer as exact. The log and the MCP plan both identify the method used.

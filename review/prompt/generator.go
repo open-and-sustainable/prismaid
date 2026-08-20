@@ -58,11 +58,12 @@ type ChunkReport struct {
 // retained only for internal orchestration; result writers continue to receive
 // document-level sequence IDs after a chunked extraction is merged.
 type PreparedInput struct {
-	JSON         string
-	Filenames    []string
-	Bindings     map[string]chunking.Binding
-	ChunkReports []ChunkReport
-	HasChunks    bool
+	JSON           string
+	Filenames      []string
+	Bindings       map[string]chunking.Binding
+	ExpectedGroups []chunking.ExpectedGroup
+	ChunkReports   []ChunkReport
+	HasChunks      bool
 }
 
 // parsePrompts reads the configuration and generates a list of prompts along with their corresponding filenames.
@@ -260,7 +261,7 @@ func PreparePlan(config *config.Config) (*PreparedInput, error) {
 	jsonSchema := definitions.Input{
 		Metadata: definitions.InputMetadata{
 			Version:       config.Project.Version,
-			SchemaVersion: "1.0", // Hardcoded since it's not in TOML
+			SchemaVersion: "v1",
 			Timestamp:     time.Now().Format(time.RFC3339),
 		},
 	}
@@ -355,6 +356,25 @@ func PreparePlan(config *config.Config) (*PreparedInput, error) {
 				})
 			}
 			sequenceID++
+		}
+		artifactCount := 1
+		if config.Project.Configuration.CotJustification == "yes" {
+			artifactCount++
+		}
+		if config.Project.Configuration.Summary == "yes" {
+			artifactCount++
+		}
+		for _, model := range jsonSchema.Models {
+			for sequenceNumber := 1; sequenceNumber <= artifactCount; sequenceNumber++ {
+				prepared.ExpectedGroups = append(prepared.ExpectedGroups, chunking.ExpectedGroup{
+					DocumentIndex:  documentIndex,
+					Filename:       document.Filename,
+					Provider:       model.Provider,
+					Model:          model.Model,
+					SequenceNumber: sequenceNumber,
+					ChunkCount:     len(chunks),
+				})
+			}
 		}
 		prepared.ChunkReports = append(prepared.ChunkReports, report)
 	}

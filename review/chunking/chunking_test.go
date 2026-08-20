@@ -159,7 +159,7 @@ func TestMergeNumericOperations(t *testing.T) {
 	}
 }
 
-func TestMergeRejectsConfiguredMetadataMismatch(t *testing.T) {
+func TestMergeRecordsConfiguredMetadataMismatch(t *testing.T) {
 	raw, err := json.Marshal(definitions.Output{
 		Metadata: definitions.OutputMetadata{SchemaVersion: "1.0"},
 		Responses: []definitions.Response{
@@ -170,27 +170,86 @@ func TestMergeRejectsConfiguredMetadataMismatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, _, err = Merge(string(raw), map[string]Binding{
+	merged, report, err := Merge(string(raw), map[string]Binding{
 		"one": {DocumentIndex: 0, Filename: "paper", ChunkIndex: 0, ChunkCount: 2},
 		"two": {DocumentIndex: 0, Filename: "paper", ChunkIndex: 1, ChunkCount: 2},
 	}, config.ChunkingConfig{Enabled: true, Merge: map[string]config.MergeRule{
 		"doi": {Rule: "metadata", OnMismatch: "error"},
 	}})
-	if err == nil || !strings.Contains(err.Error(), "metadata values differ") {
-		t.Fatalf("expected metadata mismatch error, got %v", err)
+	if err != nil {
+		t.Fatalf("Merge returned an unexpected global error: %v", err)
+	}
+	if len(report.Failures) != 1 || !strings.Contains(report.Failures[0].Message, "metadata values differ") {
+		t.Fatalf("expected one metadata failure, got %#v", report.Failures)
+	}
+	var parsed definitions.Output
+	if err := json.Unmarshal([]byte(merged), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if len(parsed.Responses) != 0 {
+		t.Fatalf("expected failed document to be omitted, got %#v", parsed.Responses)
 	}
 }
 
-func TestMergeRejectsMissingConfiguredField(t *testing.T) {
-	config := config.ChunkingConfig{Enabled: true, Merge: map[string]config.MergeRule{
-		"status": {Rule: "ordinal", Order: []string{"no", "yes"}},
+func TestMergeNormalizesHeterogeneousModelValues(t *testing.T) {
+	cfg := config.ChunkingConfig{Enabled: true, Merge: map[string]config.MergeRule{
+		"union":       {Rule: "union", Sentinels: []string{"none", "not_specified"}},
+		"ordinal":     {Rule: "ordinal", Order: []string{"none", "implicit", "explicit"}},
+		"categorical": {Rule: "categorical", Defaults: []string{"not_specified", "other"}, TieBreak: "first"},
+		"text":        {Rule: "unique_text", Separator: " | ", MaxLength: 100},
+		"numeric":     {Rule: "numeric", Operation: "max"},
+		"metadata":    {Rule: "metadata", OnMismatch: "warn"},
 	}}
-	output := `{"metadata":{"schemaVersion":"1.0"},"responses":[{"provider":"x","model":"y","sequenceId":"one","sequenceNumber":1,"modelResponses":["{}"]}]}`
-	_, _, err := Merge(output, map[string]Binding{
-		"one": {DocumentIndex: 0, Filename: "paper", ChunkIndex: 0, ChunkCount: 1},
-	}, config)
-	if err == nil || !strings.Contains(err.Error(), "missing configured review field") {
-		t.Fatalf("expected missing-field error, got %v", err)
+	output := `{"metadata":{"schemaVersion":"v1"},"responses":[
+		{"provider":"x","model":"y","sequenceId":"one","sequenceNumber":1,"modelResponses":["{\"union\":\"method_a\",\"ordinal\":[\"unknown\",\"implicit\"],\"categorical\":[\"not_specified\",\"regional\"],\"text\":[\"First detail\",4],\"numeric\":\"0.4\",\"metadata\":null}" ]},
+		{"provider":"x","model":"y","sequenceId":"two","sequenceNumber":1,"modelResponses":["{\"union\":[true,\"none\"],\"ordinal\":null,\"text\":\"Second detail\",\"numeric\":[\"bad\",0.9],\"metadata\":\"10.1/example\"}" ]}
+	]}`
+	merged, report, err := Merge(output, map[string]Binding{
+		"one": {DocumentIndex: 0, Filename: "paper", ChunkIndex: 0, ChunkCount: 2},
+		"two": {DocumentIndex: 0, Filename: "paper", ChunkIndex: 1, ChunkCount: 2},
+	}, cfg)
+	if err != nil {
+		t.Fatalf("Merge returned an error for heterogeneous values: %v", err)
+	}
+	if len(report.Failures) != 0 || len(report.Coercions) == 0 {
+		t.Fatalf("expected coercions and no failures, got report %#v", report)
+	}
+	var parsed definitions.Output
+	if err := json.Unmarshal([]byte(merged), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	var object map[string]interface{}
+	if err := json.Unmarshal([]byte(parsed.Responses[0].ModelResponses[0]), &object); err != nil {
+		t.Fatal(err)
+	}
+	if !equalStrings(object["union"], []string{"method_a", "true"}) || object["ordinal"] != "implicit" || object["categorical"] != "regional" || object["text"] != "First detail | Second detail" || object["numeric"] != 0.9 || object["metadata"] != "10.1/example" {
+		t.Fatalf("unexpected normalized result: %#v", object)
+	}
+}
+
+func TestMergeRetainsOtherDocumentsWhenOneFails(t *testing.T) {
+	output := `{"metadata":{"schemaVersion":"v1"},"responses":[
+		{"provider":"x","model":"y","sequenceId":"good","sequenceNumber":1,"modelResponses":["{\"status\":\"yes\"}"]},
+		{"provider":"x","model":"y","sequenceId":"bad","sequenceNumber":1,"modelResponses":["not json"]}
+	]}`
+	bindings := map[string]Binding{
+		"good": {DocumentIndex: 0, Filename: "good", ChunkIndex: 0, ChunkCount: 1},
+		"bad":  {DocumentIndex: 1, Filename: "bad", ChunkIndex: 0, ChunkCount: 1},
+	}
+	expected := []ExpectedGroup{
+		{DocumentIndex: 0, Filename: "good", Provider: "x", Model: "y", SequenceNumber: 1, ChunkCount: 1},
+		{DocumentIndex: 1, Filename: "bad", Provider: "x", Model: "y", SequenceNumber: 1, ChunkCount: 1},
+	}
+	merged, report, err := MergeWithExpected(output, bindings, expected, config.ChunkingConfig{Enabled: true, Merge: map[string]config.MergeRule{"status": {Rule: "ordinal", Order: []string{"no", "yes"}}}})
+	if err != nil || len(report.Failures) != 1 || report.Failures[0].Filename != "bad" {
+		t.Fatalf("expected one isolated bad-document failure, got merged=%s report=%#v err=%v", merged, report, err)
+	}
+	var parsed definitions.Output
+	if err := json.Unmarshal([]byte(merged), &parsed); err != nil {
+		t.Fatal(err)
+	}
+	if len(parsed.Responses) != 1 || parsed.Responses[0].SequenceID != "1" {
+		t.Fatalf("expected good document only, got %#v", parsed.Responses)
 	}
 }
 

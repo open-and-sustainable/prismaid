@@ -35,27 +35,38 @@ type PDFOptions = conversion.PDFOptions
 // an explicit merge rule for every review field; call PlanReviewChunking first
 // to inspect the plan without contacting a model.
 //
-// Returns an error if the review process fails for any reason, such as invalid configuration,
-// inaccessible files, or API errors.
+// A chunked run writes a <results_file_name>.chunking-report.json sidecar with
+// prompt estimates, normalizations, conflicts, and document failures. If one
+// or more documents fail after extraction, Review still returns the preserved
+// partial result and a non-nil error describing the failed-document count.
+// Returns an error for invalid configuration, inaccessible files, API errors,
+// or a completed partial run.
 func Review(tomlConfiguration string) (ReviewResult, error) {
 	result, err := logic.Review(tomlConfiguration)
-	if err != nil {
+	if result == nil {
 		return ReviewResult{}, err
 	}
 	return ReviewResult{
 		OutputFile:           result.OutputFile,
+		ChunkingReportFile:   result.ChunkingReportFile,
 		ManuscriptsProcessed: result.ManuscriptsProcessed,
+		ManuscriptsSucceeded: result.ManuscriptsSucceeded,
+		ManuscriptsFailed:    result.ManuscriptsFailed,
 		ReviewItems:          result.ReviewItems,
 		Models:               result.Models,
-	}, nil
+	}, err
 }
 
-// ReviewResult summarizes the outcome of a review run: the output file written,
-// how many manuscripts were processed, how many review items were extracted, and
-// which models were used. The detailed extraction output is in the output file.
+// ReviewResult summarizes the outcome of a review run. ManuscriptsProcessed is
+// the input count; ManuscriptsSucceeded and ManuscriptsFailed distinguish a
+// complete run from one with preserved partial results. ChunkingReportFile is
+// set when chunking was enabled.
 type ReviewResult struct {
 	OutputFile           string
+	ChunkingReportFile   string
 	ManuscriptsProcessed int
+	ManuscriptsSucceeded int
+	ManuscriptsFailed    int
 	ReviewItems          int
 	Models               []string
 }

@@ -123,6 +123,12 @@ func TestPreparePlanSplitsOnlyOverContextDocuments(t *testing.T) {
 	if len(prepared.Bindings) != len(input.Prompts) {
 		t.Fatalf("expected a binding for every prompt, got %d bindings for %d prompts", len(prepared.Bindings), len(input.Prompts))
 	}
+	if input.Metadata.SchemaVersion != "v1" {
+		t.Fatalf("expected Alembica schema version v1, got %q", input.Metadata.SchemaVersion)
+	}
+	if len(prepared.ExpectedGroups) != len(input.Models)*len(prepared.Filenames) {
+		t.Fatalf("expected one primary response group per model and document, got %d", len(prepared.ExpectedGroups))
+	}
 	chunkCounts := make(map[string]int)
 	for sequenceID, binding := range prepared.Bindings {
 		if binding.ChunkCount < 1 || binding.ChunkIndex < 0 || binding.ChunkIndex >= binding.ChunkCount {

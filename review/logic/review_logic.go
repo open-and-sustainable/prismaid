@@ -29,6 +29,8 @@ const (
 
 var exitFunc = os.Exit
 
+var extractReview = extraction.Extract
+
 func exit(code int) {
 	exitFunc(code)
 }
@@ -57,9 +59,24 @@ func ValidateConfig(tomlConfiguration string) error {
 // which models were used. The detailed extraction output is in the results file.
 type ReviewResult struct {
 	OutputFile           string
+	ChunkingReportFile   string
 	ManuscriptsProcessed int
+	ManuscriptsSucceeded int
+	ManuscriptsFailed    int
 	ReviewItems          int
 	Models               []string
+}
+
+// PartialReviewError reports a run in which results were successfully saved
+// for one or more documents but one or more document artifacts failed.
+type PartialReviewError struct {
+	OutputFile         string
+	ChunkingReportFile string
+	FailedDocuments    int
+}
+
+func (e *PartialReviewError) Error() string {
+	return fmt.Sprintf("review completed with partial results: %d document(s) failed; results saved to %s; chunking report saved to %s", e.FailedDocuments, e.OutputFile, e.ChunkingReportFile)
 }
 
 // Review is the main function responsible for orchestrating the systematic review process.
@@ -153,22 +170,20 @@ func Review(tomlConfiguration string) (*ReviewResult, error) {
 	}
 
 	// run review
-	reviewResults, err := extraction.Extract(preparedInput.JSON)
+	reviewResults, err := extractReview(preparedInput.JSON)
 	if err != nil {
 		logger.Error("Error extracting review results:", err)
 		return nil, err
 	}
+	mergeReport := chunking.MergeReport{}
 	if preparedInput.HasChunks {
-		var report chunking.MergeReport
-		reviewResults, report, err = chunking.Merge(reviewResults, preparedInput.Bindings, config.Project.Configuration.Chunking)
+		reviewResults, mergeReport, err = chunking.MergeWithExpected(reviewResults, preparedInput.Bindings, preparedInput.ExpectedGroups, config.Project.Configuration.Chunking)
 		if err != nil {
 			logger.Error("Error merging chunked review results:", err)
 			return nil, err
 		}
-		for _, conflict := range report.Conflicts {
-			logger.Info("Chunk merge conflict for", conflict.Filename, "field:", conflict.Field)
-		}
 	}
+	logMergeReport(mergeReport)
 
 	logger.Info("Results:\n", reviewResults)
 
@@ -178,6 +193,15 @@ func Review(tomlConfiguration string) (*ReviewResult, error) {
 	if err != nil {
 		logger.Error("Error saving results:", err)
 		return nil, err
+	}
+
+	chunkingReportFile := ""
+	if config.Project.Configuration.Chunking.Enabled {
+		chunkingReportFile, err = results.SaveChunkingReport(config.Project.Configuration.ResultsFileName, buildChunkingReport(preparedInput.ChunkReports, mergeReport))
+		if err != nil {
+			logger.Error("Error saving chunking report:", err)
+			return nil, err
+		}
 	}
 
 	if err := updateRevAIseExtraction(config, reviewResults, preparedInput.Filenames, keys); err != nil {
@@ -195,13 +219,68 @@ func Review(tomlConfiguration string) (*ReviewResult, error) {
 		models = append(models, llm.Provider+" "+llm.Model)
 	}
 
-	logger.Info("Done!")
-	return &ReviewResult{
+	failedDocuments := failedDocumentCount(mergeReport.Failures)
+	result := &ReviewResult{
 		OutputFile:           config.Project.Configuration.ResultsFileName + "." + config.Project.Configuration.OutputFormat,
+		ChunkingReportFile:   chunkingReportFile,
 		ManuscriptsProcessed: len(preparedInput.Filenames),
+		ManuscriptsSucceeded: len(preparedInput.Filenames) - failedDocuments,
+		ManuscriptsFailed:    failedDocuments,
 		ReviewItems:          len(keys),
 		Models:               models,
-	}, nil
+	}
+	if failedDocuments > 0 {
+		logger.Error("Review completed with partial results; failed documents:", failedDocuments)
+		return result, &PartialReviewError{OutputFile: result.OutputFile, ChunkingReportFile: chunkingReportFile, FailedDocuments: failedDocuments}
+	}
+	logger.Info("Done!")
+	return result, nil
+}
+
+func logMergeReport(report chunking.MergeReport) {
+	for _, coercion := range report.Coercions {
+		logger.Info("WARNING: Chunk merge coercion for", coercion.Filename, "chunk", coercion.ChunkIndex+1, "field", coercion.Field+":", coercion.SourceType, "-", coercion.Action)
+	}
+	for _, conflict := range report.Conflicts {
+		logger.Info("WARNING: Chunk merge conflict for", conflict.Filename, "field", conflict.Field+":", conflict.Resolution)
+	}
+	for _, failure := range report.Failures {
+		logger.Error("Chunk merge failure for", failure.Filename, "artifact", failure.SequenceNumber, ":", failure.Message)
+	}
+}
+
+func buildChunkingReport(plans []prompt.ChunkReport, mergeReport chunking.MergeReport) results.ChunkingReport {
+	report := results.ChunkingReport{Documents: make([]results.ChunkingDocumentReport, 0, len(plans))}
+	for index, plan := range plans {
+		document := results.ChunkingDocumentReport{Filename: plan.Filename, CounterMethod: plan.CounterMethod, FullPromptTokens: plan.FullPromptTokens, ChunkPromptTokens: plan.ChunkPromptTokens, ChunkCount: plan.ChunkCount}
+		for _, coercion := range mergeReport.Coercions {
+			if coercion.DocumentIndex == index {
+				document.Coercions = append(document.Coercions, coercion)
+			}
+		}
+		for _, conflict := range mergeReport.Conflicts {
+			if conflict.DocumentIndex == index {
+				document.Conflicts = append(document.Conflicts, conflict)
+			}
+		}
+		for _, failure := range mergeReport.Failures {
+			if failure.DocumentIndex == index {
+				document.Failures = append(document.Failures, failure)
+			}
+		}
+		report.Documents = append(report.Documents, document)
+	}
+	return report
+}
+
+func failedDocumentCount(failures []chunking.Failure) int {
+	documents := make(map[int]struct{}, len(failures))
+	for _, failure := range failures {
+		if failure.DocumentIndex >= 0 {
+			documents[failure.DocumentIndex] = struct{}{}
+		}
+	}
+	return len(documents)
 }
 
 func updateRevAIseExtraction(config *config.Config, reviewResults string, filenames, keys []string) error {

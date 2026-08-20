@@ -469,7 +469,11 @@ func handleReview(ctx context.Context, request mcp.CallToolRequest, args TOMLReq
 		return err
 	})
 	if err != nil {
-		return ReviewResponse{Error: errorInfo(400, err.Error())}, nil
+		response := ReviewResponse{Error: errorInfo(400, err.Error())}
+		if result.OutputFile != "" {
+			response.Result = &result
+		}
+		return response, nil
 	}
 	return ReviewResponse{Result: &result}, nil
 }
