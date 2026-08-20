@@ -88,6 +88,7 @@ This function interfaces with a shared library to perform a review process on th
 \itemize{
 \item \code{[project.configuration.chunking]} is disabled by default. When enabled, it splits only prompts over the user-defined \code{input_context_tokens} limit.
 \item An enabled plan must define an explicit merge rule for every configured review field. See the Review Tool documentation for the TOML shape.
+\item Chunked runs write \code{<results_file_name>.chunking-report.json} with the chunk plan, value coercions, conflicts, and document failures. If a document fails, this function returns an error message only after the normal results file and sidecar have been preserved.
 }
 }
 }

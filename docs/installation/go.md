@@ -41,6 +41,13 @@ convertResult, err := prismaid.Convert(inputDir, "pdf,docx,html", prismaid.Conve
 reviewResult, err := prismaid.Review(tomlConfigString)
 ```
 
+When chunking is enabled, `reviewResult.ChunkingReportFile` identifies the
+`<results_file_name>.chunking-report.json` sidecar. It records prompt estimates,
+value coercions, conflict resolutions, and document failures. A partial run
+returns both a populated `reviewResult` (`ManuscriptsSucceeded` and
+`ManuscriptsFailed`) and a non-nil error after preserving the normal results
+file and sidecar.
+
 Configuration helpers and protocol conformance:
 
 ```go

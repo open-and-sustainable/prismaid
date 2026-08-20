@@ -130,9 +130,14 @@
 #'   it splits only prompts over the user-defined `input_context_tokens` limit.
 #' - An enabled plan must define an explicit merge rule for every configured
 #'   review field. See the Review Tool documentation for the TOML shape.
+#' - Chunked runs write `<results_file_name>.chunking-report.json` with the
+#'   chunk plan, value coercions, conflicts, and document failures. If a
+#'   document fails, this function returns an error message only after the
+#'   normal results file and sidecar have been preserved.
 #'
 #' @param input_string A string representing the input data.
-#' @return A string indicating the result of the review process.
+#' @return A success message, or a partial-run/error message after any written
+#'   result files have been preserved.
 #' @export
 #' @examples
 #' RunReview("example input")

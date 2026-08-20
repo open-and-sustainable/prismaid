@@ -22,7 +22,10 @@ const library_path = get_library_path()
 Run a review from TOML configuration. The optional
 `[project.configuration.chunking]` block splits only prompts over a
 user-defined input-context limit. An enabled chunking plan must provide an
-explicit merge rule for every configured review field.
+explicit merge rule for every configured review field. Chunked runs write a
+`<results_file_name>.chunking-report.json` sidecar with the chunk plan, value
+coercions, conflicts, and document failures. A partial run throws only after
+the normal results file and sidecar have been written.
 """
 function run_review(input::String)
     # Validate input

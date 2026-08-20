@@ -53,6 +53,12 @@ The tools fall into four groups.
 
 Agents discover tool schemas via `tools/list` and call them with `tools/call`. The generator tools accept the same structured parameters as prismAId's Go configuration generators, so an agent can author a configuration field by field, validate it, inspect an enabled chunking plan, and then run it — all in one session.
 
+For a chunked `prismaid_review` run, the result includes the normal output path,
+the chunking-report path, and successful/failed manuscript counts. A partial
+run returns both this result and an error object after writing the normal
+results file and `<results_file_name>.chunking-report.json`; agents should read
+the sidecar to identify failed documents, coercions, and conflict resolutions.
+
 ## Running execution tools
 
 The design, generator, and conformance tools are self-contained. `prismaid_plan_review_chunking` is read-only but needs access to the configured input files. The execution tools also read and write files and call LLM providers. Two conventions apply when running the server in a container:

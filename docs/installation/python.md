@@ -61,6 +61,13 @@ report = prismaid.check_conformance(record_json, "prisma-2020")
 guidance = prismaid.protocol_guidance("prisma-2020")
 ```
 
+For chunked reviews, prismAId writes
+`<results_file_name>.chunking-report.json` beside the normal results file. It
+contains the chunk plan, value coercions, conflict resolutions, and
+document-level failures. If a document fails, `prismaid.review()` raises an
+exception only after preserving both files; inspect the sidecar before retrying
+the failed document.
+
 See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do.
 
 <div id="wcb" class="carbonbadge"></div>

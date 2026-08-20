@@ -44,6 +44,11 @@ Supported TOML configurations can optionally include `[revaise]` blocks to docum
 
 When you run the review project, you'll be prompted with cost information and asked to confirm before proceeding.
 
+For an enabled chunking plan, the review also writes
+`<results_file_name>.chunking-report.json`. It records the chunk plan, value
+coercions, conflict resolutions, and document failures. A partial run throws
+only after preserving the normal results file and this sidecar.
+
 ### Downloading PDFs from Zotero
 
 To download PDFs from a Zotero collection:

@@ -58,6 +58,13 @@ report <- CheckConformance(record_json, "prisma-2020")
 guidance <- ProtocolGuidance("prisma-2020")
 ```
 
+For chunked reviews, prismAId writes
+`<results_file_name>.chunking-report.json` beside the normal results file. It
+contains the chunk plan, value coercions, conflict resolutions, and
+document-level failures. If a document fails, `RunReview()` returns the error
+message only after preserving both files; inspect the sidecar before retrying
+the failed document.
+
 See [Protocol Conformance](../conformance) and [Protocol Guidance](../guidance) for what these do.
 
 

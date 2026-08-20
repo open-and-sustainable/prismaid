@@ -93,10 +93,14 @@ def review(toml_configuration: str) -> None:
         toml_configuration (str): TOML configuration as a string. The optional
             [project.configuration.chunking] block can split only prompts that
             exceed a user-defined input-context limit; when enabled it requires
-            explicit merge rules for every review field.
+            explicit merge rules for every review field. Chunked runs write a
+            <results_file_name>.chunking-report.json sidecar with the chunk
+            plan, value coercions, conflicts, and document failures.
 
     Raises:
-        Exception: If the review process fails
+        Exception: If the review process fails or completes partially. In a
+            partial run, the normal results file and chunking-report sidecar
+            have already been written.
     """
     result = cast(bytes | None, _RunReviewPython(toml_configuration.encode("utf-8")))
     if result:
